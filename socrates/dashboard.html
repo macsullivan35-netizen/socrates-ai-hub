@@ -205,9 +205,9 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-section">
-      <div class="avatar">JD</div>
-      <div class="user-name">Jane Doe</div>
-      <div class="user-handle">@writergod</div>
+      <div class="avatar" id="sidebarAvatar">?</div>
+      <div class="user-name" id="sidebarName">Loading…</div>
+      <div class="user-handle" id="sidebarHandle">@…</div>
     </div>
     <div class="sidebar-section">
       <h4>Builder</h4>
@@ -232,7 +232,7 @@
     <div class="dash-header">
       <div>
         <h1>Builder Dashboard</h1>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px">Welcome back, Jane. Here's how your tools are performing.</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">Welcome back, <span id="welcomeName">there</span>. Here's how your tools are performing.</div>
       </div>
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
         <div class="date-range">
@@ -340,8 +340,11 @@
             <th></th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
+        <tbody id="myToolsBody">
+          <tr id="toolsLoadingRow">
+            <td colspan="8" style="text-align:center;padding:32px;color:var(--muted);font-size:14px">Loading your tools…</td>
+          </tr>
+          <tr style="display:none">
             <td>
               <div class="tool-name-cell">
                 <div class="t-icon" style="background:rgba(201,168,76,.15)">✍️</div>
@@ -722,6 +725,67 @@ async function loadStripeData() {
 }
 
 loadStripeData();
+</script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+
+async function loadRealDashboard() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) {
+    // Not logged in — show sign in prompt
+    document.getElementById('sidebarName').textContent = 'Not signed in';
+    document.getElementById('sidebarHandle').textContent = '';
+    document.getElementById('sidebarAvatar').textContent = '?';
+    document.getElementById('welcomeName').textContent = 'there';
+    document.getElementById('toolsLoadingRow').innerHTML = '<td colspan="8" style="text-align:center;padding:32px;color:var(--muted);font-size:14px">Please <a href="#" onclick="openAuthModal(\'login\')" style="color:var(--gold);font-weight:700">sign in</a> to see your tools.</td>';
+    return;
+  }
+
+  // Load profile
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  const name = profile?.display_name || profile?.username || user.email.split('@')[0];
+  const handle = '@' + (profile?.username || user.email.split('@')[0]);
+
+  document.getElementById('sidebarName').textContent = name;
+  document.getElementById('sidebarHandle').textContent = handle;
+  document.getElementById('sidebarAvatar').textContent = name[0].toUpperCase();
+  document.getElementById('welcomeName').textContent = name;
+
+  // Load real tools
+  const { data: tools } = await sb.from('tools').select('*').eq('creator_id', user.id).order('created_at', { ascending: false });
+  const tbody = document.getElementById('myToolsBody');
+
+  if (!tools || tools.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);font-size:14px">
+      You haven't published any tools yet. <a href="publish.html" style="color:var(--gold);font-weight:700">Build your first tool →</a>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = tools.map(t => `
+    <tr>
+      <td>
+        <div class="tool-name-cell">
+          <div class="t-icon" style="background:rgba(154,110,12,.12)">${t.icon || '🤖'}</div>
+          <div>
+            <div class="t-name">${t.name}</div>
+            <div class="t-type">${t.type || 'Prompt App'} · ${t.price > 0 ? '$'+t.price+'/run' : 'Free'}</div>
+          </div>
+        </div>
+      </td>
+      <td><strong>${t.runs || 0}</strong></td>
+      <td>—</td>
+      <td style="color:var(--gold)">⭐ ${t.rating || '5.0'}</td>
+      <td style="color:var(--green)">${t.price > 0 ? '$'+(t.runs * t.price * 0.8).toFixed(2) : '$0'}</td>
+      <td><div class="t-bar-wrap"><div class="t-bar"><div class="t-bar-fill" style="width:${Math.min(100,(t.runs||0)/10)}%"></div></div></div></td>
+      <td><span class="${t.is_published ? 'status-live' : 'status-review'}">${t.is_published ? '🟢 Live' : '🟡 Draft'}</span></td>
+      <td><a href="publish.html?edit=${t.id}" class="action-btn">Edit</a></td>
+    </tr>
+  `).join('');
+}
+
+loadRealDashboard();
 </script>
 <script type="module" src="js/auth-ui.js"></script>
 </body>
