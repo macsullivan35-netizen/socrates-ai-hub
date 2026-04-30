@@ -16,6 +16,8 @@
       --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:14px;
     }
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .loading-pulse{animation:pulse 1.5s ease-in-out infinite;color:var(--muted)}
 
     nav{
       display:flex;align-items:center;justify-content:space-between;
@@ -246,43 +248,42 @@
     <!-- EARNINGS HIGHLIGHT -->
     <div class="earnings-summary">
       <div class="earnings-main">
-        <div class="e-label">Total Earnings This Month</div>
-        <div class="e-val">$3,842</div>
-        <div class="e-sub" style="color:var(--green)">↑ +34% from last month &nbsp;·&nbsp; <span style="color:var(--muted)">Next payout: May 1</span></div>
+        <div class="e-label">Total Revenue (All Time)</div>
+        <div class="e-val" id="totalRevenue"><span class="loading-pulse">Loading…</span></div>
+        <div class="e-sub" id="revSub" style="color:var(--muted)">Fetching from Stripe…</div>
       </div>
       <div class="earnings-breakdown">
-        <div class="e-item"><div class="ei-val">$2,310</div><div class="ei-label">Subscriptions</div></div>
-        <div class="e-item"><div class="ei-val">$948</div><div class="ei-label">Pay-per-Run</div></div>
-        <div class="e-item"><div class="ei-val">$584</div><div class="ei-label">Fork Attribution</div></div>
-        <div class="e-item"><div class="ei-val" style="color:var(--green)">+$210</div><div class="ei-label">Bonus (Trending)</div></div>
+        <div class="e-item"><div class="ei-val" id="totalSales">—</div><div class="ei-label">Sales</div></div>
+        <div class="e-item"><div class="ei-val" id="totalCustomers">—</div><div class="ei-label">Customers</div></div>
+        <div class="e-item"><div class="ei-val" id="stripeLink" style="font-size:13px">—</div><div class="ei-label">Stripe Dashboard</div></div>
       </div>
     </div>
 
     <!-- STATS ROW -->
     <div class="stats-row">
       <div class="stat-card">
-        <div class="sc-label">Total Runs</div>
-        <div class="sc-val gold">92,441</div>
-        <div class="sc-change up">↑ +18% vs last period</div>
-        <div class="sc-sub">Across all 8 tools</div>
+        <div class="sc-label">Total Sales</div>
+        <div class="sc-val gold" id="statSales">—</div>
+        <div class="sc-change up" id="statSalesSub">Loading from Stripe…</div>
+        <div class="sc-sub">Completed purchases</div>
       </div>
       <div class="stat-card">
-        <div class="sc-label">Unique Users</div>
-        <div class="sc-val purple">24,882</div>
-        <div class="sc-change up">↑ +27% vs last period</div>
-        <div class="sc-sub">2,109 new this week</div>
+        <div class="sc-label">Total Customers</div>
+        <div class="sc-val purple" id="statCustomers">—</div>
+        <div class="sc-change up" id="statCustomersSub">Loading from Stripe…</div>
+        <div class="sc-sub">Unique buyers</div>
       </div>
       <div class="stat-card">
-        <div class="sc-label">Avg. Rating</div>
-        <div class="sc-val green">4.88 ★</div>
-        <div class="sc-change up">↑ +0.04 pts</div>
-        <div class="sc-sub">From 6,281 reviews</div>
+        <div class="sc-label">Total Revenue</div>
+        <div class="sc-val green" id="statRevenue">—</div>
+        <div class="sc-change up">All time · USD</div>
+        <div class="sc-sub">From Stripe</div>
       </div>
       <div class="stat-card">
-        <div class="sc-label">Retention Rate</div>
-        <div class="sc-val gold">78.4%</div>
-        <div class="sc-change down">↓ -2.1% vs last period</div>
-        <div class="sc-sub">Users who ran again</div>
+        <div class="sc-label">Stripe Mode</div>
+        <div class="sc-val gold" id="statMode">—</div>
+        <div class="sc-change" id="statModeSub">—</div>
+        <div class="sc-sub">Current environment</div>
       </div>
     </div>
 
@@ -460,50 +461,19 @@
         </div>
       </div>
 
-      <!-- ACTIVITY FEED -->
+      <!-- ACTIVITY FEED — real Stripe transactions -->
       <div class="bottom-card">
-        <h3>⚡ Live Activity</h3>
-        <div class="activity-item">
-          <div class="activity-dot" style="background:var(--green)"></div>
-          <div>
-            <div class="activity-text"><strong>@student2026</strong> just ran Essay Master Pro</div>
-            <div class="activity-time">2 seconds ago</div>
+        <h3>💳 Recent Transactions</h3>
+        <div id="activityFeed">
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--muted)"></div>
+            <div><div class="activity-text loading-pulse">Loading transactions from Stripe…</div></div>
           </div>
         </div>
-        <div class="activity-item">
-          <div class="activity-dot" style="background:var(--gold)"></div>
-          <div>
-            <div class="activity-text"><strong>@jobseeker_ali</strong> forked Resume Optimizer → "Senior Dev Resume AI"</div>
-            <div class="activity-time">14 seconds ago · You earn 8% of their revenue</div>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-dot" style="background:var(--purple-light)"></div>
-          <div>
-            <div class="activity-text"><strong>@maria_writes</strong> left a 5★ review on Cover Letter AI</div>
-            <div class="activity-time">2 min ago</div>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-dot" style="background:var(--green)"></div>
-          <div>
-            <div class="activity-text"><strong>@techcorp_hr</strong> subscribed to Cover Letter AI ($4/mo)</div>
-            <div class="activity-time">11 min ago · +$3.20 to your balance</div>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-dot" style="background:var(--gold)"></div>
-          <div>
-            <div class="activity-text">Essay Master Pro reached <strong>#3 trending</strong> in Writing</div>
-            <div class="activity-time">23 min ago</div>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-dot" style="background:var(--muted)"></div>
-          <div>
-            <div class="activity-text"><strong>Interview Coach Pro</strong> submitted for review</div>
-            <div class="activity-time">2 hours ago · Expected live: tomorrow</div>
-          </div>
+        <div style="margin-top:16px;text-align:center">
+          <a href="https://dashboard.stripe.com" target="_blank" class="btn btn-ghost" style="font-size:12px">
+            Open Full Stripe Dashboard ↗
+          </a>
         </div>
       </div>
     </div>
@@ -603,15 +573,15 @@ new Chart(document.getElementById('runsChart'), {
   }
 });
 
-// REVENUE PIE
-new Chart(document.getElementById('revenueChart'), {
+// REVENUE PIE — populated by real Stripe data below
+let revenueChart = new Chart(document.getElementById('revenueChart'), {
   type: 'doughnut',
   data: {
-    labels: ['Cover Letter AI', 'Interview Coach', 'Fork Attribution', 'Trending Bonus'],
+    labels: ['Loading…'],
     datasets: [{
-      data: [2310, 948, 584, 210],
-      backgroundColor: ['#c9a84c', '#7c3aed', '#4ade80', '#f472b6'],
-      borderColor: '#0e0e1c',
+      data: [1],
+      backgroundColor: ['#e8e5db'],
+      borderColor: '#f9f8f5',
       borderWidth: 3,
       hoverOffset: 8
     }]
@@ -675,20 +645,83 @@ new Chart(document.getElementById('catChart'), {
   }
 });
 
-// LIVE ACTIVITY TICKER
-const activityItems = document.querySelectorAll('.activity-item');
-let dotColors = ['var(--green)','var(--gold)','var(--purple-light)','var(--green)','var(--gold)','var(--muted)'];
-setInterval(() => {
-  const firstDot = activityItems[0].querySelector('.activity-dot');
-  firstDot.style.opacity = '0';
-  setTimeout(() => { firstDot.style.opacity = '1'; }, 500);
-}, 3000);
-
 function setRange(btn, range) {
   document.querySelectorAll('.dr-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  // In a real app, this would re-fetch data
 }
+
+// ── REAL STRIPE DATA ──
+// Calls /api/stats (serverless function on Vercel) which talks to Stripe server-side
+async function loadStripeData() {
+  try {
+    const res = await fetch('/api/stats');
+    if (!res.ok) throw new Error('API not available');
+    const data = await res.json();
+
+    const fmt = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Earnings highlight
+    document.getElementById('totalRevenue').textContent = fmt(data.totalRevenue);
+    document.getElementById('revSub').textContent = data.totalSales + ' completed sales · Live from Stripe';
+    document.getElementById('revSub').style.color = 'var(--green)';
+    document.getElementById('totalSales').textContent = data.totalSales;
+    document.getElementById('totalCustomers').textContent = data.totalCustomers;
+    document.getElementById('stripeLink').innerHTML = '<a href="https://dashboard.stripe.com" target="_blank" style="color:var(--gold);text-decoration:none;font-weight:700">Open ↗</a>';
+
+    // Stats row
+    document.getElementById('statSales').textContent = data.totalSales;
+    document.getElementById('statSalesSub').textContent = 'Completed purchases from Stripe';
+    document.getElementById('statCustomers').textContent = data.totalCustomers;
+    document.getElementById('statCustomersSub').textContent = 'Unique buyers in Stripe';
+    document.getElementById('statRevenue').textContent = fmt(data.totalRevenue);
+    document.getElementById('statMode').textContent = 'Test';
+    document.getElementById('statModeSub').textContent = 'Switch to Live in Stripe to accept real payments';
+
+    // Revenue pie chart — real breakdown by product
+    const products = Object.keys(data.byProduct);
+    const amounts = products.map(p => data.byProduct[p]);
+    if (products.length > 0) {
+      revenueChart.data.labels = products;
+      revenueChart.data.datasets[0].data = amounts;
+      revenueChart.data.datasets[0].backgroundColor = ['#c9a84c','#7c3aed','#4ade80','#f472b6','#60a5fa'].slice(0, products.length);
+      revenueChart.update();
+    } else {
+      revenueChart.data.labels = ['No sales yet'];
+      revenueChart.data.datasets[0].data = [1];
+      revenueChart.data.datasets[0].backgroundColor = ['#e8e5db'];
+      revenueChart.update();
+    }
+
+    // Activity feed — real recent transactions
+    const feed = document.getElementById('activityFeed');
+    if (data.recent.length === 0) {
+      feed.innerHTML = '<div class="activity-item"><div class="activity-dot" style="background:var(--muted)"></div><div><div class="activity-text">No transactions yet — share your download page to get your first sale!</div></div></div>';
+    } else {
+      feed.innerHTML = data.recent.map(t => `
+        <div class="activity-item">
+          <div class="activity-dot" style="background:var(--green)"></div>
+          <div>
+            <div class="activity-text"><strong>${t.customer}</strong> purchased ${t.description}</div>
+            <div class="activity-time">${t.date} · +${('$' + t.amount.toFixed(2))}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+  } catch (err) {
+    // API not deployed yet — show placeholder with link to Stripe
+    document.getElementById('totalRevenue').innerHTML = '<a href="https://dashboard.stripe.com" target="_blank" style="color:var(--gold);text-decoration:none">View in Stripe ↗</a>';
+    document.getElementById('revSub').textContent = 'Deploy to Vercel to see live numbers here';
+    document.getElementById('statMode').textContent = 'Static';
+    document.getElementById('statModeSub').textContent = 'Deploy to Vercel to connect Stripe API';
+    ['statSales','statCustomers','statRevenue'].forEach(id => {
+      document.getElementById(id).innerHTML = '<a href="https://dashboard.stripe.com" target="_blank" style="color:var(--gold);font-size:13px;text-decoration:none">See Stripe ↗</a>';
+    });
+    document.getElementById('activityFeed').innerHTML = '<div class="activity-item"><div class="activity-dot" style="background:var(--gold)"></div><div><div class="activity-text">Connect Stripe API to see real transactions here. <a href="https://dashboard.stripe.com" target="_blank" style="color:var(--gold)">Open Stripe dashboard ↗</a></div></div></div>';
+  }
+}
+
+loadStripeData();
 </script>
 </body>
 </html>
