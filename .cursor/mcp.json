@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "socrates-filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\jmaca\\OneDrive\\Desktop\\Socrates Knowledge Base",
+        "C:\\Users\\jmaca\\OneDrive\\Desktop\\Cursor builds\\Socrates"
+      ]
+    }
+  }
+}

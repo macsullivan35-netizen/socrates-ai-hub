@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Marketplace — Socrates</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.12);
+      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.09);
+      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
+      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:14px;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* NAV */
+    nav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 32px;background:rgba(249,248,245,0.97);
+      border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+      backdrop-filter:blur(20px);
+    }
+    .nav-logo{
+      font-family:'Playfair Display',serif;font-size:20px;font-weight:700;
+      color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:8px;
+    }
+    .nav-logo svg{width:28px;height:28px;}
+    .nav-right{display:flex;gap:12px;align-items:center}
+    .btn{
+      padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;
+      cursor:pointer;border:none;text-decoration:none;display:inline-flex;
+      align-items:center;gap:7px;transition:all .2s;
+    }
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a}
+    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.35)}
+
+    /* LAYOUT */
+    .layout{display:flex;min-height:calc(100vh - 57px)}
+
+    /* SIDEBAR */
+    .sidebar{
+      width:240px;flex-shrink:0;padding:28px 20px;
+      border-right:1px solid var(--border);
+      background:var(--bg2);overflow-y:auto;
+      position:sticky;top:57px;height:calc(100vh - 57px);
+    }
+    .sidebar-section{margin-bottom:28px}
+    .sidebar-section h4{
+      font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+      color:var(--muted);margin-bottom:12px;
+    }
+    .sidebar-link{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:9px 12px;border-radius:10px;cursor:pointer;
+      font-size:14px;font-weight:500;color:var(--muted);
+      transition:all .2s;border:1px solid transparent;user-select:none;
+    }
+    .sidebar-link:hover{background:var(--surface);color:var(--text)}
+    .sidebar-link.active{
+      background:var(--gold-dim);border-color:rgba(201,168,76,.2);
+      color:var(--gold);font-weight:600;
+    }
+    .sidebar-link .icon{margin-right:8px}
+    .sidebar-link .cnt{
+      font-size:11px;background:var(--surface);
+      padding:2px 7px;border-radius:100px;color:var(--muted);
+    }
+    .sidebar-link.active .cnt{background:rgba(201,168,76,.2);color:var(--gold)}
+
+    /* MAIN */
+    .main{flex:1;padding:28px 32px;overflow-y:auto}
+
+    /* SEARCH + FILTERS */
+    .top-bar{display:flex;gap:12px;align-items:center;margin-bottom:28px;flex-wrap:wrap}
+    .search-wrap{flex:1;min-width:200px;position:relative}
+    .search-wrap input{
+      width:100%;background:var(--surface);border:1px solid var(--border);
+      border-radius:12px;padding:12px 16px 12px 44px;
+      font-size:14px;color:var(--text);outline:none;font-family:'Inter',sans-serif;
+      transition:border-color .2s;
+    }
+    .search-wrap input:focus{border-color:var(--gold)}
+    .search-wrap input::placeholder{color:var(--muted)}
+    .search-icon{
+      position:absolute;left:14px;top:50%;transform:translateY(-50%);
+      font-size:16px;pointer-events:none;
+    }
+    .filter-row{display:flex;gap:8px;flex-wrap:wrap}
+    .filter-chip{
+      padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;
+      border:1px solid var(--border);background:var(--surface);color:var(--muted);
+      cursor:pointer;transition:all .2s;white-space:nowrap;
+    }
+    .filter-chip:hover{border-color:var(--purple);color:var(--purple-light)}
+    .filter-chip.active{
+      background:var(--purple-dim);border-color:var(--purple);color:var(--purple-light);
+    }
+
+    /* SORT ROW */
+    .sort-row{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:20px;flex-wrap:wrap;gap:12px;
+    }
+    .sort-row .results{font-size:14px;color:var(--muted)}
+    .sort-row .results strong{color:var(--text)}
+    .sort-select{
+      background:var(--surface);border:1px solid var(--border);
+      color:var(--text);padding:8px 14px;border-radius:10px;
+      font-size:13px;font-family:'Inter',sans-serif;outline:none;cursor:pointer;
+    }
+
+    /* TOOL GRID */
+    .tool-grid{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+      gap:18px;
+    }
+    .tool-card{
+      background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+      padding:24px;transition:all .25s;cursor:pointer;display:flex;flex-direction:column;
+    }
+    .tool-card:hover{
+      border-color:rgba(201,168,76,.35);transform:translateY(-3px);
+      box-shadow:0 12px 40px rgba(0,0,0,.5);
+    }
+    .tc-header{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
+    .tc-icon{
+      width:46px;height:46px;border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;flex-shrink:0;
+    }
+    .tc-meta{flex:1;min-width:0}
+    .tc-meta h3{
+      font-size:15px;font-weight:700;white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;
+    }
+    .tc-type{
+      display:inline-block;font-size:11px;font-weight:600;
+      padding:3px 10px;border-radius:100px;
+    }
+    .type-prompt{background:var(--gold-dim);color:var(--gold)}
+    .type-agent{background:var(--purple-dim);color:var(--purple-light)}
+    .type-model{background:rgba(251,113,133,.12);color:#f87171}
+    .type-chat{background:rgba(74,222,128,.12);color:#4ade80}
+    .type-tool{background:rgba(99,179,237,.12);color:#63b3ed}
+    .tc-desc{
+      font-size:13px;color:var(--muted);line-height:1.6;
+      flex:1;margin-bottom:16px;
+      display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+    }
+    .tc-footer{
+      display:flex;align-items:center;justify-content:space-between;
+      font-size:12px;color:var(--muted);margin-top:auto;
+    }
+    .tc-stats{display:flex;gap:12px}
+    .tc-stats span{display:flex;align-items:center;gap:3px}
+    .tc-price{font-weight:700}
+    .price-free{color:#4ade80}
+    .price-paid{color:var(--gold)}
+    .tc-author{color:var(--gold);font-weight:600;font-size:11px;margin-top:6px}
+
+    /* RUN MODAL */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.75);
+      z-index:1000;display:none;align-items:center;justify-content:center;
+      backdrop-filter:blur(8px);padding:20px;
+    }
+    .modal-overlay.open{display:flex}
+    .modal{
+      background:var(--bg2);border:1px solid var(--border);
+      border-radius:20px;width:100%;max-width:660px;
+      max-height:90vh;overflow-y:auto;padding:36px;position:relative;
+    }
+    .modal-close{
+      position:absolute;top:20px;right:20px;background:var(--surface);
+      border:none;color:var(--muted);width:36px;height:36px;border-radius:50%;
+      cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;
+      transition:all .2s;
+    }
+    .modal-close:hover{color:var(--text);background:var(--bg3)}
+    .modal-header{display:flex;gap:16px;align-items:center;margin-bottom:28px}
+    .modal-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+    .modal-title{font-size:20px;font-weight:800}
+    .modal-subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+
+    .modal label{
+      display:block;font-size:13px;font-weight:600;
+      color:var(--muted);margin-bottom:8px;margin-top:20px;
+    }
+    .modal label:first-of-type{margin-top:0}
+    .modal input,.modal textarea,.modal select{
+      width:100%;background:var(--bg3);border:1px solid var(--border);
+      border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);
+      outline:none;font-family:'Inter',sans-serif;transition:border-color .2s;resize:vertical;
+    }
+    .modal input:focus,.modal textarea:focus{border-color:var(--gold)}
+    .modal textarea{min-height:100px}
+    .modal-actions{display:flex;gap:12px;margin-top:24px}
+    .btn-run{
+      flex:1;padding:14px;border-radius:12px;font-size:15px;font-weight:700;
+      background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;
+      border:none;cursor:pointer;transition:all .2s;
+    }
+    .btn-run:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.35)}
+    .btn-run:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .output-box{
+      background:var(--bg3);border:1px solid var(--border);
+      border-radius:12px;padding:20px;margin-top:20px;
+      font-size:14px;line-height:1.8;white-space:pre-wrap;
+      display:none;max-height:320px;overflow-y:auto;
+    }
+    .output-box.visible{display:block}
+    .output-label{
+      font-size:11px;font-weight:700;letter-spacing:2px;
+      text-transform:uppercase;color:var(--gold);margin-bottom:12px;
+    }
+    .loading-dots{display:inline-flex;gap:4px;align-items:center}
+    .loading-dots span{
+      width:6px;height:6px;border-radius:50%;background:var(--gold);
+      animation:bounce .9s ease infinite;
+    }
+    .loading-dots span:nth-child(2){animation-delay:.15s}
+    .loading-dots span:nth-child(3){animation-delay:.3s}
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    .output-actions{display:flex;gap:10px;margin-top:14px}
+    .btn-sm{
+      padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;
+      border:1px solid var(--border);background:var(--surface);
+      color:var(--muted);cursor:pointer;transition:all .2s;
+    }
+    .btn-sm:hover{border-color:var(--gold);color:var(--gold)}
+
+    /* SKELETON */
+    .skeleton{
+      background:linear-gradient(90deg,var(--surface) 25%,var(--bg3) 50%,var(--surface) 75%);
+      background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;
+    }
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* EMPTY */
+    .empty-state{
+      grid-column:1/-1;text-align:center;padding:80px 20px;
+    }
+    .empty-state .icon{font-size:64px;margin-bottom:16px}
+    .empty-state p{color:var(--muted);font-size:16px}
+
+    #keyInput:focus { border-color: var(--gold) !important; outline: none; }
+
+    @media(max-width:768px){
+      .sidebar{display:none}
+      .main{padding:20px 16px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="15" stroke="#c9a84c" stroke-width="1.5"/>
+      <path d="M10 22 Q16 8 22 22" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <circle cx="16" cy="12" r="3" fill="#c9a84c" opacity=".6"/>
+    </svg>
+    Socrates
+  </a>
+  <div class="nav-right">
+    <button id="keyBtn" onclick="openKeyModal()" class="btn btn-ghost" style="font-size:12px">🔑 Add API Key</button>
+    <a href="dashboard.html" class="btn btn-ghost">My Dashboard</a>
+    <a href="publish.html" class="btn btn-gold">+ Publish Tool</a>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h4>Browse</h4>
+      <div class="sidebar-link active" onclick="filterCat('all')"><span class="icon">🌐</span>All Tools<span class="cnt">48K</span></div>
+      <div class="sidebar-link" onclick="filterCat('trending')"><span class="icon">🔥</span>Trending<span class="cnt">top</span></div>
+      <div class="sidebar-link" onclick="filterCat('new')"><span class="icon">✨</span>New Releases<span class="cnt">new</span></div>
+      <div class="sidebar-link" onclick="filterCat('free')"><span class="icon">🎁</span>Free Only<span class="cnt">free</span></div>
+    </div>
+    <div class="sidebar-section">
+      <h4>Categories</h4>
+      <div class="sidebar-link" onclick="filterCat('writing')"><span class="icon">✍️</span>Writing<span class="cnt">4.8K</span></div>
+      <div class="sidebar-link" onclick="filterCat('coding')"><span class="icon">💻</span>Coding<span class="cnt">6.2K</span></div>
+      <div class="sidebar-link" onclick="filterCat('study')"><span class="icon">📚</span>Study<span class="cnt">3.5K</span></div>
+      <div class="sidebar-link" onclick="filterCat('business')"><span class="icon">💼</span>Business<span class="cnt">5.1K</span></div>
+      <div class="sidebar-link" onclick="filterCat('creative')"><span class="icon">🎨</span>Creative<span class="cnt">2.9K</span></div>
+      <div class="sidebar-link" onclick="filterCat('research')"><span class="icon">🔬</span>Research<span class="cnt">1.8K</span></div>
+      <div class="sidebar-link" onclick="filterCat('health')"><span class="icon">⚕️</span>Health<span class="cnt">1.5K</span></div>
+      <div class="sidebar-link" onclick="filterCat('finance')"><span class="icon">💰</span>Finance<span class="cnt">1.7K</span></div>
+      <div class="sidebar-link" onclick="filterCat('fun')"><span class="icon">🎮</span>Fun & Games<span class="cnt">3.2K</span></div>
+      <div class="sidebar-link" onclick="filterCat('automation')"><span class="icon">🤖</span>Automation<span class="cnt">4K</span></div>
+    </div>
+    <div class="sidebar-section">
+      <h4>AI Type</h4>
+      <div class="sidebar-link" onclick="filterType('prompt')"><span class="icon">⚡</span>Prompt Apps</div>
+      <div class="sidebar-link" onclick="filterType('agent')"><span class="icon">🤖</span>Agents</div>
+      <div class="sidebar-link" onclick="filterType('chat')"><span class="icon">💬</span>Chat Bots</div>
+      <div class="sidebar-link" onclick="filterType('model')"><span class="icon">🧠</span>Models</div>
+      <div class="sidebar-link" onclick="filterType('tool')"><span class="icon">🔧</span>Connectors</div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- SEARCH + FILTERS -->
+    <div class="top-bar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search 48,000+ AI tools..." oninput="doSearch(this.value)"/>
+      </div>
+    </div>
+
+    <div class="filter-row" style="margin-bottom:20px">
+      <div class="filter-chip active" onclick="setFilter(this,'all')">All Types</div>
+      <div class="filter-chip" onclick="setFilter(this,'prompt')">⚡ Prompt App</div>
+      <div class="filter-chip" onclick="setFilter(this,'agent')">🤖 Agent</div>
+      <div class="filter-chip" onclick="setFilter(this,'chat')">💬 Chat Bot</div>
+      <div class="filter-chip" onclick="setFilter(this,'model')">🧠 Model</div>
+      <div class="filter-chip" onclick="setFilter(this,'tool')">🔧 Connector</div>
+    </div>
+
+    <div class="sort-row">
+      <span class="results">Showing <strong id="resultCount">48</strong> results</span>
+      <select class="sort-select" onchange="doSort(this.value)">
+        <option value="trending">Sort: Trending</option>
+        <option value="rating">Sort: Top Rated</option>
+        <option value="newest">Sort: Newest</option>
+        <option value="runs">Sort: Most Runs</option>
+        <option value="free">Sort: Free First</option>
+      </select>
+    </div>
+
+    <div class="tool-grid" id="toolGrid"></div>
+  </main>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="keyOverlay">
+  <div class="modal" style="max-width:500px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:48px;margin-bottom:12px">🔑</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;margin-bottom:8px">Connect Your OpenAI Key</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">Your key is stored only in your browser — never sent to any server except OpenAI directly.</div>
+    </div>
+    <label style="display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px">OpenAI API Key</label>
+    <input type="password" id="keyInput" placeholder="sk-..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);outline:none;font-family:'Inter',sans-serif;margin-bottom:8px"/>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--gold)">platform.openai.com/api-keys</a> — it costs ~$0.01 per run.</div>
+    <button onclick="saveKey()" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;cursor:pointer;">Save Key &amp; Run Tool</button>
+    <button onclick="closeKeyModal()" style="width:100%;padding:10px;border-radius:12px;font-size:13px;font-weight:600;background:transparent;color:var(--muted);border:none;cursor:pointer;margin-top:8px;">Cancel</button>
+  </div>
+</div>
+
+<!-- RUN MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-header">
+      <div class="modal-icon" id="modalIcon"></div>
+      <div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
+    </div>
+
+    <div id="modalFields"></div>
+
+    <div class="modal-actions">
+      <button class="btn-run" id="runBtn" onclick="runTool()">▶ Run Tool</button>
+    </div>
+
+    <div class="output-box" id="outputBox">
+      <div class="output-label">Output</div>
+      <div id="outputContent"></div>
+      <div class="output-actions">
+        <button class="btn-sm" onclick="copyOutput()">📋 Copy</button>
+        <button class="btn-sm" onclick="forkTool()">🔀 Fork &amp; Edit</button>
+        <button class="btn-sm" onclick="thumbUp()">👍 Great output</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOOLS = [
+  {id:1,icon:'✍️',bg:'rgba(201,168,76,.15)',name:'Essay Master Pro',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'writing',desc:'Write college-level essays on any topic instantly. Includes thesis, body, citations, and revision mode. Used by 2M+ students worldwide.',rating:4.9,runs:'2.1M',price:'free',author:'@writergod',trending:true,
+   sys:'You are an expert academic essay writer. Write well-structured, college-level essays with a clear thesis, developed body paragraphs with evidence, and a conclusion. Match the requested tone and length. End with 2-3 suggested citations in MLA format.',
+   fields:[
+     {label:'Essay Topic',id:'topic',type:'text',placeholder:'e.g. The impact of social media on democracy'},
+     {label:'Length',id:'length',type:'select',options:['Short (500 words)','Medium (1000 words)','Long (2000 words)','Very Long (3000+ words)']},
+     {label:'Tone',id:'tone',type:'select',options:['Academic','Persuasive','Analytical','Narrative']},
+   ],
+   sample:'## The Impact of Social Media on Democracy\n\nIn the digital age, social media platforms have fundamentally reshaped the landscape of democratic participation. From Twitter\'s role in the Arab Spring to Facebook\'s influence in the 2016 U.S. Presidential Election, these tools have proven to be double-edged swords in the hands of democratic societies.\n\n### Thesis\nWhile social media democratizes information and amplifies civic voices, its algorithmic design and susceptibility to manipulation pose existential threats to informed democratic discourse.\n\n### Body I: The Democratization of Voice\nHistorically, political discourse was controlled by gatekeepers — newspapers, television networks, and establishment figures...\n\n[Full 1,000-word essay continues with citations from Habermas, Sunstein, and Pariser...]'
+  },
+  {id:2,icon:'🐛',bg:'rgba(124,58,237,.15)',name:'Debug Wizard',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'coding',desc:'Paste your broken code and this agent finds the bug, explains it in plain English, and outputs a corrected version with inline comments.',rating:4.8,runs:'1.8M',price:'$4/mo',author:'@devtools_ai',trending:true,
+   sys:'You are an expert software engineer and debugger. Analyze the provided code carefully, identify all bugs, explain each bug clearly in plain English, then provide the fully corrected code with inline comments explaining what was fixed and why.',
+   fields:[
+     {label:'Paste your broken code',id:'code',type:'textarea',placeholder:'def calculate_avg(nums):\n    return sum(nums) / len(nums)\n\nprint(calculate_avg([]))'},
+     {label:'Programming Language',id:'lang',type:'select',options:['Python','JavaScript','TypeScript','Java','C++','Go','Rust','Other']},
+     {label:'Describe the error (optional)',id:'err',type:'text',placeholder:'e.g. ZeroDivisionError on empty list'},
+   ],
+   sample:'## Bug Found: ZeroDivisionError\n\n**Root Cause:** The function divides by `len(nums)` without checking if the list is empty. When an empty list is passed, `len([])` returns 0, causing a ZeroDivisionError.\n\n**Fixed Code:**\n```python\ndef calculate_avg(nums):\n    if not nums:  # Guard against empty list\n        return 0  # or raise ValueError("Cannot average empty list")\n    return sum(nums) / len(nums)\n\nprint(calculate_avg([]))  # Returns: 0\nprint(calculate_avg([1, 2, 3]))  # Returns: 2.0\n```\n\n**What changed:** Added an early return guard. The function now safely handles empty inputs.'
+  },
+  {id:3,icon:'💰',bg:'rgba(74,222,128,.15)',name:'Stock Analyst Bot',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'finance',desc:'Give it a ticker symbol. It reads SEC filings, recent news, analyst sentiment, and technical indicators to generate a full analyst report.',rating:4.7,runs:'940K',price:'$12/mo',author:'@quant_labs',trending:true,
+   sys:'You are a professional financial analyst. For the given stock ticker, produce a structured analyst report with: Executive Summary, Key Financials (estimated from general knowledge), Bull Case, Bear Case, Risks, and a Rating (Strong Buy / Buy / Hold / Sell). Note that data is based on training knowledge and may not be current.',
+   fields:[
+     {label:'Stock Ticker',id:'ticker',type:'text',placeholder:'e.g. AAPL, TSLA, NVDA'},
+     {label:'Analysis Depth',id:'depth',type:'select',options:['Summary (1 page)','Standard (3 pages)','Deep Dive (10+ pages)']},
+     {label:'Focus Area',id:'focus',type:'select',options:['General','Growth Potential','Risk Assessment','Dividend Analysis','Technical Patterns']},
+   ],
+   sample:'## NVDA (NVIDIA Corporation) — Analyst Report\n**Rating: STRONG BUY** | Target Price: $1,340 | Current: $1,198\n\n### Executive Summary\nNVIDIA continues to dominate the AI accelerator market with ~80% market share in data center GPUs. The company\'s H100 and upcoming B200 Blackwell chips remain the gold standard for AI training workloads...\n\n### Key Financials\n- Revenue (TTM): $79.8B (+122% YoY)\n- Net Income: $29.7B\n- P/E Ratio: 42x (premium justified by growth)\n- Free Cash Flow: $26.9B\n\n### Bull Case: AI infrastructure spending shows no signs of deceleration...\n### Bear Case: Competition from AMD MI300X and custom silicon from hyperscalers...'
+  },
+  {id:4,icon:'🧠',bg:'rgba(251,113,133,.15)',name:'MedAssist GPT',type:'model',typeName:'Fine-Tuned Model',typeClass:'type-model',cat:'health',desc:'A medically fine-tuned model trained on 2M+ clinical case studies, drug interactions, and medical guidelines. For professionals and researchers.',rating:4.9,runs:'520K',price:'$29/mo',author:'@medai_labs',
+   sys:'You are a medical knowledge assistant for healthcare professionals and researchers. Provide structured, clinically-oriented responses including differential diagnoses, key diagnostic steps, and management considerations. Always end with: "⚠️ For educational reference only — verify with a licensed physician before clinical application."',
+   fields:[
+     {label:'Clinical Query',id:'query',type:'textarea',placeholder:'e.g. Patient presents with acute onset chest pain radiating to left arm, diaphoresis, and shortness of breath. Vitals: BP 160/100, HR 92. Differential diagnosis?'},
+     {label:'Query Type',id:'qtype',type:'select',options:['Differential Diagnosis','Drug Interaction Check','Treatment Protocol','Lab Interpretation','Patient Education']},
+   ],
+   sample:'## Clinical Assessment\n**Chief Complaint:** Acute onset chest pain with radiation, diaphoresis, and dyspnea\n\n### Priority Differential (Ranked by urgency)\n1. **STEMI / NSTEMI** (HIGH PRIORITY — rule out immediately)\n   - Classic presentation with radiation to left arm\n   - Obtain 12-lead ECG within 10 minutes\n   - Troponin I and T, BNP, CBC, CMP stat\n\n2. **Aortic Dissection**\n   - Hypertension (160/100) is a risk factor\n   - Consider if pain is tearing in character\n\n3. **Pulmonary Embolism**\n   - Rule out with Wells Score + D-Dimer\n\n### Immediate Actions\n- 12-lead ECG stat\n- Aspirin 325mg PO (if not contraindicated)\n- IV access x2, O2 if SpO2 < 94%\n- Cardiology consult ASAP\n\n⚠️ *For clinical reference only. Always verify with attending physician.*'
+  },
+  {id:5,icon:'🎮',bg:'rgba(251,191,36,.15)',name:'DungeonMaster AI',type:'chat',typeName:'Chat Agent',typeClass:'type-chat',cat:'fun',desc:'A full D&D dungeon master that remembers your campaign, tracks NPCs, world lore, inventory, and responds to every player action with rich narration.',rating:5.0,runs:'3.4M',price:'free',author:'@gameai_studio',trending:true,
+   sys:'You are a master Dungeons & Dragons dungeon master. Create immersive, vivid narrative responses to player actions. Describe the environment with rich sensory detail, voice NPCs distinctly, introduce tension and mystery. Always end your response with a clear prompt for what the player does next. Track character stats mentioned by the player.',
+   fields:[
+     {label:'Character Name & Class',id:'char',type:'text',placeholder:'e.g. Theron, a level 5 Wood Elf Ranger'},
+     {label:'Campaign Setting',id:'setting',type:'select',options:['Classic Fantasy (Forgotten Realms)','Dark Gothic (Ravenloft)','Sci-Fi Hybrid','Homebrew (I\'ll describe it)','Continue previous campaign']},
+     {label:'Your action',id:'action',type:'textarea',placeholder:'What do you do? e.g. I cautiously enter the tavern and scan the room for suspicious figures...'},
+   ],
+   sample:'*The heavy oak door of the Rusty Flagon swings open with a creak, revealing a dimly lit tavern thick with pipe smoke and the smell of cheap ale.*\n\nYou are Theron, a Wood Elf Ranger of impressive renown. As you enter, a dozen pairs of eyes flick toward you — then quickly away. Travelers, merchants, a couple of dwarven miners nursing their mugs.\n\nIn the far corner, a hooded figure sits alone at a table, nursing a dark drink. Their hood is pulled low, but you notice — with your 15 Perception — that their hands are too smooth to be a laborer\'s. A dagger hilt gleams at their belt: not the common iron of a farmer\'s tool, but polished silver with an insignia you half-recognize...\n\n*The Thieves\' Guild of Calimport.*\n\n**What do you do?**\n[ You have: Longbow, 20 arrows, Hunter\'s Mark (1/day remaining), 34 HP ]'
+  },
+  {id:6,icon:'📧',bg:'rgba(99,179,237,.15)',name:'Cold Email Crusher',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'business',desc:'Write high-converting cold outreach emails for any industry, role, or product. Just add the company name, contact name, and your offer.',rating:4.6,runs:'1.2M',price:'free',author:'@sales_gpt',
+   sys:'You are an expert sales copywriter specializing in cold email outreach. Write a concise, personalized cold email with a compelling subject line, a brief value-focused opening, 2-3 bullet points on benefits, and a low-friction call to action. Keep it under 150 words in the body. Output the subject line separately at the top.',
+   fields:[
+     {label:'Your Name & Company',id:'sender',type:'text',placeholder:'e.g. Alex Chen, Acme SaaS'},
+     {label:"Prospect's Name & Company",id:'prospect',type:'text',placeholder:'e.g. Sarah Johnson, TechCorp Inc'},
+     {label:'Your Offer / Value Prop',id:'offer',type:'text',placeholder:'e.g. Our tool reduces customer churn by 30%'},
+     {label:'Email Tone',id:'tone',type:'select',options:['Professional','Casual & Direct','Curiosity-Driven','Value-Forward']},
+   ],
+   sample:'Subject: Cut TechCorp\'s churn by 30% — 8 minutes of your time?\n\nHi Sarah,\n\nI noticed TechCorp recently expanded your SaaS offering into the enterprise segment — congrats on the growth.\n\nI\'m Alex from Acme SaaS. We help companies like yours reduce customer churn by an average of 30% within 90 days, using behavioral AI that predicts at-risk accounts before they cancel.\n\nThree quick things that might be relevant:\n→ We work with 40+ SaaS companies in your revenue range\n→ Average ROI is 8x in the first 6 months\n→ Setup takes under a day, zero engineering required\n\nWould you be open to an 8-minute call this week to see if there\'s a fit? I\'ll show you exactly how we\'d apply this to TechCorp\'s specific use case.\n\nBest,\nAlex Chen\nAcme SaaS | alex@acmesaas.com'
+  },
+  {id:7,icon:'📝',bg:'rgba(201,168,76,.15)',name:'Resume Optimizer AI',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'business',desc:'Paste your resume and a job description. This tool rewrites your resume to be ATS-optimized, keyword-matched, and tailored for the specific role.',rating:4.8,runs:'1.5M',price:'free',author:'@careerboost',
+   sys:'You are an expert resume writer and ATS optimization specialist. Rewrite the provided resume to be tailored to the job description with strong keyword matching, achievement-focused bullet points with metrics where possible, and a compelling summary. End with an ATS score estimate (out of 100) and 2 tips to improve further.',
+   fields:[
+     {label:'Your Current Resume',id:'resume',type:'textarea',placeholder:'Paste your resume text here...'},
+     {label:'Job Description',id:'jd',type:'textarea',placeholder:'Paste the job description here...'},
+   ],
+   sample:'## Optimized Resume — Software Engineer @ Google\n\n**JANE DOE**\njane@email.com | LinkedIn | GitHub | (555) 000-0000\n\n**SUMMARY**\nFull-stack software engineer with 5 years building scalable, cloud-native applications. Proven track record reducing system latency by 40% and shipping features that serve 10M+ users. Skilled in distributed systems, Python, Go, and Kubernetes.\n\n**EXPERIENCE**\n\n**Senior Software Engineer — Startup Corp** (2022–Present)\n• Led redesign of data pipeline (Python, Apache Kafka) reducing processing latency by 40%\n• Built microservices architecture serving 10M+ DAU with 99.99% uptime\n• Mentored team of 3 junior engineers, accelerating sprint velocity by 25%\n\n*✅ ATS Score: 94/100 | Keyword match: 87% | Estimated callback rate: High*'
+  },
+  {id:8,icon:'🌍',bg:'rgba(99,179,237,.15)',name:'Universal Translator Pro',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'writing',desc:'Translate any text into 95+ languages with cultural context, idiom adaptation, and tone preservation. Far beyond word-for-word translation.',rating:4.7,runs:'2.8M',price:'free',author:'@polyglot_ai',trending:true,
+   sys:'You are an expert linguist and cultural translator. Translate the given text into the target language, preserving the original tone and adapting idioms so they feel natural to native speakers — not word-for-word. After the translation, add a brief "Translator\'s Note" explaining any cultural adaptations or idiom substitutions you made.',
+   fields:[
+     {label:'Text to Translate',id:'text',type:'textarea',placeholder:'Enter text in any language...'},
+     {label:'Target Language',id:'lang',type:'select',options:['Spanish','French','German','Japanese','Chinese (Mandarin)','Arabic','Portuguese','Korean','Italian','Russian','Hindi','Turkish']},
+     {label:'Tone Preservation',id:'tone',type:'select',options:['Preserve original tone','Formal','Casual','Professional']},
+   ],
+   sample:'**Original (English):** "It\'s raining cats and dogs outside — I wouldn\'t go out there without an umbrella if I were you!"\n\n**Spanish (Latin American):** "Está lloviendo a cántaros afuera — ¡Yo que tú no saldría sin paraguas ni loco!"\n\n*Translation note: "lloviendo a cántaros" (raining in pitchers) is the Spanish equivalent of "raining cats and dogs." "ni loco" adds natural emphasis typical in Latin American casual speech. Direct translation of the English idiom would sound unnatural.*\n\n**Confidence:** 98% | **Dialect:** Mexican Spanish | **Register:** Casual'
+  },
+  {id:9,icon:'📊',bg:'rgba(74,222,128,.15)',name:'Data Analyst Copilot',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'research',desc:'Upload a CSV or paste raw data. This agent cleans it, finds patterns, generates visualizations descriptions, and gives you a full analysis report.',rating:4.8,runs:'780K',price:'$8/mo',author:'@datalab_ai',
+   sys:'You are an expert data analyst. Analyze the provided data to identify key patterns, trends, correlations, and anomalies. Structure your response with: (1) Key Findings as numbered insights, (2) What the data suggests, (3) Specific actionable recommendations. Be precise and data-driven.',
+   fields:[
+     {label:'Paste your data (CSV or describe it)',id:'data',type:'textarea',placeholder:'Month, Revenue, Users, Churn\nJan, 42000, 1200, 4.2%\nFeb, 48000, 1380, 3.8%\n...'},
+     {label:'Analysis Goal',id:'goal',type:'text',placeholder:'e.g. Find what is driving the increase in churn'},
+   ],
+   sample:'## Data Analysis Report\n**Dataset:** 12-month SaaS metrics (Revenue, Users, Churn)\n\n### Key Findings\n1. **Churn Correlation:** Strong negative correlation (-0.82) between monthly active usage and churn rate. Users who log in < 3x/month churn at 8.4% vs 1.2% for daily users.\n\n2. **Revenue Trend:** CAGR of 34%. Revenue growth accelerated in Q3 (+22% QoQ) coinciding with enterprise plan launch.\n\n3. **Anomaly Detected:** August shows a churn spike (6.7%) despite revenue growth. Cross-referencing: this coincides with a 4-hour outage on Aug 14.\n\n### Recommendations\n→ Launch an engagement nudge campaign for users < 3 logins/month\n→ Investigate infrastructure reliability — outage → churn causal link is strong\n→ The enterprise segment (launched July) shows 0.4% churn — double down on sales there\n\n*Chart: [Revenue vs Churn scatter plot — negative correlation visible]*'
+  },
+  {id:10,icon:'🎵',bg:'rgba(251,113,133,.15)',name:'Lyric & Song Writer',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'creative',desc:'Generate original song lyrics in any genre, style, or mood. From country ballads to rap verses to pop hooks — full songs with verses, chorus, bridge.',rating:4.6,runs:'1.1M',price:'free',author:'@music_gpt',
+   sys:'You are a professional songwriter and lyricist. Write original, emotionally resonant song lyrics in the requested genre and mood. Structure clearly with labeled [Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], [Outro] sections. The lyrics should feel authentic to the genre — use genre-appropriate language, rhythm, and imagery.',
+   fields:[
+     {label:'Song Topic / Feeling',id:'topic',type:'text',placeholder:'e.g. Leaving your hometown to chase your dreams'},
+     {label:'Genre',id:'genre',type:'select',options:['Pop','Country','Hip-Hop / Rap','R&B / Soul','Rock','Folk/Indie','EDM','Jazz']},
+     {label:'Mood',id:'mood',type:'select',options:['Uplifting','Melancholic','Hype / Energetic','Romantic','Reflective','Angry']},
+   ],
+   sample:'**Title: "Open Roads"**\n*Genre: Country | Mood: Bittersweet*\n\n**[Verse 1]**\nI packed my bag on a Sunday morning\nKissed my mama\'s cheek without a warning\nThe old screen door still singing in the breeze\nLeft my footprints on the Georgia leaves\n\n**[Pre-Chorus]**\nThey said this town is everything I need\nBut something in my bones says I\'ve gotta leave\n\n**[Chorus]**\nSo I\'m driving into open roads\nWhere the sky don\'t have a ceiling\nLeaving everything I\'ve known\nFor a life that\'s worth believing\nI might cry when the city lights appear\nBut I\'ll smile when I remember — I chose to be here\n\n**[Verse 2]**\nFound a coffee shop in Austin, Texas\nWhere the music never stops and nobody second-guesses...'
+  },
+  {id:11,icon:'🤖',bg:'rgba(124,58,237,.15)',name:'Workflow Automator',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'automation',desc:'Describe a repetitive task in plain English. This agent builds a step-by-step automation workflow you can deploy immediately with Zapier or Make.',rating:4.5,runs:'430K',price:'$15/mo',author:'@automate_labs',
+   sys:'You are an automation expert specializing in Zapier, Make (formerly Integromat), and no-code workflow tools. For the described task, create a detailed step-by-step automation workflow with: Trigger, each Action step with specific field mappings, and estimated setup time. Format it clearly so a non-technical person can follow it.',
+   fields:[
+     {label:'Describe the task to automate',id:'task',type:'textarea',placeholder:'e.g. Every time a new lead fills out my Typeform, add them to HubSpot CRM, send them a welcome email, and notify my Slack channel'},
+     {label:'Apps you use',id:'apps',type:'text',placeholder:'e.g. HubSpot, Slack, Gmail, Typeform, Notion'},
+   ],
+   sample:'## Automation Workflow: Lead Intake Pipeline\n**Trigger:** New Typeform submission → **Result:** CRM entry + email + Slack alert\n\n### Step-by-Step Workflow (Zapier)\n**Step 1 — TRIGGER:** Typeform: New Entry\n- Watch form: "Lead Contact Form"\n\n**Step 2 — ACTION:** HubSpot: Create/Update Contact\n- First Name: {{typeform_first_name}}\n- Email: {{typeform_email}}\n- Lead Source: "Website Form"\n- Pipeline Stage: "New Lead"\n\n**Step 3 — ACTION:** Gmail: Send Email\n- To: {{typeform_email}}\n- Template: "Welcome — We\'ll be in touch within 24 hours"\n\n**Step 4 — ACTION:** Slack: Send Message\n- Channel: #new-leads\n- Message: "🔔 New lead: {{typeform_name}} ({{typeform_email}}) — added to HubSpot"\n\n*Estimated setup time: 12 minutes | Zap cost: ~0.02 tasks/run*'
+  },
+  {id:12,icon:'🧑‍🏫',bg:'rgba(201,168,76,.15)',name:'Socratic Tutor',type:'chat',typeName:'Chat Agent',typeClass:'type-chat',cat:'study',desc:'A patient AI tutor that uses the Socratic method — asking questions, not giving answers — to help you truly understand any subject.',rating:4.9,runs:'890K',price:'free',author:'@edu_ai',
+   sys:'You are a patient, warm Socratic tutor. Never give direct answers — instead ask probing questions that guide the student to discover the understanding themselves. Acknowledge what they already know, identify the gap, and ask one clear question at a time. Be encouraging. Think of yourself as a thoughtful mentor, not a textbook.',
+   fields:[
+     {label:'Subject & Topic',id:'subject',type:'text',placeholder:'e.g. Calculus — derivatives and the chain rule'},
+     {label:'Your current understanding',id:'level',type:'select',options:['Complete beginner','Some basics','Intermediate','Advanced — just stuck on specifics']},
+     {label:'What specifically confuses you?',id:'question',type:'textarea',placeholder:'e.g. I understand the derivative formula but I get lost when functions are nested inside each other'},
+   ],
+   sample:'Interesting — let\'s explore this together.\n\nBefore I explain anything, I want to understand what you already know. Can you tell me: what does a derivative *mean* to you? Not the formula — the concept. What is it actually measuring?\n\n(Take your time. There\'s no wrong answer here.)\n\n...\n\nGreat! Now here\'s a question: if f(x) = x², you know the derivative is 2x. But what if I *wrapped* another function around it? Like... what if x itself was changing according to another rule?\n\nImagine you\'re driving. Your speed changes over time. But what if *time itself* was stretched — like a slow-motion video? How would that affect your apparent speed?\n\n*That\'s* what the chain rule captures. Does that image make anything click?'
+  },
+];
+
+let currentTools = [...TOOLS];
+let activeFilter = 'all';
+let activeType = 'all';
+let searchQuery = '';
+let currentTool = null;
+
+function renderTools(tools) {
+  const grid = document.getElementById('toolGrid');
+  document.getElementById('resultCount').textContent = tools.length === TOOLS.length ? '48,000+' : tools.length;
+  if (tools.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No tools match your search. Try a different keyword or category.</p></div>';
+    return;
+  }
+  grid.innerHTML = tools.map(t => `
+    <div class="tool-card" onclick="openTool(${t.id})">
+      <div class="tc-header">
+        <div class="tc-icon" style="background:${t.bg}">${t.icon}</div>
+        <div class="tc-meta">
+          <h3>${t.name}</h3>
+          <span class="tc-type ${t.typeClass}">${t.typeName}</span>
+        </div>
+      </div>
+      <div class="tc-desc">${t.desc}</div>
+      <div class="tc-footer">
+        <div>
+          <div class="tc-stats">
+            <span>⭐ ${t.rating}</span>
+            <span>🔁 ${t.runs} runs</span>
+          </div>
+          <div class="tc-author">${t.author}</div>
+        </div>
+        <div class="tc-price ${t.price === 'free' ? 'price-free' : 'price-paid'}">${t.price === 'free' ? 'Free' : t.price}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function applyFilters() {
+  let tools = [...TOOLS];
+  if (activeFilter === 'trending') tools = tools.filter(t => t.trending);
+  else if (activeFilter === 'free') tools = tools.filter(t => t.price === 'free');
+  else if (activeFilter !== 'all' && activeFilter !== 'new') tools = tools.filter(t => t.cat === activeFilter);
+  if (activeType !== 'all') tools = tools.filter(t => t.type === activeType);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    tools = tools.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      t.desc.toLowerCase().includes(q) ||
+      t.cat.toLowerCase().includes(q) ||
+      t.typeName.toLowerCase().includes(q)
+    );
+  }
+  currentTools = tools;
+  renderTools(tools);
+}
+
+function filterCat(cat) {
+  activeFilter = cat;
+  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  applyFilters();
+}
+
+function filterType(type) {
+  activeType = type;
+  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  applyFilters();
+}
+
+function setFilter(el, type) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  activeType = type;
+  applyFilters();
+}
+
+function doSearch(q) {
+  searchQuery = q;
+  applyFilters();
+}
+
+function doSort(val) {
+  let tools = [...currentTools];
+  if (val === 'rating') tools.sort((a,b) => b.rating - a.rating);
+  else if (val === 'runs') tools.sort((a,b) => parseFloat(b.runs) - parseFloat(a.runs));
+  else if (val === 'free') tools.sort((a,b) => (a.price === 'free' ? -1 : 1));
+  renderTools(tools);
+}
+
+function openTool(id) {
+  currentTool = TOOLS.find(t => t.id === id);
+  if (!currentTool) return;
+  document.getElementById('modalIcon').textContent = currentTool.icon;
+  document.getElementById('modalIcon').style.background = currentTool.bg;
+  document.getElementById('modalTitle').textContent = currentTool.name;
+  document.getElementById('modalSubtitle').textContent = `${currentTool.typeName} by ${currentTool.author} · ${currentTool.price === 'free' ? '🟢 Free' : '🟡 ' + currentTool.price}`;
+
+  const fieldsEl = document.getElementById('modalFields');
+  fieldsEl.innerHTML = currentTool.fields.map(f => {
+    if (f.type === 'select') {
+      return `<label>${f.label}</label>
+        <select id="${f.id}">
+          ${f.options.map(o => `<option>${o}</option>`).join('')}
+        </select>`;
+    } else if (f.type === 'textarea') {
+      return `<label>${f.label}</label>
+        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
+    } else {
+      return `<label>${f.label}</label>
+        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
+    }
+  }).join('');
+
+  document.getElementById('outputBox').classList.remove('visible');
+  document.getElementById('outputContent').textContent = '';
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('runBtn').textContent = '▶ Run Tool';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+// ── API KEY MANAGEMENT ──
+let pendingRun = false;
+
+function getKey() { return localStorage.getItem('socrates_api_key'); }
+
+function openKeyModal() {
+  const existing = getKey();
+  if (existing) document.getElementById('keyInput').value = existing;
+  document.getElementById('keyOverlay').classList.add('open');
+}
+
+function closeKeyModal() {
+  document.getElementById('keyOverlay').classList.remove('open');
+  pendingRun = false;
+}
+
+function saveKey() {
+  const key = document.getElementById('keyInput').value.trim();
+  if (!key.startsWith('sk-')) {
+    document.getElementById('keyInput').style.borderColor = '#f87171';
+    document.getElementById('keyInput').placeholder = 'Must start with sk-...';
+    return;
+  }
+  localStorage.setItem('socrates_api_key', key);
+  updateKeyBtn();
+  closeKeyModal();
+  if (pendingRun) { pendingRun = false; runTool(); }
+}
+
+function updateKeyBtn() {
+  const btn = document.getElementById('keyBtn');
+  if (getKey()) {
+    btn.textContent = '✅ AI Connected';
+    btn.style.borderColor = 'rgba(74,222,128,.4)';
+    btn.style.color = '#4ade80';
+  } else {
+    btn.textContent = '🔑 Add API Key';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  }
+}
+
+// ── REAL OPENAI STREAMING RUN ──
+async function runTool() {
+  const apiKey = getKey();
+  if (!apiKey) {
+    pendingRun = true;
+    openKeyModal();
+    return;
+  }
+
+  const btn = document.getElementById('runBtn');
+  const output = document.getElementById('outputBox');
+  const content = document.getElementById('outputContent');
+
+  // Build user message from filled fields
+  const userParts = currentTool.fields.map(f => {
+    const el = document.getElementById(f.id);
+    const val = el ? el.value.trim() : '';
+    return val ? `${f.label}: ${val}` : '';
+  }).filter(Boolean);
+
+  if (userParts.length === 0 || !currentTool.fields.every(f => {
+    const el = document.getElementById(f.id);
+    return el && el.value.trim();
+  })) {
+    // still run even if some fields empty — just use what we have
+  }
+
+  const userMessage = userParts.join('\n');
+
+  btn.disabled = true;
+  btn.innerHTML = 'Running <span class="loading-dots"><span></span><span></span><span></span></span>';
+  output.classList.add('visible');
+  content.textContent = '';
+  content.innerHTML = '<span style="color:var(--muted);font-size:13px">Connecting to AI...</span>';
+
+  try {
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        stream: true,
+        max_tokens: 1200,
+        messages: [
+          { role: 'system', content: currentTool.sys || 'You are a helpful AI assistant.' },
+          { role: 'user', content: userMessage || 'Please demonstrate what this tool can do with a sample output.' }
+        ]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      content.textContent = `Error: ${err.error?.message || 'API request failed. Check your API key.'}`;
+      btn.disabled = false;
+      btn.textContent = '▶ Try Again';
+      return;
+    }
+
+    content.textContent = '';
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') break;
+        try {
+          const json = JSON.parse(data);
+          const delta = json.choices?.[0]?.delta?.content;
+          if (delta) {
+            content.textContent += delta;
+            output.scrollTop = output.scrollHeight;
+          }
+        } catch {}
+      }
+    }
+
+    btn.disabled = false;
+    btn.textContent = '▶ Run Again';
+
+  } catch (e) {
+    content.textContent = `Network error: ${e.message}. Make sure you have an internet connection.`;
+    btn.disabled = false;
+    btn.textContent = '▶ Try Again';
+  }
+}
+
+function copyOutput() {
+  const text = document.getElementById('outputContent').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy', 2000);
+  });
+}
+
+function forkTool() {
+  alert('🔀 This would open the tool editor with this tool pre-loaded, so you can remix it and publish your own version. (Connected to publish.html in the full build)');
+}
+
+function thumbUp() {
+  const btn = event.target;
+  btn.textContent = '✅ Thanks!';
+  btn.style.color = '#4ade80';
+  btn.style.borderColor = '#4ade80';
+}
+
+renderTools(TOOLS);
+updateKeyBtn();
+</script>
+</body>
+</html>

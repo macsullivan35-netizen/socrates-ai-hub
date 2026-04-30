@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="tracker.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">◈</span>
+      <span class="logo-text">Portfolio</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">▣</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-page="businesses">
+        <span class="nav-icon">🏢</span>
+        <span class="nav-label">Businesses</span>
+      </a>
+      <a href="#" class="nav-item" data-page="assets">
+        <span class="nav-icon">💎</span>
+        <span class="nav-label">Assets</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-label">Portfolio Tracker v1.0</div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="main-content">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" id="topbar-add-btn">+ Add New</button>
+      </div>
+    </header>
+
+    <!-- Pages -->
+    <!-- DASHBOARD PAGE -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h2>Analytics Overview</h2>
+        <p class="page-subtitle">Your complete portfolio performance at a glance</p>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-total">
+          <div class="kpi-icon">$</div>
+          <div class="kpi-info">
+            <div class="kpi-label">Total Portfolio (Annual)</div>
+            <div class="kpi-value" id="kpi-total">$0</div>
+            <div class="kpi-sub" id="kpi-total-monthly">$0 / month</div>
+          </div>
+        </div>
+        <div class="kpi-card kpi-business">
+          <div class="kpi-icon">🏢</div>
+          <div class="kpi-info">
+            <div class="kpi-label">Business Revenue (Annual)</div>
+            <div class="kpi-value" id="kpi-business">$0</div>
+            <div class="kpi-sub" id="kpi-business-count">0 businesses</div>
+          </div>
+        </div>
+        <div class="kpi-card kpi-asset">
+          <div class="kpi-icon">💎</div>
+          <div class="kpi-info">
+            <div class="kpi-label">Asset Income (Annual)</div>
+            <div class="kpi-value" id="kpi-asset">$0</div>
+            <div class="kpi-sub" id="kpi-asset-count">0 assets</div>
+          </div>
+        </div>
+        <div class="kpi-card kpi-monthly">
+          <div class="kpi-icon">📅</div>
+          <div class="kpi-info">
+            <div class="kpi-label">Combined Monthly</div>
+            <div class="kpi-value" id="kpi-monthly">$0</div>
+            <div class="kpi-sub" id="kpi-daily">$0 / day (avg)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="charts-row">
+        <div class="chart-card chart-wide">
+          <div class="chart-header">
+            <span class="chart-title">Revenue Breakdown</span>
+            <div class="chart-legend" id="bar-legend"></div>
+          </div>
+          <div class="chart-body">
+            <canvas id="barChart"></canvas>
+            <div class="chart-empty" id="bar-empty">
+              <span>No data yet — add a business or asset to see your breakdown</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card chart-narrow">
+          <div class="chart-header">
+            <span class="chart-title">Portfolio Split</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="donutChart"></canvas>
+            <div class="chart-empty" id="donut-empty">
+              <span>Add items to see split</span>
+            </div>
+          </div>
+          <div class="donut-labels" id="donut-labels"></div>
+        </div>
+      </div>
+
+      <!-- Top Performers Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Top Performers</span>
+        </div>
+        <div id="top-performers-body">
+          <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <div class="empty-text">No businesses or assets added yet.</div>
+            <div class="empty-sub">Click <strong>+ Add New</strong> to get started.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BUSINESSES PAGE -->
+    <section class="page" id="page-businesses">
+      <div class="page-header">
+        <h2>Businesses</h2>
+        <p class="page-subtitle">Manage your business portfolio and track revenue</p>
+      </div>
+      <div class="summary-strip" id="biz-summary">
+        <div class="strip-item"><span class="strip-label">Total Businesses</span><span class="strip-val" id="biz-count">0</span></div>
+        <div class="strip-item"><span class="strip-label">Annual Revenue</span><span class="strip-val" id="biz-annual">$0</span></div>
+        <div class="strip-item"><span class="strip-label">Monthly Revenue</span><span class="strip-val" id="biz-monthly">$0</span></div>
+      </div>
+      <div class="items-grid" id="businesses-grid">
+        <div class="empty-state">
+          <div class="empty-icon">🏢</div>
+          <div class="empty-text">No businesses added yet.</div>
+          <div class="empty-sub">Click <strong>+ Add New</strong> to add your first business.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ASSETS PAGE -->
+    <section class="page" id="page-assets">
+      <div class="page-header">
+        <h2>Assets</h2>
+        <p class="page-subtitle">Track your assets and the income they generate</p>
+      </div>
+      <div class="summary-strip" id="asset-summary">
+        <div class="strip-item"><span class="strip-label">Total Assets</span><span class="strip-val" id="asset-count">0</span></div>
+        <div class="strip-item"><span class="strip-label">Total Asset Value</span><span class="strip-val" id="asset-total-value">$0</span></div>
+        <div class="strip-item"><span class="strip-label">Annual Income</span><span class="strip-val" id="asset-annual">$0</span></div>
+        <div class="strip-item"><span class="strip-label">Monthly Income</span><span class="strip-val" id="asset-monthly">$0</span></div>
+      </div>
+      <div class="items-grid" id="assets-grid">
+        <div class="empty-state">
+          <div class="empty-icon">💎</div>
+          <div class="empty-text">No assets added yet.</div>
+          <div class="empty-sub">Click <strong>+ Add New</strong> to add your first asset.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL: Add/Edit Business -->
+  <div class="modal-overlay" id="modal-business">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-biz-title">Add Business</span>
+        <button class="modal-close" data-modal="modal-business">✕</button>
+      </div>
+      <form class="modal-form" id="form-business">
+        <input type="hidden" id="biz-id" />
+        <div class="form-row">
+          <div class="form-group">
+            <label>Business Name *</label>
+            <input type="text" id="biz-name" placeholder="e.g. Acme Corp" required />
+          </div>
+          <div class="form-group">
+            <label>Industry</label>
+            <select id="biz-industry">
+              <option value="Technology">Technology</option>
+              <option value="Real Estate">Real Estate</option>
+              <option value="Retail">Retail</option>
+              <option value="Food & Beverage">Food & Beverage</option>
+              <option value="Healthcare">Healthcare</option>
+              <option value="Manufacturing">Manufacturing</option>
+              <option value="Finance">Finance</option>
+              <option value="Construction">Construction</option>
+              <option value="Transportation">Transportation</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Monthly Revenue ($)</label>
+            <input type="number" id="biz-monthly-rev" placeholder="0" min="0" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label>Annual Revenue ($)</label>
+            <input type="number" id="biz-annual-rev" placeholder="Auto-calculated" min="0" step="0.01" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ownership % </label>
+            <input type="number" id="biz-ownership" placeholder="100" min="0" max="100" step="0.1" value="100" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="biz-status">
+              <option value="Active">Active</option>
+              <option value="Growing">Growing</option>
+              <option value="Stable">Stable</option>
+              <option value="Declining">Declining</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="biz-notes" placeholder="Optional notes about this business..." rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="modal-business">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Business</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Add/Edit Asset -->
+  <div class="modal-overlay" id="modal-asset">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-asset-title">Add Asset</span>
+        <button class="modal-close" data-modal="modal-asset">✕</button>
+      </div>
+      <form class="modal-form" id="form-asset">
+        <input type="hidden" id="asset-id" />
+        <div class="form-row">
+          <div class="form-group">
+            <label>Asset Name *</label>
+            <input type="text" id="asset-name" placeholder="e.g. Downtown Rental Property" required />
+          </div>
+          <div class="form-group">
+            <label>Asset Type</label>
+            <select id="asset-type">
+              <option value="Real Estate">Real Estate</option>
+              <option value="Stocks / ETFs">Stocks / ETFs</option>
+              <option value="Crypto">Crypto</option>
+              <option value="Bonds">Bonds</option>
+              <option value="Equipment">Equipment</option>
+              <option value="Intellectual Property">Intellectual Property</option>
+              <option value="Vehicle">Vehicle</option>
+              <option value="Savings / CD">Savings / CD</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Asset Value ($)</label>
+            <input type="number" id="asset-value" placeholder="0" min="0" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label>Monthly Income ($)</label>
+            <input type="number" id="asset-monthly-income" placeholder="0" min="0" step="0.01" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Annual Income ($)</label>
+            <input type="number" id="asset-annual-income" placeholder="Auto-calculated" min="0" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="asset-status">
+              <option value="Active">Active</option>
+              <option value="Appreciating">Appreciating</option>
+              <option value="Stable">Stable</option>
+              <option value="Depreciating">Depreciating</option>
+              <option value="Sold">Sold</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="asset-notes" placeholder="Optional notes about this asset..." rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="modal-asset">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Asset</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Confirm Delete -->
+  <div class="modal-overlay" id="modal-delete">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <span class="modal-title">Confirm Delete</span>
+        <button class="modal-close" data-modal="modal-delete">✕</button>
+      </div>
+      <div class="delete-body">
+        <div class="delete-icon">🗑️</div>
+        <p id="delete-message">Are you sure you want to delete this item? This cannot be undone.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-modal="modal-delete">Cancel</button>
+        <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="tracker.js"></script>
+</body>
+</html>

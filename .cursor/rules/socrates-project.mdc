@@ -1,0 +1,46 @@
+---
+description: Full context for the Socrates AI Hub project
+alwaysApply: true
+---
+
+# Socrates — The Hub of AI
+
+This is a static HTML/CSS/JS website for **Socrates**, an AI marketplace platform concept. No build tools or frameworks — pure HTML files opened directly in the browser.
+
+## Project Location
+`c:\Users\jmaca\OneDrive\Desktop\Cursor builds\Socrates\`
+
+## Site Files (all in `socrates/` subfolder)
+- `socrates/index.html` — Homepage (hero, categories, trending tools, how it works)
+- `socrates/marketplace.html` — Browse and run AI tools
+- `socrates/dashboard.html` — Builder analytics dashboard
+- `socrates/publish.html` — Publish your own AI tools
+- `socrates/pricing.html` — Pricing plans
+- `socrates/about.html` — Mission, team, values, press, careers
+- `socrates/spec.html` — API docs and SDK
+
+## Root Files
+- `index.html` — Stewart Plumbing Services (DIFFERENT project, ignore unless asked)
+- `tracker.html / tracker.css / tracker.js` — Separate tracker tool
+
+## Design System
+- **Dark bg:** `#07070e` / `#0e0e1c` / `#14142a`
+- **Gold accent:** `#c9a84c` (primary brand color)
+- **Purple accent:** `#7c3aed`
+- **Fonts:** Inter (body) + Playfair Display (headings)
+- Animated starfield canvas on homepage
+- All pages share the same nav and footer pattern
+
+## Key Platform Concepts
+- **4 tool types:** Prompt Apps, AI Agents, Connectors, Fine-Tuned Models
+- **Revenue share:** Builders keep 80%, Socrates keeps 20%
+- **Trending algorithm:** Ranks by retention + satisfaction, not clicks
+- **Fork attribution:** Builders earn upstream when tools are remixed
+- **Stats:** 48K tools, 2.1M monthly users, 92K builders, $4.2M paid out
+
+## Knowledge Base
+Full interconnected notes at: `C:\Users\jmaca\OneDrive\Desktop\Socrates Knowledge Base\`
+Read these markdown files for deep context on any topic before making changes.
+
+## How to Open the Site
+Run: `Start-Process "c:\Users\jmaca\OneDrive\Desktop\Cursor builds\Socrates\socrates\index.html"`

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Download Ready — Socrates AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.12);
+      --purple:#6d28d9;--purple-dim:rgba(109,40,217,.09);
+      --green:#16a34a;--green-dim:rgba(22,163,74,.1);
+      --bg:#f9f8f5;--bg2:#f2f0ea;--surface:#ffffff;
+      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:56px 48px;max-width:540px;width:100%;text-align:center;box-shadow:0 8px 48px rgba(0,0,0,.06)}
+    .success-ring{width:80px;height:80px;border-radius:50%;background:var(--green-dim);border:3px solid var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;font-size:38px}
+    h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:12px}
+    h1 span{color:var(--gold)}
+    .sub{color:var(--muted);font-size:15px;line-height:1.7;margin-bottom:36px}
+    .download-box{border:2px dashed rgba(154,110,12,.3);border-radius:16px;padding:28px;margin-bottom:28px;background:var(--gold-dim)}
+    .download-box .bot-name{font-size:22px;font-weight:800;margin-bottom:4px}
+    .download-box .version{font-size:13px;color:var(--muted);margin-bottom:20px}
+    .dl-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn{padding:13px 28px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff}
+    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(154,110,12,.4)}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+    .note{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:28px}
+    .note a{color:var(--gold);text-decoration:none}
+    .note a:hover{text-decoration:underline}
+    .back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;text-decoration:none;transition:color .2s}
+    .back:hover{color:var(--gold)}
+    .order-id{font-size:11px;color:var(--muted);margin-top:16px;opacity:.6}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="success-ring">✓</div>
+    <h1>Payment <span>Confirmed!</span></h1>
+    <p class="sub">Your download is ready. Click the button for your platform below — the app will start downloading immediately.</p>
+
+    <div class="download-box">
+      <div class="bot-name" id="dlBotName">Essay Master Pro</div>
+      <div class="version" id="dlVersion">v1.2.0 · Released Apr 2025</div>
+      <div class="dl-btns">
+        <a id="dlMac" href="#" class="btn btn-gold" download>
+          🍎 Download for Mac (.dmg)
+        </a>
+        <a id="dlWin" href="#" class="btn btn-ghost" download>
+          🪟 Download for Windows (.exe)
+        </a>
+      </div>
+    </div>
+
+    <p class="note">
+      A confirmation email with your download links has been sent to your inbox.<br>
+      Need help? <a href="mailto:support@socrates.ai">support@socrates.ai</a>
+    </p>
+
+    <a href="download.html" class="back">← Back to Download page</a>
+    <div class="order-id" id="orderId"></div>
+  </div>
+
+  <script>
+    // Bot metadata — update download URLs once you have hosted files
+    const BOTS = {
+      'essay-master': {
+        name: 'Essay Master Pro',
+        version: 'v1.2.0 · Released Apr 2025',
+        mac: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.2.0/EssayMasterPro-mac.dmg',
+        win: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.2.0/EssayMasterPro-win.exe'
+      },
+      'debug-wizard': {
+        name: 'Debug Wizard',
+        version: 'v1.0.4 · Released Mar 2025',
+        mac: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.0.4/DebugWizard-mac.dmg',
+        win: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.0.4/DebugWizard-win.exe'
+      },
+      'study-buddy': {
+        name: 'Study Buddy',
+        version: 'v2.1.0 · Released Apr 2025',
+        mac: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v2.1.0/StudyBuddy-mac.dmg',
+        win: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v2.1.0/StudyBuddy-win.exe'
+      },
+      'pitch-perfect': {
+        name: 'Pitch Perfect',
+        version: 'v1.1.2 · Released Mar 2025',
+        mac: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.1.2/PitchPerfect-mac.dmg',
+        win: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.1.2/PitchPerfect-win.exe'
+      },
+      'data-decoder': {
+        name: 'Data Decoder',
+        version: 'v1.3.1 · Released Apr 2025',
+        mac: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.3.1/DataDecoder-mac.dmg',
+        win: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.3.1/DataDecoder-win.exe'
+      },
+      'legal-lens': {
+        name: 'Legal Lens',
+        version: 'v1.0.8 · Released Feb 2025',
+        mac: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.0.8/LegalLens-mac.dmg',
+        win: 'https://github.com/YOUR_ORG/socrates-bots/releases/download/v1.0.8/LegalLens-win.exe'
+      }
+    };
+
+    // Stripe sends `client_reference_id` as a query param on the success URL
+    // Set your Stripe Payment Link success URL to: https://yourdomain.com/success.html
+    // Stripe will append ?client_reference_id=botId-platform automatically
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('client_reference_id') || 'essay-master-mac';
+    const [botId, platform] = ref.split('-mac').length > 1 
+      ? [ref.replace('-mac',''), 'mac'] 
+      : [ref.replace('-win',''), 'win'];
+
+    const bot = BOTS[botId] || BOTS['essay-master'];
+    document.getElementById('dlBotName').textContent = bot.name;
+    document.getElementById('dlVersion').textContent = bot.version;
+    document.getElementById('dlMac').href = bot.mac;
+    document.getElementById('dlWin').href = bot.win;
+
+    // Highlight the right platform button
+    if (platform === 'win') {
+      document.getElementById('dlWin').className = 'btn btn-gold';
+      document.getElementById('dlMac').className = 'btn btn-ghost';
+    }
+
+    const sessionId = params.get('session_id');
+    if (sessionId) {
+      document.getElementById('orderId').textContent = 'Order ID: ' + sessionId;
+    }
+  </script>
+</body>
+</html>

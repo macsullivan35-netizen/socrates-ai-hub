@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pricing — Socrates</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.12);
+      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.09);
+      --green:#16a34a;
+      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
+      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:16px;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+
+    /* NAV */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:18px 60px;background:rgba(249,248,245,0.95);
+      backdrop-filter:blur(20px);border-bottom:1px solid var(--border);
+    }
+    .nav-logo{display:flex;align-items:center;gap:10px;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold);text-decoration:none}
+    .nav-logo svg{width:32px;height:32px}
+    .nav-links{display:flex;align-items:center;gap:32px}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-links a.active{color:var(--gold)}
+    .nav-cta{display:flex;gap:12px}
+    .btn{padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a}
+    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(201,168,76,.4)}
+    .btn-purple{background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff}
+    .btn-purple:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(124,58,237,.4)}
+    .btn-lg{padding:14px 32px;font-size:15px;border-radius:12px}
+    .btn-full{width:100%;justify-content:center;padding:14px}
+
+    /* HERO */
+    .hero{padding:160px 24px 80px;text-align:center;position:relative;z-index:1}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--purple-dim);border:1px solid rgba(124,58,237,.3);border-radius:100px;padding:8px 18px;font-size:13px;font-weight:600;color:var(--purple-light);margin-bottom:28px}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(40px,7vw,80px);font-weight:900;line-height:1.05;letter-spacing:-2px;margin-bottom:20px}
+    .hero h1 span{color:var(--gold)}
+    .hero p{font-size:18px;color:var(--muted);max-width:520px;margin:0 auto 48px;line-height:1.7}
+
+    /* TOGGLE */
+    .billing-toggle{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:64px}
+    .toggle-label{font-size:14px;font-weight:600;color:var(--muted)}
+    .toggle-label.active{color:var(--text)}
+    .toggle-track{width:52px;height:28px;background:var(--surface);border:1px solid var(--border);border-radius:100px;position:relative;cursor:pointer;transition:background .2s}
+    .toggle-track.annual{background:var(--gold-dim);border-color:rgba(201,168,76,.3)}
+    .toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;background:var(--muted);border-radius:50%;transition:all .25s}
+    .toggle-track.annual .toggle-thumb{transform:translateX(24px);background:var(--gold)}
+    .save-badge{background:var(--gold-dim);border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px}
+
+    /* CARDS */
+    .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1100px;margin:0 auto;padding:0 24px}
+    .plan-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:36px;position:relative;transition:transform .25s}
+    .plan-card:hover{transform:translateY(-4px)}
+    .plan-card.featured{border-color:var(--gold);background:linear-gradient(160deg,rgba(201,168,76,.06),var(--bg2))}
+    .featured-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;font-size:12px;font-weight:800;padding:5px 18px;border-radius:100px;white-space:nowrap;letter-spacing:.5px}
+    .plan-icon{font-size:36px;margin-bottom:16px}
+    .plan-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;margin-bottom:6px}
+    .plan-tagline{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.5}
+    .plan-price{margin-bottom:8px}
+    .plan-price .amount{font-size:52px;font-weight:900;font-family:'Playfair Display',serif;line-height:1;color:var(--text)}
+    .plan-price .amount.free-price{font-size:40px;color:var(--green)}
+    .plan-price .period{font-size:14px;color:var(--muted);margin-left:4px}
+    .plan-price .annual-note{display:block;font-size:12px;color:var(--muted);margin-top:4px;height:16px}
+    .plan-divider{border:none;border-top:1px solid var(--border);margin:28px 0}
+    .plan-features{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+    .plan-features li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--muted);line-height:1.5}
+    .plan-features li .check{flex-shrink:0;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;margin-top:1px}
+    .check-green{background:rgba(74,222,128,.15);color:var(--green)}
+    .check-gold{background:var(--gold-dim);color:var(--gold)}
+    .check-purple{background:var(--purple-dim);color:var(--purple-light)}
+    .check-muted{background:var(--surface);color:var(--muted)}
+    .plan-features li span{color:var(--text)}
+    .plan-features li .dim{color:var(--muted)}
+
+    /* CREDITS */
+    .credits-section{max-width:1100px;margin:100px auto 0;padding:0 24px}
+    .credits-inner{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:48px}
+    .credits-header{display:flex;align-items:flex-start;justify-content:space-between;gap:40px;flex-wrap:wrap;margin-bottom:40px}
+    .credits-title{font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:10px}
+    .credits-desc{font-size:15px;color:var(--muted);max-width:420px;line-height:1.7}
+    .credit-bundles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .bundle{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+    .bundle:hover{border-color:var(--gold);transform:translateY(-3px)}
+    .bundle.popular{border-color:rgba(124,58,237,.4)}
+    .bundle-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--purple-dim);border:1px solid rgba(124,58,237,.3);color:var(--purple-light);font-size:10px;font-weight:700;padding:3px 12px;border-radius:100px;white-space:nowrap}
+    .bundle-credits{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:var(--gold);margin-bottom:4px}
+    .bundle-credits span{font-size:13px;font-family:'Inter',sans-serif;font-weight:600}
+    .bundle-price{font-size:20px;font-weight:800;margin-bottom:4px}
+    .bundle-per{font-size:11px;color:var(--green);font-weight:600}
+    .bundle-save{font-size:11px;color:var(--muted);margin-top:4px}
+
+    /* FAQ */
+    .faq-section{max-width:760px;margin:100px auto 0;padding:0 24px}
+    .faq-title{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;text-align:center;margin-bottom:48px}
+    .faq-item{border-bottom:1px solid var(--border);padding:24px 0;cursor:pointer}
+    .faq-q{display:flex;align-items:center;justify-content:space-between;font-size:16px;font-weight:700;gap:16px}
+    .faq-q .arrow{color:var(--gold);font-size:18px;transition:transform .25s;flex-shrink:0}
+    .faq-item.open .arrow{transform:rotate(45deg)}
+    .faq-a{font-size:14px;color:var(--muted);line-height:1.8;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+    .faq-item.open .faq-a{max-height:200px;padding-top:14px}
+
+    /* ENTERPRISE */
+    .enterprise{max-width:1100px;margin:100px auto;padding:0 24px}
+    .enterprise-inner{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(201,168,76,.06));border:1px solid rgba(124,58,237,.2);border-radius:20px;padding:60px;display:flex;align-items:center;justify-content:space-between;gap:40px;flex-wrap:wrap}
+    .enterprise h2{font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,44px);font-weight:900;margin-bottom:12px}
+    .enterprise p{font-size:16px;color:var(--muted);max-width:460px;line-height:1.7}
+    .enterprise-features{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+    .ent-feat{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;color:var(--muted)}
+
+    /* FOOTER */
+    footer{background:var(--bg2);border-top:1px solid var(--border);padding:60px 24px 40px;margin-top:0}
+    .footer-inner{max-width:1200px;margin:0 auto}
+    .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;padding-bottom:48px;border-bottom:1px solid var(--border)}
+    .footer-brand p{font-size:14px;color:var(--muted);margin-top:12px;line-height:1.7;max-width:260px}
+    .footer-col h4{font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text)}
+    .footer-col a{display:block;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:10px;transition:color .2s}
+    .footer-col a:hover{color:var(--gold)}
+    .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:32px;font-size:13px;color:var(--muted);flex-wrap:wrap;gap:12px}
+    .footer-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--gold)}
+
+    /* ORBS */
+    .orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px);opacity:.25}
+    .orb-1{width:500px;height:500px;background:var(--purple);top:-200px;left:-200px}
+    .orb-2{width:400px;height:400px;background:var(--gold);bottom:-150px;right:-150px;opacity:.1}
+
+    @media(max-width:900px){
+      .plans{grid-template-columns:1fr}
+      .credit-bundles{grid-template-columns:repeat(2,1fr)}
+      .footer-top{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:600px){
+      nav{padding:16px 20px}
+      .nav-links{display:none}
+      .credit-bundles{grid-template-columns:1fr 1fr}
+      .footer-top{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="15" stroke="#c9a84c" stroke-width="1.5"/>
+      <path d="M10 22 Q16 8 22 22" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <circle cx="16" cy="12" r="3" fill="#c9a84c" opacity=".6"/>
+    </svg>
+    Socrates
+  </a>
+  <div class="nav-links">
+    <a href="marketplace.html">Explore</a>
+    <a href="about.html">About</a>
+    <a href="pricing.html" class="active">Pricing</a>
+    <a href="download.html">Download</a>
+    <a href="spec.html">Docs</a>
+    <a href="dashboard.html">Dashboard</a>
+  </div>
+  <div class="nav-cta">
+    <a href="marketplace.html" class="btn btn-ghost">Browse AI</a>
+    <a href="publish.html" class="btn btn-gold">Start Building</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" style="position:relative;z-index:1">
+  <div class="hero-badge">Simple, transparent pricing</div>
+  <h1>Run AI tools.<br/><span>Pay for what you use.</span></h1>
+  <p>Start free forever. Buy credits when you need them. Builders keep 80% of everything they earn.</p>
+
+  <!-- BILLING TOGGLE -->
+  <div class="billing-toggle">
+    <span class="toggle-label active" id="monthLabel">Monthly</span>
+    <div class="toggle-track" id="billingToggle" onclick="toggleBilling()">
+      <div class="toggle-thumb"></div>
+    </div>
+    <span class="toggle-label" id="annualLabel">Annual</span>
+    <span class="save-badge">Save 30%</span>
+  </div>
+
+  <!-- PLAN CARDS -->
+  <div class="plans">
+
+    <!-- FREE -->
+    <div class="plan-card">
+      <div class="plan-icon">🌱</div>
+      <div class="plan-name">Explorer</div>
+      <div class="plan-tagline">Everything you need to start discovering AI tools — forever free.</div>
+      <div class="plan-price">
+        <span class="amount free-price">Free</span>
+        <span class="annual-note"></span>
+      </div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><div class="check check-green">✓</div><div><span>Unlimited runs on free tools</span></div></li>
+        <li><div class="check check-green">✓</div><div><span>100 credits/month</span> <span class="dim"> — runs paid tools</span></div></li>
+        <li><div class="check check-green">✓</div><div><span>Browse all 48,000+ tools</span></div></li>
+        <li><div class="check check-green">✓</div><div><span>Save up to 10 collections</span></div></li>
+        <li><div class="check check-green">✓</div><div><span>Run history (last 7 days)</span></div></li>
+        <li><div class="check check-muted">–</div><div class="dim">Priority run queue</div></li>
+        <li><div class="check check-muted">–</div><div class="dim">API access</div></li>
+        <li><div class="check check-muted">–</div><div class="dim">Publish tools</div></li>
+      </ul>
+      <a href="marketplace.html" class="btn btn-ghost btn-full">Start for free →</a>
+    </div>
+
+    <!-- PRO (FEATURED) -->
+    <div class="plan-card featured">
+      <div class="featured-badge">MOST POPULAR</div>
+      <div class="plan-icon">⚡</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-tagline">For power users who need more runs, more credits, and faster access.</div>
+      <div class="plan-price">
+        <span class="amount" id="proPrice">$19</span><span class="period">/mo</span>
+        <span class="annual-note" id="proNote"></span>
+      </div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><div class="check check-gold">✓</div><div><span>Everything in Explorer</span></div></li>
+        <li><div class="check check-gold">✓</div><div><span>2,000 credits/month</span> <span class="dim">(~$20 value)</span></div></li>
+        <li><div class="check check-gold">✓</div><div><span>Priority run queue</span> <span class="dim">— 3× faster</span></div></li>
+        <li><div class="check check-gold">✓</div><div><span>Unlimited collections</span></div></li>
+        <li><div class="check check-gold">✓</div><div><span>Full run history + export</span></div></li>
+        <li><div class="check check-gold">✓</div><div><span>Early access to new tools</span></div></li>
+        <li><div class="check check-gold">✓</div><div><span>Personal API key</span> <span class="dim">(1,000 req/day)</span></div></li>
+        <li><div class="check check-muted">–</div><div class="dim">Publish tools publicly</div></li>
+      </ul>
+      <a href="marketplace.html" class="btn btn-gold btn-full">Get Pro →</a>
+    </div>
+
+    <!-- BUILDER -->
+    <div class="plan-card">
+      <div class="plan-icon">🔨</div>
+      <div class="plan-name">Builder</div>
+      <div class="plan-tagline">Create, publish, and earn. Everything in Pro plus a full publishing suite.</div>
+      <div class="plan-price">
+        <span class="amount" id="builderPrice">$49</span><span class="period">/mo</span>
+        <span class="annual-note" id="builderNote"></span>
+      </div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><div class="check check-purple">✓</div><div><span>Everything in Pro</span></div></li>
+        <li><div class="check check-purple">✓</div><div><span>Publish unlimited tools</span></div></li>
+        <li><div class="check check-purple">✓</div><div><span>80% revenue share</span> <span class="dim">on paid tools</span></div></li>
+        <li><div class="check check-purple">✓</div><div><span>Full analytics dashboard</span></div></li>
+        <li><div class="check check-purple">✓</div><div><span>Fork attribution earnings</span></div></li>
+        <li><div class="check check-purple">✓</div><div><span>Verified Builder badge</span></div></li>
+        <li><div class="check check-purple">✓</div><div><span>API access (10K req/day)</span></div></li>
+        <li><div class="check check-purple">✓</div><div><span>Monthly Stripe payouts</span></div></li>
+      </ul>
+      <a href="publish.html" class="btn btn-purple btn-full">Start Building →</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- CREDITS SECTION -->
+<section class="credits-section" style="position:relative;z-index:1">
+  <div class="credits-inner">
+    <div class="credits-header">
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Socrates Credits</div>
+        <div class="credits-title">Pay-as-you-go runs</div>
+        <div class="credits-desc">Credits let you run any paid tool without a subscription. 100 credits = $1.00. Buy once, use anytime. They never expire.</div>
+      </div>
+      <div style="font-size:48px">🪙</div>
+    </div>
+    <div class="credit-bundles">
+      <div class="bundle">
+        <div class="bundle-credits">500 <span>credits</span></div>
+        <div class="bundle-price">$5</div>
+        <div class="bundle-per">$0.01 / credit</div>
+        <div class="bundle-save">&nbsp;</div>
+      </div>
+      <div class="bundle popular">
+        <div class="bundle-badge">BEST VALUE</div>
+        <div class="bundle-credits">5,000 <span>credits</span></div>
+        <div class="bundle-price">$45</div>
+        <div class="bundle-per">$0.009 / credit</div>
+        <div class="bundle-save">Save $5 vs starter</div>
+      </div>
+      <div class="bundle">
+        <div class="bundle-credits">20,000 <span>credits</span></div>
+        <div class="bundle-price">$160</div>
+        <div class="bundle-per">$0.008 / credit</div>
+        <div class="bundle-save">Save $40 vs starter</div>
+      </div>
+      <div class="bundle">
+        <div class="bundle-credits">100,000 <span>credits</span></div>
+        <div class="bundle-price">$700</div>
+        <div class="bundle-per">$0.007 / credit</div>
+        <div class="bundle-save">Save $300 vs starter</div>
+      </div>
+    </div>
+    <div style="margin-top:24px;font-size:13px;color:var(--muted);line-height:1.7">
+      💡 <strong style="color:var(--text)">How credits work:</strong> Tool builders set the credit cost per run (minimum 1 credit, typical range 5–100). Free tools always cost 0 credits. Your Pro or Builder plan includes a monthly credit allowance before you need to buy more.
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section" style="position:relative;z-index:1">
+  <div class="faq-title">Frequently asked questions</div>
+
+  <div class="faq-item open">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      Can I really use Socrates for free?
+      <span class="arrow">+</span>
+    </div>
+    <div class="faq-a">Yes — completely. The Explorer plan is free forever and gives you access to all free tools in the marketplace, plus 100 credits a month to try paid tools. No credit card required to sign up.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      What's the difference between a subscription and credits?
+      <span class="arrow">+</span>
+    </div>
+    <div class="faq-a">Your plan subscription unlocks platform features (API access, analytics, publishing). Credits are the currency you spend to run paid AI tools — think of them like tokens or Robux. You get a monthly credits allowance with Pro and Builder, or you can buy them separately on the Explorer plan.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      How does the 80% revenue share work for builders?
+      <span class="arrow">+</span>
+    </div>
+    <div class="faq-a">When a user pays for your tool — either via subscription or per-run credits — you receive 80% of the revenue. Socrates keeps 20% to cover hosting, execution costs, payment processing, and platform services. Payouts happen automatically every month via Stripe Connect to your bank account, with a $25 minimum threshold.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      What is fork attribution?
+      <span class="arrow">+</span>
+    </div>
+    <div class="faq-a">When someone remixes (forks) your tool and their forked version earns money, you automatically receive 8% of that revenue upstream — in addition to your own tool's earnings. This creates a passive income stream as your ideas spread across the platform.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      Can I cancel or change plans anytime?
+      <span class="arrow">+</span>
+    </div>
+    <div class="faq-a">Yes. Upgrade, downgrade, or cancel anytime from your dashboard. If you cancel, you keep access through the end of your billing period. Unused monthly credits do not roll over, but purchased credit bundles never expire.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      Do you offer student or nonprofit discounts?
+      <span class="arrow">+</span>
+    </div>
+    <div class="faq-a">Yes. Verified students and accredited nonprofits receive 40% off any paid plan. Contact us at hello@socrates.ai with proof of status and we'll apply the discount immediately.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      Is there a free trial for Pro or Builder?
+      <span class="arrow">+</span>
+    </div>
+    <div class="faq-a">Yes — both Pro and Builder come with a 14-day free trial, no credit card required. You'll get full access to every feature at that tier so you can evaluate before committing.</div>
+  </div>
+</section>
+
+<!-- ENTERPRISE -->
+<section class="enterprise" style="position:relative;z-index:1">
+  <div class="enterprise-inner">
+    <div>
+      <div style="font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--purple-light);margin-bottom:12px">Enterprise</div>
+      <h2>Your org. Your AI stack.</h2>
+      <p>Deploy Socrates privately for your team or organization. Custom models, private tools, SSO, compliance controls, and a dedicated success manager.</p>
+      <div class="enterprise-features">
+        <div class="ent-feat">Private deployment</div>
+        <div class="ent-feat">SSO / SAML</div>
+        <div class="ent-feat">Custom model routing</div>
+        <div class="ent-feat">SOC 2 Type II</div>
+        <div class="ent-feat">Dedicated support</div>
+        <div class="ent-feat">SLA guarantees</div>
+        <div class="ent-feat">Unlimited seats</div>
+        <div class="ent-feat">White-label option</div>
+      </div>
+    </div>
+    <div style="flex-shrink:0">
+      <a href="mailto:enterprise@socrates.ai" class="btn btn-purple btn-lg">Talk to Sales →</a>
+      <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:12px">We respond within 24 hours</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo">Socrates</div>
+        <p>The Hub of AI. Every tool, every model, every person — all in one place.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="marketplace.html">Marketplace</a>
+        <a href="marketplace.html">Trending</a>
+        <a href="marketplace.html">New Releases</a>
+        <a href="marketplace.html">Collections</a>
+      </div>
+      <div class="footer-col">
+        <h4>Build</h4>
+        <a href="publish.html">Publish a Tool</a>
+        <a href="dashboard.html">Builder Dashboard</a>
+        <a href="spec.html">API Docs</a>
+        <a href="spec.html">SDK</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="about.html">About</a>
+        <a href="about.html">Blog</a>
+        <a href="about.html">Careers</a>
+        <a href="about.html">Press</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="about.html">Terms</a>
+        <a href="about.html">Privacy</a>
+        <a href="about.html">Content Policy</a>
+        <a href="about.html">Safety</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Socrates AI, Inc. All rights reserved.</span>
+      <span style="color:var(--gold)">The Hub of AI</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+let isAnnual = false;
+
+function toggleBilling() {
+  isAnnual = !isAnnual;
+  const track = document.getElementById('billingToggle');
+  track.classList.toggle('annual', isAnnual);
+  document.getElementById('monthLabel').classList.toggle('active', !isAnnual);
+  document.getElementById('annualLabel').classList.toggle('active', isAnnual);
+
+  document.getElementById('proPrice').textContent = isAnnual ? '$13' : '$19';
+  document.getElementById('proNote').textContent = isAnnual ? 'billed $156/yr · save $72' : '';
+  document.getElementById('builderPrice').textContent = isAnnual ? '$34' : '$49';
+  document.getElementById('builderNote').textContent = isAnnual ? 'billed $408/yr · save $180' : '';
+}
+
+function toggleFaq(el) {
+  const item = el.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Publish a Tool — Socrates</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.12);
+      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.09);
+      --green:#16a34a;--red:#dc2626;
+      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
+      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:14px;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    nav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 32px;background:rgba(249,248,245,0.97);
+      border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+      backdrop-filter:blur(20px);
+    }
+    .nav-logo{
+      font-family:'Playfair Display',serif;font-size:20px;font-weight:700;
+      color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:8px;
+    }
+    .nav-logo svg{width:28px;height:28px;}
+    .btn{
+      padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;
+      cursor:pointer;border:none;text-decoration:none;display:inline-flex;
+      align-items:center;gap:7px;transition:all .2s;
+    }
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a}
+    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.35)}
+
+    /* PROGRESS STEPS */
+    .publish-header{
+      background:var(--bg2);border-bottom:1px solid var(--border);
+      padding:28px 48px;
+    }
+    .steps{display:flex;align-items:center;gap:0;max-width:700px;margin:0 auto}
+    .step{
+      display:flex;align-items:center;gap:12px;flex:1;
+    }
+    .step-circle{
+      width:36px;height:36px;border-radius:50%;border:2px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      font-size:14px;font-weight:700;color:var(--muted);
+      flex-shrink:0;transition:all .3s;background:var(--surface);
+    }
+    .step.active .step-circle{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+    .step.done .step-circle{border-color:var(--green);color:var(--green);background:rgba(74,222,128,.1)}
+    .step-label{font-size:13px;font-weight:600;color:var(--muted);transition:color .3s}
+    .step.active .step-label{color:var(--text)}
+    .step.done .step-label{color:var(--muted)}
+    .step-line{flex:1;height:1px;background:var(--border);margin:0 8px}
+    .step-line.done{background:var(--green)}
+
+    /* LAYOUT */
+    .publish-body{
+      display:flex;gap:0;max-width:1100px;margin:48px auto;padding:0 24px;
+      align-items:flex-start;
+    }
+    .form-area{flex:1;min-width:0}
+    .preview-panel{
+      width:320px;flex-shrink:0;margin-left:32px;
+      position:sticky;top:90px;
+    }
+
+    /* STEP PANELS */
+    .step-panel{display:none}
+    .step-panel.active{display:block}
+
+    .panel-title{
+      font-family:'Playfair Display',serif;
+      font-size:28px;font-weight:900;margin-bottom:8px;
+    }
+    .panel-desc{font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.6}
+
+    /* FORM ELEMENTS */
+    .form-group{margin-bottom:24px}
+    .form-group label{
+      display:block;font-size:13px;font-weight:700;color:var(--muted);
+      margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;
+    }
+    .form-group input,.form-group textarea,.form-group select{
+      width:100%;background:var(--surface);border:1px solid var(--border);
+      border-radius:12px;padding:14px 16px;font-size:14px;color:var(--text);
+      outline:none;font-family:'Inter',sans-serif;transition:border-color .2s;
+    }
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{
+      border-color:var(--gold);
+    }
+    .form-group input::placeholder,.form-group textarea::placeholder{color:var(--muted)}
+    .form-group textarea{resize:vertical;min-height:100px}
+    .char-count{font-size:11px;color:var(--muted);text-align:right;margin-top:4px}
+
+    /* TYPE SELECTOR */
+    .type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:0}
+    .type-option{
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:20px 16px;cursor:pointer;text-align:center;transition:all .2s;
+    }
+    .type-option:hover{border-color:var(--purple)}
+    .type-option.selected{
+      border-color:var(--gold);background:var(--gold-dim);
+    }
+    .type-option .type-icon{font-size:28px;margin-bottom:10px}
+    .type-option .type-name{font-size:13px;font-weight:700;margin-bottom:4px}
+    .type-option .type-sub{font-size:11px;color:var(--muted)}
+
+    /* INPUT BUILDER */
+    .inputs-list{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+    .input-row{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:16px;display:flex;gap:12px;align-items:center;
+    }
+    .input-row .ir-icon{font-size:20px}
+    .input-row .ir-info{flex:1}
+    .input-row .ir-name{font-size:14px;font-weight:600;margin-bottom:2px}
+    .input-row .ir-type{font-size:11px;color:var(--muted)}
+    .input-row .ir-remove{
+      background:none;border:none;color:var(--muted);cursor:pointer;
+      font-size:18px;transition:color .2s;padding:4px;
+    }
+    .input-row .ir-remove:hover{color:var(--red)}
+    .add-input-btn{
+      width:100%;padding:12px;border-radius:12px;border:1px dashed var(--border);
+      background:transparent;color:var(--muted);font-size:14px;font-weight:600;
+      cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;
+    }
+    .add-input-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+    /* MINI MODAL */
+    .mini-modal-bg{
+      position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;
+      display:none;align-items:center;justify-content:center;
+    }
+    .mini-modal-bg.open{display:flex}
+    .mini-modal{
+      background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+      padding:28px;width:360px;
+    }
+    .mini-modal h3{font-size:16px;font-weight:700;margin-bottom:20px}
+    .mini-modal label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;margin-top:14px}
+    .mini-modal input,.mini-modal select{
+      width:100%;background:var(--surface);border:1px solid var(--border);
+      border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);
+      outline:none;font-family:'Inter',sans-serif;
+    }
+    .mini-modal .mini-actions{display:flex;gap:10px;margin-top:20px}
+    .btn-mini{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;flex:1}
+    .btn-mini-cancel{background:var(--surface);color:var(--muted)}
+    .btn-mini-add{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a}
+
+    /* PRICING */
+    .price-options{display:flex;gap:12px;margin-bottom:0}
+    .price-option{
+      flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:20px;cursor:pointer;transition:all .2s;text-align:center;
+    }
+    .price-option:hover{border-color:var(--purple)}
+    .price-option.selected{border-color:var(--gold);background:var(--gold-dim)}
+    .price-option .p-icon{font-size:24px;margin-bottom:8px}
+    .price-option .p-name{font-size:14px;font-weight:700;margin-bottom:4px}
+    .price-option .p-sub{font-size:12px;color:var(--muted)}
+
+    /* TAGS */
+    .tags-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .tag{
+      padding:6px 14px;border-radius:100px;font-size:12px;font-weight:600;
+      background:var(--surface);border:1px solid var(--border);color:var(--muted);
+      cursor:pointer;transition:all .2s;
+    }
+    .tag:hover,.tag.selected{background:var(--purple-dim);border-color:var(--purple);color:var(--purple-light)}
+
+    /* NAVIGATION BUTTONS */
+    .form-nav{display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
+    .btn-prev{padding:12px 24px;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s}
+    .btn-prev:hover{color:var(--text);border-color:var(--text)}
+    .btn-next{padding:12px 32px;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;transition:all .2s}
+    .btn-next:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.35)}
+
+    /* PREVIEW CARD */
+    .preview-card{
+      background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+      padding:24px;
+    }
+    .preview-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+    .pc-icon{width:48px;height:48px;border-radius:14px;background:rgba(201,168,76,.15);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px}
+    .pc-type{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--gold-dim);color:var(--gold);margin-bottom:10px}
+    .pc-name{font-size:16px;font-weight:800;margin-bottom:8px;color:var(--text)}
+    .pc-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+    .pc-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+    .pc-tag{font-size:11px;padding:3px 10px;border-radius:100px;background:var(--surface);color:var(--muted)}
+    .pc-footer{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:14px}
+
+    /* SUCCESS */
+    .success-screen{
+      text-align:center;padding:80px 20px;display:none;
+    }
+    .success-screen.active{display:block}
+    .success-screen .success-icon{font-size:80px;margin-bottom:24px}
+    .success-screen h2{font-family:'Playfair Display',serif;font-size:40px;font-weight:900;margin-bottom:12px}
+    .success-screen p{font-size:16px;color:var(--muted);max-width:480px;margin:0 auto 40px;line-height:1.7}
+    .success-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+
+    /* TEST AREA */
+    .test-area{
+      background:var(--bg3);border:1px solid var(--border);border-radius:12px;
+      padding:20px;margin-top:0;
+    }
+    .test-area h4{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:14px}
+    .test-input{
+      width:100%;background:var(--surface);border:1px solid var(--border);
+      border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);
+      outline:none;font-family:'Inter',sans-serif;margin-bottom:10px;resize:none;
+    }
+    .test-output{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:8px;padding:12px;font-size:13px;color:var(--muted);
+      min-height:60px;line-height:1.6;
+    }
+    .btn-test{
+      padding:9px 20px;background:var(--purple-dim);border:1px solid var(--purple);
+      color:var(--purple-light);border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;
+      margin-bottom:12px;transition:all .2s;
+    }
+    .btn-test:hover{background:var(--purple);color:#fff}
+
+    @media(max-width:800px){
+      .preview-panel{display:none}
+      .publish-body{margin:24px auto}
+      .type-grid{grid-template-columns:repeat(2,1fr)}
+      .price-options{flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="15" stroke="#c9a84c" stroke-width="1.5"/>
+      <path d="M10 22 Q16 8 22 22" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <circle cx="16" cy="12" r="3" fill="#c9a84c" opacity=".6"/>
+    </svg>
+    Socrates
+  </a>
+  <div style="display:flex;gap:12px">
+    <a href="marketplace.html" class="btn btn-ghost">Browse Marketplace</a>
+    <a href="download.html" class="btn btn-ghost">⬇ Download</a>
+    <a href="dashboard.html" class="btn btn-ghost">My Dashboard</a>
+  </div>
+</nav>
+
+<!-- PROGRESS -->
+<div class="publish-header">
+  <div class="steps" id="stepsBar">
+    <div class="step active" id="s1"><div class="step-circle">1</div><div class="step-label">Tool Type</div></div>
+    <div class="step-line" id="l1"></div>
+    <div class="step" id="s2"><div class="step-circle">2</div><div class="step-label">Details</div></div>
+    <div class="step-line" id="l2"></div>
+    <div class="step" id="s3"><div class="step-circle">3</div><div class="step-label">Inputs &amp; Prompt</div></div>
+    <div class="step-line" id="l3"></div>
+    <div class="step" id="s4"><div class="step-circle">4</div><div class="step-label">Test &amp; Price</div></div>
+    <div class="step-line" id="l4"></div>
+    <div class="step" id="s5"><div class="step-circle">5</div><div class="step-label">Publish</div></div>
+  </div>
+</div>
+
+<div class="publish-body">
+  <div class="form-area">
+
+    <!-- SUCCESS -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">🎉</div>
+      <h2>Tool Published!</h2>
+      <p>Your AI tool is now live on the Socrates Marketplace. It's been submitted for review and will appear publicly within 24 hours. You'll earn 80% of all revenue it generates.</p>
+      <div class="success-actions">
+        <a href="marketplace.html" class="btn btn-ghost" style="padding:14px 28px;font-size:15px">View in Marketplace</a>
+        <a href="dashboard.html" class="btn btn-gold" style="padding:14px 28px;font-size:15px">Open Dashboard</a>
+        <button onclick="resetForm()" class="btn btn-ghost" style="padding:14px 28px;font-size:15px">Publish Another</button>
+      </div>
+    </div>
+
+    <!-- STEP 1: TYPE -->
+    <div class="step-panel active" id="panel1">
+      <div class="panel-title">What are you building?</div>
+      <div class="panel-desc">Choose the type of AI tool you want to publish. You can always change this later.</div>
+
+      <div class="type-grid">
+        <div class="type-option selected" onclick="selectType(this,'Prompt App')">
+          <div class="type-icon">⚡</div>
+          <div class="type-name">Prompt App</div>
+          <div class="type-sub">Simple input → output</div>
+        </div>
+        <div class="type-option" onclick="selectType(this,'Agent')">
+          <div class="type-icon">🤖</div>
+          <div class="type-name">Agent</div>
+          <div class="type-sub">Multi-step autonomous task</div>
+        </div>
+        <div class="type-option" onclick="selectType(this,'Chat Bot')">
+          <div class="type-icon">💬</div>
+          <div class="type-name">Chat Bot</div>
+          <div class="type-sub">Ongoing conversation</div>
+        </div>
+        <div class="type-option" onclick="selectType(this,'Model Wrapper')">
+          <div class="type-icon">🧠</div>
+          <div class="type-name">Model Wrapper</div>
+          <div class="type-sub">API access to a model</div>
+        </div>
+        <div class="type-option" onclick="selectType(this,'Connector / Tool')">
+          <div class="type-icon">🔧</div>
+          <div class="type-name">Connector / Tool</div>
+          <div class="type-sub">Plug into an external app</div>
+        </div>
+        <div class="type-option" onclick="selectType(this,'Dataset')">
+          <div class="type-icon">📦</div>
+          <div class="type-name">Dataset</div>
+          <div class="type-sub">Evals, training data, RAG</div>
+        </div>
+      </div>
+
+      <div class="form-nav">
+        <span></span>
+        <button class="btn-next" onclick="goStep(2)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: DETAILS -->
+    <div class="step-panel" id="panel2">
+      <div class="panel-title">Tool Details</div>
+      <div class="panel-desc">Give your tool a great name and description. First impressions matter — these are the first things users see.</div>
+
+      <div class="form-group">
+        <label>Tool Name *</label>
+        <input type="text" id="toolName" placeholder="e.g. Essay Master Pro" maxlength="60" oninput="updatePreview()"/>
+        <div class="char-count"><span id="nameLen">0</span>/60</div>
+      </div>
+
+      <div class="form-group">
+        <label>Short Description * <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(shown in marketplace cards)</span></label>
+        <textarea id="toolDesc" placeholder="e.g. Write college-level essays on any topic in seconds. Includes thesis, citations, and revision mode." maxlength="200" rows="3" oninput="updatePreview()"></textarea>
+        <div class="char-count"><span id="descLen">0</span>/200</div>
+      </div>
+
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="toolCat" onchange="updatePreview()">
+          <option value="">Select a category...</option>
+          <option>Writing</option><option>Coding</option><option>Study & Learning</option>
+          <option>Business</option><option>Creative</option><option>Research</option>
+          <option>Data & Analysis</option><option>Health & Fitness</option><option>Legal</option>
+          <option>Finance</option><option>Fun & Games</option><option>Automation</option>
+          <option>Translation</option><option>Science</option><option>Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Tags <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(select all that apply)</span></label>
+        <div class="tags-wrap">
+          <div class="tag" onclick="toggleTag(this)">essay</div>
+          <div class="tag" onclick="toggleTag(this)">writing</div>
+          <div class="tag" onclick="toggleTag(this)">students</div>
+          <div class="tag" onclick="toggleTag(this)">productivity</div>
+          <div class="tag" onclick="toggleTag(this)">gpt-4</div>
+          <div class="tag" onclick="toggleTag(this)">claude</div>
+          <div class="tag" onclick="toggleTag(this)">automation</div>
+          <div class="tag" onclick="toggleTag(this)">coding</div>
+          <div class="tag" onclick="toggleTag(this)">free</div>
+          <div class="tag" onclick="toggleTag(this)">beginner-friendly</div>
+          <div class="tag" onclick="toggleTag(this)">business</div>
+          <div class="tag" onclick="toggleTag(this)">research</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Emoji Icon</label>
+        <input type="text" id="toolIcon" placeholder="e.g. ✍️ 🤖 💡 🔬" maxlength="4" oninput="updatePreview()" style="max-width:120px;font-size:24px;text-align:center"/>
+      </div>
+
+      <div class="form-nav">
+        <button class="btn-prev" onclick="goStep(1)">← Back</button>
+        <button class="btn-next" onclick="goStep(3)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: INPUTS + PROMPT -->
+    <div class="step-panel" id="panel3">
+      <div class="panel-title">Inputs &amp; Prompt</div>
+      <div class="panel-desc">Define what information users will provide, and write the system prompt that powers your tool. This is the engine.</div>
+
+      <div class="form-group">
+        <label>User Inputs <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(fields users fill in before running)</span></label>
+        <div class="inputs-list" id="inputsList">
+          <div class="input-row">
+            <div class="ir-icon">📝</div>
+            <div class="ir-info">
+              <div class="ir-name">Topic</div>
+              <div class="ir-type">Text Input · Required</div>
+            </div>
+            <button class="ir-remove" onclick="removeInput(this)">✕</button>
+          </div>
+        </div>
+        <button class="add-input-btn" onclick="openInputModal()">+ Add Input Field</button>
+      </div>
+
+      <div class="form-group">
+        <label>System Prompt * <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(the AI's instructions — the core of your tool)</span></label>
+        <textarea id="systemPrompt" rows="10" placeholder="You are an expert academic writer with a PhD-level understanding of all subjects. When the user provides a topic, you will write a well-structured, engaging essay with:
+
+- A compelling introduction with a clear thesis
+- 3-4 body paragraphs with evidence and analysis
+- A strong conclusion that synthesizes the argument
+- Proper academic citations where applicable
+
+Always match the requested tone and length. Use clear, precise language and avoid clichés.
+
+Topic: {{topic}}
+Length: {{length}}
+Tone: {{tone}}"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn-test" onclick="insertVar('{{topic}}')">+ topic</button>
+          <button class="btn-test" onclick="insertVar('{{length}}')">+ length</button>
+          <button class="btn-test" onclick="insertVar('{{tone}}')">+ tone</button>
+          <button class="btn-test" style="background:transparent;border-color:var(--border);color:var(--muted)" onclick="insertVar('{{custom}}')">+ custom var</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px">Use <code style="background:var(--surface);padding:1px 6px;border-radius:4px">{{variable_name}}</code> to reference user inputs in your prompt.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Sample Output <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(shown to users before they run — helps conversions)</span></label>
+        <textarea id="sampleOutput" rows="6" placeholder="Paste an example of what this tool produces at its best..."></textarea>
+      </div>
+
+      <div class="form-nav">
+        <button class="btn-prev" onclick="goStep(2)">← Back</button>
+        <button class="btn-next" onclick="goStep(4)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: TEST + PRICE -->
+    <div class="step-panel" id="panel4">
+      <div class="panel-title">Test &amp; Set Pricing</div>
+      <div class="panel-desc">Run a live test to make sure your tool works, then set your price. You keep 80% of all revenue.</div>
+
+      <div class="form-group">
+        <label>Live Test</label>
+        <div class="test-area">
+          <h4>Test your tool with sample inputs</h4>
+          <textarea class="test-input" rows="2" placeholder="Enter a test topic (e.g. 'The history of the Roman Empire')..." id="testInput"></textarea>
+          <button class="btn-test" onclick="runTest()">▶ Run Test</button>
+          <div class="test-output" id="testOutput">Output will appear here...</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Pricing Model *</label>
+        <div class="price-options">
+          <div class="price-option selected" onclick="selectPrice(this,'free')">
+            <div class="p-icon">🎁</div>
+            <div class="p-name">Free</div>
+            <div class="p-sub">Maximum reach. Great for building your reputation.</div>
+          </div>
+          <div class="price-option" onclick="selectPrice(this,'monthly')">
+            <div class="p-icon">📅</div>
+            <div class="p-name">Monthly</div>
+            <div class="p-sub">Recurring subscription. Best for ongoing tools.</div>
+          </div>
+          <div class="price-option" onclick="selectPrice(this,'usage')">
+            <div class="p-icon">⚡</div>
+            <div class="p-name">Pay-per-Run</div>
+            <div class="p-sub">Charge per use. Best for high-value outputs.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" id="priceAmountGroup" style="display:none">
+        <label>Price (USD) — You keep 80%</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="position:relative;width:180px">
+            <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px">$</span>
+            <input type="number" id="priceAmt" min="0.50" step="0.50" value="4.99" style="padding-left:30px"/>
+          </div>
+          <span id="priceUnit" style="color:var(--muted);font-size:14px">/month</span>
+        </div>
+        <div style="font-size:12px;color:var(--green);margin-top:8px">Your estimated earnings at 1,000 users: <strong id="earningsEst">$3,992/mo</strong></div>
+      </div>
+
+      <div class="form-group">
+        <label>Version Notes (optional)</label>
+        <input type="text" id="versionNotes" placeholder="v1.0.0 — Initial release"/>
+      </div>
+
+      <div class="form-nav">
+        <button class="btn-prev" onclick="goStep(3)">← Back</button>
+        <button class="btn-next" onclick="goStep(5)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: REVIEW + PUBLISH -->
+    <div class="step-panel" id="panel5">
+      <div class="panel-title">Ready to Publish</div>
+      <div class="panel-desc">Review your tool one final time. Once published, it goes live to 2M+ users on the Socrates Marketplace.</div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:24px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Tool Type</div>
+            <div id="rev-type" style="font-weight:600">Prompt App</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Category</div>
+            <div id="rev-cat" style="font-weight:600">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Pricing</div>
+            <div id="rev-price" style="font-weight:600;color:var(--green)">Free</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Revenue Share</div>
+            <div style="font-weight:600;color:var(--gold)">80% to you</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:32px">
+        <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-size:14px;color:var(--muted)">
+          <input type="checkbox" id="agreeTerms" style="margin-top:3px;accent-color:var(--gold)"/>
+          I agree to the <a href="#" style="color:var(--gold)">Socrates Content Policy</a> and confirm this tool does not violate any laws or platform rules.
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-size:14px;color:var(--muted)">
+          <input type="checkbox" id="agreeOriginal" style="margin-top:3px;accent-color:var(--gold)"/>
+          This tool is my original work or I have rights to publish it on Socrates.
+        </label>
+      </div>
+
+      <div class="form-nav">
+        <button class="btn-prev" onclick="goStep(4)">← Back</button>
+        <button class="btn-next" id="publishBtn" onclick="publish()" style="background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff;padding:14px 40px;font-size:15px">
+          🚀 Publish to Marketplace
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /form-area -->
+
+  <!-- PREVIEW PANEL -->
+  <div class="preview-panel">
+    <div class="preview-card">
+      <div class="preview-label">Live Preview</div>
+      <div class="pc-icon" id="previewIcon">⚡</div>
+      <span class="pc-type" id="previewType">Prompt App</span>
+      <div class="pc-name" id="previewName">Your Tool Name</div>
+      <div class="pc-desc" id="previewDesc">Your description will appear here. Make it compelling — this is what users see first in the marketplace.</div>
+      <div class="pc-tags" id="previewTags"></div>
+      <div class="pc-footer">
+        <span>⭐ New</span>
+        <span id="previewPrice" style="color:#4ade80;font-weight:700">Free</span>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px">Builder Info</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8">
+        <div>👤 <strong style="color:var(--text)">Your Profile</strong></div>
+        <div>📈 Revenue share: <strong style="color:var(--gold)">80%</strong></div>
+        <div>🔀 Fork attribution: <strong style="color:var(--text)">On</strong></div>
+        <div>🛡️ Safety scan: <strong style="color:var(--green)">Auto-enabled</strong></div>
+        <div>📋 Review time: <strong style="color:var(--text)">~24 hours</strong></div>
+      </div>
+    </div>
+  </div>
+</div><!-- /publish-body -->
+
+<!-- ADD INPUT MODAL -->
+<div class="mini-modal-bg" id="inputModalBg">
+  <div class="mini-modal">
+    <h3>Add Input Field</h3>
+    <label>Field Name</label>
+    <input type="text" id="newFieldName" placeholder="e.g. Essay Topic"/>
+    <label>Field Type</label>
+    <select id="newFieldType">
+      <option value="text">Short Text</option>
+      <option value="textarea">Long Text (Textarea)</option>
+      <option value="select">Dropdown (Select)</option>
+      <option value="number">Number</option>
+    </select>
+    <label>Required?</label>
+    <select id="newFieldRequired">
+      <option value="yes">Required</option>
+      <option value="no">Optional</option>
+    </select>
+    <div class="mini-actions">
+      <button class="btn-mini btn-mini-cancel" onclick="closeInputModal()">Cancel</button>
+      <button class="btn-mini btn-mini-add" onclick="addInput()">Add Field</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentStep = 1;
+let selectedType = 'Prompt App';
+let selectedPrice = 'free';
+
+const ICONS = {'Prompt App':'⚡','Agent':'🤖','Chat Bot':'💬','Model Wrapper':'🧠','Connector / Tool':'🔧','Dataset':'📦'};
+
+function goStep(n) {
+  document.getElementById('panel' + currentStep).classList.remove('active');
+  document.getElementById('panel' + n).classList.add('active');
+
+  // update progress
+  for (let i = 1; i <= 5; i++) {
+    const s = document.getElementById('s'+i);
+    s.classList.remove('active','done');
+    if (i < n) { s.classList.add('done'); s.querySelector('.step-circle').textContent = '✓'; }
+    else if (i === n) { s.classList.add('active'); s.querySelector('.step-circle').textContent = i; }
+    else { s.querySelector('.step-circle').textContent = i; }
+    if (i < 5) {
+      const l = document.getElementById('l'+i);
+      l.classList.toggle('done', i < n);
+    }
+  }
+  currentStep = n;
+
+  // populate review step
+  if (n === 5) {
+    document.getElementById('rev-type').textContent = selectedType;
+    document.getElementById('rev-cat').textContent = document.getElementById('toolCat').value || '—';
+    const pr = document.getElementById('rev-price');
+    if (selectedPrice === 'free') { pr.textContent = 'Free'; pr.style.color = 'var(--green)'; }
+    else {
+      const amt = document.getElementById('priceAmt').value;
+      const unit = selectedPrice === 'monthly' ? '/mo' : '/run';
+      pr.textContent = '$' + amt + unit;
+      pr.style.color = 'var(--gold)';
+    }
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function selectType(el, type) {
+  document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedType = type;
+  document.getElementById('previewType').textContent = type;
+  document.getElementById('previewIcon').textContent = ICONS[type] || '⚡';
+}
+
+function selectPrice(el, price) {
+  document.querySelectorAll('.price-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPrice = price;
+  const grp = document.getElementById('priceAmountGroup');
+  grp.style.display = price === 'free' ? 'none' : 'block';
+  document.getElementById('previewPrice').textContent = price === 'free' ? 'Free' : 'Paid';
+  document.getElementById('previewPrice').style.color = price === 'free' ? 'var(--green)' : 'var(--gold)';
+  document.getElementById('priceUnit').textContent = price === 'monthly' ? '/month' : '/run';
+  updateEarnings();
+}
+
+function updateEarnings() {
+  const amt = parseFloat(document.getElementById('priceAmt').value) || 0;
+  const earn = (amt * 0.8 * 1000).toFixed(0);
+  const unit = selectedPrice === 'monthly' ? '/mo' : ' total (1K runs)';
+  document.getElementById('earningsEst').textContent = '$' + parseInt(earn).toLocaleString() + unit;
+}
+
+document.getElementById('priceAmt').addEventListener('input', updateEarnings);
+
+function updatePreview() {
+  const name = document.getElementById('toolName').value;
+  const desc = document.getElementById('toolDesc').value;
+  const icon = document.getElementById('toolIcon').value;
+  document.getElementById('nameLen').textContent = name.length;
+  document.getElementById('descLen').textContent = desc.length;
+  document.getElementById('previewName').textContent = name || 'Your Tool Name';
+  document.getElementById('previewDesc').textContent = desc || 'Your description will appear here...';
+  if (icon) document.getElementById('previewIcon').textContent = icon;
+}
+
+function toggleTag(el) {
+  el.classList.toggle('selected');
+  renderPreviewTags();
+}
+
+function renderPreviewTags() {
+  const selected = [...document.querySelectorAll('.tag.selected')].map(t => t.textContent);
+  document.getElementById('previewTags').innerHTML = selected.map(t => `<span class="pc-tag">${t}</span>`).join('');
+}
+
+function openInputModal() {
+  document.getElementById('inputModalBg').classList.add('open');
+}
+
+function closeInputModal() {
+  document.getElementById('inputModalBg').classList.remove('open');
+}
+
+document.getElementById('inputModalBg').addEventListener('click', e => {
+  if (e.target === document.getElementById('inputModalBg')) closeInputModal();
+});
+
+const fieldIcons = {text:'📝',textarea:'📄',select:'📋',number:'🔢'};
+
+function addInput() {
+  const name = document.getElementById('newFieldName').value.trim();
+  const type = document.getElementById('newFieldType').value;
+  const req = document.getElementById('newFieldRequired').value;
+  if (!name) { alert('Please enter a field name.'); return; }
+
+  const row = document.createElement('div');
+  row.className = 'input-row';
+  row.innerHTML = `
+    <div class="ir-icon">${fieldIcons[type]}</div>
+    <div class="ir-info">
+      <div class="ir-name">${name}</div>
+      <div class="ir-type">${type.charAt(0).toUpperCase()+type.slice(1)} · ${req === 'yes' ? 'Required' : 'Optional'}</div>
+    </div>
+    <button class="ir-remove" onclick="removeInput(this)">✕</button>
+  `;
+  document.getElementById('inputsList').appendChild(row);
+  document.getElementById('newFieldName').value = '';
+  closeInputModal();
+}
+
+function removeInput(btn) {
+  btn.closest('.input-row').remove();
+}
+
+function insertVar(v) {
+  const ta = document.getElementById('systemPrompt');
+  const start = ta.selectionStart;
+  const before = ta.value.substring(0, start);
+  const after = ta.value.substring(ta.selectionEnd);
+  ta.value = before + v + after;
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = start + v.length;
+}
+
+const TEST_OUTPUTS = [
+  "## The Roman Empire: A Civilization That Shaped the World\n\nFew civilizations have left as enduring a mark on human history as the Roman Empire. At its zenith in the 2nd century CE, Rome governed over 70 million people spanning from the Scottish Highlands to the sands of Mesopotamia...\n\n[Full essay continues with structured paragraphs, citations, and a compelling conclusion...]",
+  "Great question! Let me break this down step by step...\n\nBased on the context provided, here is a comprehensive response tailored to your specific needs...\n\n[Output continues with detailed, well-formatted content...]"
+];
+
+function runTest() {
+  const input = document.getElementById('testInput').value;
+  const output = document.getElementById('testOutput');
+  output.textContent = '⏳ Running...';
+  setTimeout(() => {
+    output.textContent = TEST_OUTPUTS[0];
+  }, 1600);
+}
+
+function publish() {
+  const terms = document.getElementById('agreeTerms').checked;
+  const original = document.getElementById('agreeOriginal').checked;
+  if (!terms || !original) {
+    alert('Please check both boxes to confirm you agree to the terms.');
+    return;
+  }
+  const btn = document.getElementById('publishBtn');
+  btn.textContent = '🚀 Publishing...';
+  btn.disabled = true;
+  setTimeout(() => {
+    document.getElementById('panel5').classList.remove('active');
+    document.getElementById('successScreen').classList.add('active');
+    // update steps all done
+    for (let i = 1; i <= 5; i++) {
+      const s = document.getElementById('s'+i);
+      s.classList.remove('active');
+      s.classList.add('done');
+      s.querySelector('.step-circle').textContent = '✓';
+      if (i < 5) document.getElementById('l'+i).classList.add('done');
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }, 2000);
+}
+
+function resetForm() {
+  location.reload();
+}
+</script>
+</body>
+</html>

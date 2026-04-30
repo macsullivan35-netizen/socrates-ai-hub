@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About — Socrates</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#9a6e0c;--gold-dim:rgba(154,110,12,.12);
+      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.09);
+      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
+      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:16px;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+
+    .orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(100px);opacity:.07}
+    .orb-1{width:500px;height:500px;background:var(--purple);top:-200px;left:-200px}
+    .orb-2{width:400px;height:400px;background:var(--gold);bottom:-100px;right:-100px;opacity:.04}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 60px;background:rgba(249,248,245,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+    .nav-logo{display:flex;align-items:center;gap:10px;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold);text-decoration:none}
+    .nav-logo svg{width:32px;height:32px}
+    .nav-links{display:flex;align-items:center;gap:32px}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
+    .nav-links a:hover{color:var(--text)}
+    .nav-links a.active{color:var(--gold)}
+    .nav-cta{display:flex;gap:12px}
+    .btn{padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a}
+    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(201,168,76,.4)}
+
+    /* HERO */
+    .hero{padding:160px 24px 100px;text-align:center;position:relative;z-index:1;max-width:900px;margin:0 auto}
+    .hero-label{font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:20px}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(44px,7vw,84px);font-weight:900;line-height:1.05;letter-spacing:-2px;margin-bottom:24px}
+    .hero h1 em{font-style:italic;color:var(--purple-light)}
+    .hero p{font-size:18px;color:var(--muted);line-height:1.8;max-width:640px;margin:0 auto}
+
+    /* MISSION */
+    .mission{position:relative;z-index:1;padding:80px 24px;max-width:960px;margin:0 auto}
+    .mission-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+    .mission-quote{font-family:'Playfair Display',serif;font-size:clamp(20px,3vw,32px);font-weight:700;font-style:italic;line-height:1.4;color:var(--text);margin-bottom:24px}
+    .mission-quote span{color:var(--gold)}
+    .mission-body{font-size:16px;color:var(--muted);line-height:1.9}
+    .mission-stats{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
+    .stat-num{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;background:linear-gradient(135deg,var(--gold),var(--purple-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .stat-label{font-size:13px;color:var(--muted);margin-top:4px}
+
+    /* STORY */
+    .story{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:100px 24px;position:relative;z-index:1}
+    .story-inner{max-width:780px;margin:0 auto}
+    .story-label{font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+    .story h2{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,52px);font-weight:900;margin-bottom:40px;line-height:1.1}
+    .story p{font-size:16px;color:var(--muted);line-height:1.9;margin-bottom:20px}
+    .story p strong{color:var(--text)}
+
+    /* TEAM */
+    .team{padding:100px 24px;position:relative;z-index:1}
+    .team-inner{max-width:1100px;margin:0 auto}
+    .team-header{text-align:center;margin-bottom:60px}
+    .team-label{font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+    .team h2{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,52px);font-weight:900}
+    .team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+    .team-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:28px;text-align:center;transition:all .25s}
+    .team-card:hover{border-color:rgba(201,168,76,.3);transform:translateY(-4px)}
+    .team-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:32px;border:2px solid var(--border)}
+    .team-name{font-size:16px;font-weight:700;margin-bottom:4px}
+    .team-role{font-size:13px;color:var(--gold);font-weight:600;margin-bottom:8px}
+    .team-bio{font-size:13px;color:var(--muted);line-height:1.6}
+    .team-prev{font-size:11px;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+
+    /* VALUES */
+    .values{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:100px 24px;position:relative;z-index:1}
+    .values-inner{max-width:1100px;margin:0 auto}
+    .values-header{margin-bottom:60px}
+    .values-label{font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+    .values h2{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,52px);font-weight:900}
+    .values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    .value-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:32px}
+    .value-icon{font-size:32px;margin-bottom:16px}
+    .value-name{font-size:18px;font-weight:800;margin-bottom:10px}
+    .value-desc{font-size:14px;color:var(--muted);line-height:1.7}
+
+    /* INVESTORS / BACKED BY */
+    .backed{padding:80px 24px;position:relative;z-index:1;text-align:center}
+    .backed-inner{max-width:900px;margin:0 auto}
+    .backed-label{font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:40px}
+    .backer-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:16px}
+    .backer{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 28px;font-size:15px;font-weight:700;color:var(--muted)}
+
+    /* PRESS */
+    .press{background:var(--bg2);border-top:1px solid var(--border);padding:80px 24px;position:relative;z-index:1}
+    .press-inner{max-width:1100px;margin:0 auto}
+    .press-label{font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+    .press h2{font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:40px}
+    .press-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+    .press-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:28px}
+    .press-source{font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+    .press-headline{font-size:16px;font-weight:700;line-height:1.4;margin-bottom:8px}
+    .press-date{font-size:12px;color:var(--muted)}
+
+    /* JOBS */
+    .jobs{padding:80px 24px 60px;position:relative;z-index:1}
+    .jobs-inner{max-width:860px;margin:0 auto}
+    .jobs-header{margin-bottom:40px}
+    .jobs-label{font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+    .jobs h2{font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,44px);font-weight:900;margin-bottom:12px}
+    .jobs-desc{font-size:16px;color:var(--muted);line-height:1.7}
+    .job-item{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:14px;transition:all .2s;cursor:pointer}
+    .job-item:hover{border-color:rgba(201,168,76,.3);transform:translateX(4px)}
+    .job-title{font-size:16px;font-weight:700;margin-bottom:4px}
+    .job-meta{font-size:13px;color:var(--muted)}
+    .job-tags{display:flex;gap:8px;flex-wrap:wrap}
+    .job-tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px}
+    .tag-full{background:rgba(74,222,128,.1);color:#4ade80}
+    .tag-remote{background:var(--purple-dim);color:var(--purple-light)}
+    .tag-senior{background:var(--gold-dim);color:var(--gold)}
+
+    /* FOOTER */
+    footer{background:var(--bg2);border-top:1px solid var(--border);padding:60px 24px 40px}
+    .footer-inner{max-width:1200px;margin:0 auto}
+    .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;padding-bottom:48px;border-bottom:1px solid var(--border)}
+    .footer-brand p{font-size:14px;color:var(--muted);margin-top:12px;line-height:1.7;max-width:260px}
+    .footer-col h4{font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text)}
+    .footer-col a{display:block;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:10px;transition:color .2s}
+    .footer-col a:hover{color:var(--gold)}
+    .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:32px;font-size:13px;color:var(--muted);flex-wrap:wrap;gap:12px}
+    .footer-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--gold)}
+
+    @media(max-width:900px){
+      nav{padding:16px 20px}
+      .nav-links{display:none}
+      .mission-grid{grid-template-columns:1fr}
+      .team-grid{grid-template-columns:repeat(2,1fr)}
+      .values-grid{grid-template-columns:1fr 1fr}
+      .press-grid{grid-template-columns:1fr}
+      .footer-top{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:600px){
+      .team-grid{grid-template-columns:1fr 1fr}
+      .values-grid{grid-template-columns:1fr}
+      .mission-stats{grid-template-columns:1fr 1fr}
+      .footer-top{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="15" stroke="#c9a84c" stroke-width="1.5"/>
+      <path d="M10 22 Q16 8 22 22" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <circle cx="16" cy="12" r="3" fill="#c9a84c" opacity=".6"/>
+    </svg>
+    Socrates
+  </a>
+  <div class="nav-links">
+    <a href="marketplace.html">Explore</a>
+    <a href="about.html" class="active">About</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="download.html">Download</a>
+    <a href="spec.html">Docs</a>
+    <a href="dashboard.html">Dashboard</a>
+  </div>
+  <div class="nav-cta">
+    <a href="marketplace.html" class="btn btn-ghost">Browse AI</a>
+    <a href="publish.html" class="btn btn-gold">Start Building</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-label">About Socrates</div>
+  <h1>The world's AI,<br/><em>organized for everyone.</em></h1>
+  <p>We believe access to powerful AI shouldn't require a PhD, a fat budget, or an engineering team. Socrates puts every AI tool ever built into a single place — built by anyone, run by everyone.</p>
+</section>
+
+<!-- MISSION -->
+<section class="mission">
+  <div class="mission-grid">
+    <div>
+      <div class="mission-quote">"The greatest tool in history should be the most <span>accessible</span> tool in history."</div>
+      <div class="mission-body">
+        Socrates was founded on a single belief: that AI is the most transformative technology ever created, and its benefits should not be locked behind corporate walls, expensive APIs, or technical gatekeepers.<br/><br/>
+        We built the infrastructure so that anyone — a student in Lagos, a developer in Seoul, a small business owner in Ohio — can access, use, build, and earn from AI tools in seconds, with no setup required.
+      </div>
+    </div>
+    <div class="mission-stats">
+      <div class="stat-box">
+        <div class="stat-num">48K+</div>
+        <div class="stat-label">AI tools published</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">2.1M</div>
+        <div class="stat-label">Monthly active users</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">92K</div>
+        <div class="stat-label">Active builders</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">$4.2M</div>
+        <div class="stat-label">Paid out to builders</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STORY -->
+<section class="story">
+  <div class="story-inner">
+    <div class="story-label">Our Story</div>
+    <h2>How Socrates came to be</h2>
+    <p>In early 2025, our founders were frustrated. They were builders — developers, researchers, designers — who kept running into the same wall: incredible AI models existed, but turning them into usable tools required months of engineering work and thousands of dollars in infrastructure. Meanwhile, the tools that did exist were scattered across hundreds of disconnected platforms, each with their own onboarding, billing, and APIs.</p>
+    <p><strong>There was no place where all AI lived.</strong> No hub. No standard. No marketplace where a non-technical person could discover and run a state-of-the-art AI tool in one click, and where the builder who created it could actually earn a living.</p>
+    <p>So we built it. Socrates launched in beta in January 2026 with 50 hand-picked builders and 500 tools. Within 30 days, it had grown to 10,000 tools and 200,000 users entirely through word of mouth. We knew then that we'd found something real.</p>
+    <p><strong>Today, Socrates is the largest open AI marketplace in the world.</strong> We're just getting started.</p>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="team">
+  <div class="team-inner">
+    <div class="team-header">
+      <div class="team-label">The Team</div>
+      <h2>Built by people who care</h2>
+    </div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar" style="background:var(--gold-dim)">👨‍💻</div>
+        <div class="team-name">Marcus Elliot</div>
+        <div class="team-role">CEO & Co-Founder</div>
+        <div class="team-bio">Former ML engineer at Anthropic. Built and scaled AI infrastructure for 100M+ users. Obsessed with making AI accessible.</div>
+        <div class="team-prev">Previously: Anthropic, Google DeepMind</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar" style="background:var(--purple-dim)">👩‍🔬</div>
+        <div class="team-name">Priya Nair</div>
+        <div class="team-role">CTO & Co-Founder</div>
+        <div class="team-bio">PhD in distributed systems from MIT. Designed the execution layer that lets Socrates run millions of AI calls a day at sub-second latency.</div>
+        <div class="team-prev">Previously: OpenAI, Stripe</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar" style="background:rgba(74,222,128,.1)">👨‍🎨</div>
+        <div class="team-name">Jordan Kim</div>
+        <div class="team-role">CPO & Co-Founder</div>
+        <div class="team-bio">Product lead behind two top-10 App Store apps. Brought the consumer-first philosophy that makes Socrates feel like magic to use.</div>
+        <div class="team-prev">Previously: Figma, Notion</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar" style="background:rgba(251,113,133,.1)">👩‍💼</div>
+        <div class="team-name">Amara Osei</div>
+        <div class="team-role">Head of Builders</div>
+        <div class="team-bio">Built the creator economy programs at two unicorns. Designed the 80% revenue share model and the Verified Builder program from the ground up.</div>
+        <div class="team-prev">Previously: Patreon, Substack</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES -->
+<section class="values">
+  <div class="values-inner">
+    <div class="values-header">
+      <div class="values-label">What We Believe</div>
+      <h2>Our values</h2>
+    </div>
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="value-icon">🌍</div>
+        <div class="value-name">Radical Access</div>
+        <div class="value-desc">The best AI should be a click away for anyone on earth. We eliminate every unnecessary barrier — signup friction, installation, cost, and technical complexity.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🔨</div>
+        <div class="value-name">Builders First</div>
+        <div class="value-desc">The people who create the tools that others use should be rewarded generously for their work. 80% is not a marketing line — it's a commitment.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🛡️</div>
+        <div class="value-name">Safety Without Compromise</div>
+        <div class="value-desc">Powerful AI in the wrong hands is dangerous. We run safety checks that would make most AI companies embarrassed by comparison — and we improve them every week.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">📖</div>
+        <div class="value-name">Quality Over Quantity</div>
+        <div class="value-desc">Trending is earned, not bought. Our ranking algorithm rewards tools that users actually love — measured by re-run rate, copy rate, and satisfaction, not clicks.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🤝</div>
+        <div class="value-name">Honest Business</div>
+        <div class="value-desc">Simple pricing. No dark patterns. No burying your cancellation button. We keep 20% of what you earn, and we work hard to make that 20% worth it.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🧠</div>
+        <div class="value-name">Curiosity Above All</div>
+        <div class="value-desc">Socrates didn't have answers. He had better questions. We build this platform in that spirit — curious, open, and convinced that wisdom comes from everywhere.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BACKED BY -->
+<section class="backed">
+  <div class="backed-inner">
+    <div class="backed-label">Backed By</div>
+    <div class="backer-grid">
+      <div class="backer">Sequoia Capital</div>
+      <div class="backer">a16z</div>
+      <div class="backer">Founders Fund</div>
+      <div class="backer">Y Combinator</div>
+      <div class="backer">SV Angel</div>
+      <div class="backer">Nat Friedman</div>
+      <div class="backer">Daniel Gross</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRESS -->
+<section class="press">
+  <div class="press-inner">
+    <div class="press-label">Press</div>
+    <h2>In the news</h2>
+    <div class="press-grid">
+      <div class="press-card">
+        <div class="press-source">TechCrunch</div>
+        <div class="press-headline">"Socrates is what every AI marketplace has failed to be — a place you actually want to spend time."</div>
+        <div class="press-date">March 2026</div>
+      </div>
+      <div class="press-card">
+        <div class="press-source">The Verge</div>
+        <div class="press-headline">"The Roblox of AI is real, and it's growing at a pace that should terrify every incumbent."</div>
+        <div class="press-date">February 2026</div>
+      </div>
+      <div class="press-card">
+        <div class="press-source">Forbes</div>
+        <div class="press-headline">"Socrates' creator economy is minting a new class of AI entrepreneurs earning six figures from tools they built in a weekend."</div>
+        <div class="press-date">April 2026</div>
+      </div>
+    </div>
+    <div style="margin-top:24px;font-size:14px;color:var(--muted)">Press inquiries: <a href="mailto:press@socrates.ai" style="color:var(--gold)">press@socrates.ai</a></div>
+  </div>
+</section>
+
+<!-- JOBS -->
+<section class="jobs">
+  <div class="jobs-inner">
+    <div class="jobs-header">
+      <div class="jobs-label">Careers</div>
+      <h2>Join the team</h2>
+      <p class="jobs-desc">We're a small team doing things at a scale that usually requires 10× the people. If that excites you, we want to talk.</p>
+    </div>
+
+    <div class="job-item">
+      <div>
+        <div class="job-title">Senior Infrastructure Engineer</div>
+        <div class="job-meta">Engineering · San Francisco or Remote</div>
+      </div>
+      <div class="job-tags">
+        <span class="job-tag tag-full">Full-time</span>
+        <span class="job-tag tag-remote">Remote OK</span>
+        <span class="job-tag tag-senior">Senior</span>
+      </div>
+    </div>
+
+    <div class="job-item">
+      <div>
+        <div class="job-title">Product Designer — Marketplace</div>
+        <div class="job-meta">Design · San Francisco</div>
+      </div>
+      <div class="job-tags">
+        <span class="job-tag tag-full">Full-time</span>
+        <span class="job-tag tag-senior">Senior</span>
+      </div>
+    </div>
+
+    <div class="job-item">
+      <div>
+        <div class="job-title">AI Safety Researcher</div>
+        <div class="job-meta">Research · San Francisco or Remote</div>
+      </div>
+      <div class="job-tags">
+        <span class="job-tag tag-full">Full-time</span>
+        <span class="job-tag tag-remote">Remote OK</span>
+      </div>
+    </div>
+
+    <div class="job-item">
+      <div>
+        <div class="job-title">Builder Relations Lead</div>
+        <div class="job-meta">Growth · Remote</div>
+      </div>
+      <div class="job-tags">
+        <span class="job-tag tag-full">Full-time</span>
+        <span class="job-tag tag-remote">Remote</span>
+      </div>
+    </div>
+
+    <div class="job-item">
+      <div>
+        <div class="job-title">ML Engineer — Ranking & Recommendations</div>
+        <div class="job-meta">Engineering · San Francisco</div>
+      </div>
+      <div class="job-tags">
+        <span class="job-tag tag-full">Full-time</span>
+        <span class="job-tag tag-senior">Senior</span>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;font-size:14px;color:var(--muted)">Don't see your role? We're always looking for exceptional people. Send us a note at <a href="mailto:careers@socrates.ai" style="color:var(--gold)">careers@socrates.ai</a></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo">Socrates</div>
+        <p>The Hub of AI. Every tool, every model, every person — all in one place.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="marketplace.html">Marketplace</a>
+        <a href="marketplace.html">Trending</a>
+        <a href="marketplace.html">New Releases</a>
+        <a href="marketplace.html">Collections</a>
+      </div>
+      <div class="footer-col">
+        <h4>Build</h4>
+        <a href="publish.html">Publish a Tool</a>
+        <a href="dashboard.html">Builder Dashboard</a>
+        <a href="spec.html">API Docs</a>
+        <a href="spec.html">SDK</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="about.html">About</a>
+        <a href="about.html">Blog</a>
+        <a href="about.html">Careers</a>
+        <a href="about.html">Press</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="about.html">Terms</a>
+        <a href="about.html">Privacy</a>
+        <a href="about.html">Content Policy</a>
+        <a href="about.html">Safety</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Socrates AI, Inc. All rights reserved.</span>
+      <span style="color:var(--gold)">The Hub of AI</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

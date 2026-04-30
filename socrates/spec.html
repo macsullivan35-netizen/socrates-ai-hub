@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Technical Spec — Socrates Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#9a6e0c;--gold-dim:rgba(154,110,12,.12);
+      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.09);
+      --green:#16a34a;--red:#dc2626;
+      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
+      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:12px;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+    /* NAV */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 32px;background:rgba(249,248,245,0.97);
+      border-bottom:1px solid var(--border);backdrop-filter:blur(20px);
+    }
+    .nav-logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:8px}
+    .nav-logo svg{width:28px;height:28px}
+    .btn{padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+
+    /* SIDEBAR TOC */
+    .toc{
+      width:260px;flex-shrink:0;padding:80px 0 40px;
+      position:fixed;top:0;left:0;bottom:0;
+      background:var(--bg2);border-right:1px solid var(--border);
+      overflow-y:auto;
+    }
+    .toc-inner{padding:24px 20px}
+    .toc-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+    .toc a{
+      display:block;font-size:13px;color:var(--muted);text-decoration:none;
+      padding:7px 12px;border-radius:8px;transition:all .2s;
+      border-left:2px solid transparent;margin-bottom:2px;
+    }
+    .toc a:hover{color:var(--text);background:var(--surface)}
+    .toc a.active{color:var(--gold);border-left-color:var(--gold);background:var(--gold-dim)}
+    .toc a.sub{padding-left:28px;font-size:12px}
+
+    /* CONTENT */
+    .content{margin-left:260px;padding:100px 80px 80px;max-width:960px;flex:1}
+
+    /* SECTIONS */
+    .spec-section{margin-bottom:72px;scroll-margin-top:80px}
+    .spec-section h2{
+      font-family:'Playfair Display',serif;font-size:32px;font-weight:900;
+      margin-bottom:8px;padding-bottom:16px;border-bottom:1px solid var(--border);
+    }
+    .spec-section h3{font-size:18px;font-weight:700;margin-top:32px;margin-bottom:12px;color:var(--text)}
+    .spec-section h4{font-size:14px;font-weight:700;margin-top:20px;margin-bottom:8px;color:var(--gold)}
+    .spec-section p{font-size:15px;color:var(--muted);line-height:1.8;margin-bottom:14px}
+    .spec-section ul,.spec-section ol{padding-left:24px;margin-bottom:14px}
+    .spec-section li{font-size:15px;color:var(--muted);line-height:1.8;margin-bottom:6px}
+    .spec-section li strong{color:var(--text)}
+    .spec-section a{color:var(--gold);text-decoration:none}
+    .spec-section a:hover{text-decoration:underline}
+
+    /* CALLOUT */
+    .callout{
+      border-radius:var(--radius);padding:18px 20px;margin:20px 0;
+      border-left:3px solid;font-size:14px;line-height:1.7;
+    }
+    .callout-gold{background:var(--gold-dim);border-color:var(--gold);color:var(--text)}
+    .callout-purple{background:var(--purple-dim);border-color:var(--purple);color:var(--text)}
+    .callout-green{background:rgba(74,222,128,.08);border-color:var(--green);color:var(--text)}
+    .callout-red{background:rgba(248,113,113,.08);border-color:var(--red);color:var(--text)}
+    .callout strong{display:block;margin-bottom:4px}
+
+    /* CODE */
+    pre{
+      background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);
+      padding:20px 24px;overflow-x:auto;margin:16px 0;
+    }
+    code{font-family:'JetBrains Mono',monospace;font-size:13px;color:#a3e635;line-height:1.7}
+    pre code{color:var(--text)}
+    .code-comment{color:var(--muted)}
+    .code-key{color:var(--gold)}
+    .code-str{color:#a3e635}
+    .code-num{color:var(--purple-light)}
+    .inline-code{
+      font-family:'JetBrains Mono',monospace;font-size:12px;
+      background:var(--surface);padding:2px 8px;border-radius:6px;
+      border:1px solid var(--border);color:var(--gold);
+    }
+
+    /* TABLE */
+    .spec-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+    .spec-table th{
+      background:var(--surface);border:1px solid var(--border);
+      padding:10px 14px;text-align:left;font-size:12px;font-weight:700;
+      text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+    }
+    .spec-table td{border:1px solid var(--border);padding:10px 14px;vertical-align:top;color:var(--muted);line-height:1.6}
+    .spec-table td strong{color:var(--text)}
+    .spec-table tr:hover td{background:rgba(255,255,255,.02)}
+
+    /* BADGE */
+    .badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-right:4px}
+    .badge-gold{background:var(--gold-dim);color:var(--gold)}
+    .badge-purple{background:var(--purple-dim);color:var(--purple-light)}
+    .badge-green{background:rgba(74,222,128,.1);color:var(--green)}
+    .badge-red{background:rgba(248,113,113,.1);color:var(--red)}
+
+    /* ARCH DIAGRAM */
+    .arch-box{
+      background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+      padding:32px;margin:20px 0;font-family:'JetBrains Mono',monospace;
+      font-size:13px;line-height:2;overflow-x:auto;
+    }
+
+    /* PHASE CARDS */
+    .phase-grid{display:flex;flex-direction:column;gap:16px;margin:16px 0}
+    .phase-card{
+      background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+      padding:20px 24px;display:flex;gap:20px;align-items:flex-start;
+    }
+    .phase-num{
+      width:40px;height:40px;border-radius:50%;
+      background:var(--gold-dim);border:1px solid rgba(201,168,76,.3);
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Playfair Display',serif;font-size:18px;font-weight:900;
+      color:var(--gold);flex-shrink:0;
+    }
+    .phase-title{font-size:15px;font-weight:700;margin-bottom:6px}
+    .phase-timeline{font-size:11px;color:var(--gold);font-weight:600;margin-bottom:8px;letter-spacing:.5px}
+    .phase-items{font-size:13px;color:var(--muted);line-height:1.8}
+
+    /* HERO SECTION */
+    .spec-hero{
+      background:var(--bg2);border:1px solid var(--border);border-radius:20px;
+      padding:40px;margin-bottom:48px;
+      background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(124,58,237,.06));
+    }
+    .spec-hero h1{font-family:'Playfair Display',serif;font-size:42px;font-weight:900;margin-bottom:12px}
+    .spec-hero .sh-meta{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:20px}
+    .spec-hero .sh-meta span{display:flex;align-items:center;gap:6px}
+
+    @media(max-width:900px){
+      .toc{display:none}
+      .content{margin-left:0;padding:80px 24px 60px}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="15" stroke="#c9a84c" stroke-width="1.5"/>
+      <path d="M10 22 Q16 8 22 22" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <circle cx="16" cy="12" r="3" fill="#c9a84c" opacity=".6"/>
+    </svg>
+    Socrates
+  </a>
+  <div style="display:flex;gap:12px">
+    <a href="marketplace.html" class="btn btn-ghost">Marketplace</a>
+    <a href="download.html" class="btn btn-ghost">⬇ Download</a>
+    <a href="dashboard.html" class="btn btn-ghost">Dashboard</a>
+  </div>
+</nav>
+
+<!-- TOC -->
+<nav class="toc">
+  <div class="toc-inner">
+    <div class="toc-title">Contents</div>
+    <a href="#overview">1. Platform Overview</a>
+    <a href="#primitives" class="sub">Core Primitives</a>
+    <a href="#architecture">2. Architecture</a>
+    <a href="#tech-stack" class="sub">Tech Stack</a>
+    <a href="#data-models">3. Data Models</a>
+    <a href="#tool-schema" class="sub">Tool Schema</a>
+    <a href="#user-schema" class="sub">User Schema</a>
+    <a href="#api">4. API Reference</a>
+    <a href="#api-tools" class="sub">Tools Endpoints</a>
+    <a href="#api-run" class="sub">Run Endpoint</a>
+    <a href="#pages">5. Pages & Flows</a>
+    <a href="#marketplace-page" class="sub">Marketplace</a>
+    <a href="#publish-flow" class="sub">Publish Flow</a>
+    <a href="#run-flow" class="sub">Run Flow</a>
+    <a href="#monetization">6. Monetization</a>
+    <a href="#safety">7. Safety & Trust</a>
+    <a href="#analytics">8. Analytics System</a>
+    <a href="#ranking">9. Ranking Algorithm</a>
+    <a href="#roadmap">10. Roadmap</a>
+  </div>
+</nav>
+
+<div class="content">
+
+  <!-- HERO -->
+  <div class="spec-hero">
+    <div style="font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:12px">Technical Specification</div>
+    <h1>Socrates Platform</h1>
+    <p style="font-size:16px;color:var(--muted);max-width:560px;line-height:1.7">
+      The Hub of AI — a universal marketplace and execution layer for AI tools, prompt apps, agents, models, and connectors. Built by anyone, scaled by the platform.
+    </p>
+    <div class="sh-meta">
+      <span>📄 Version 1.0</span>
+      <span>📅 April 2026</span>
+      <span>🔐 Confidential</span>
+      <span><span class="badge badge-gold">MVP</span> <span class="badge badge-purple">Spec</span></span>
+    </div>
+  </div>
+
+  <!-- 1. OVERVIEW -->
+  <div class="spec-section" id="overview">
+    <h2>1. Platform Overview</h2>
+    <p>Socrates is a two-sided marketplace platform where:</p>
+    <ul>
+      <li><strong>Builders</strong> create, publish, version, and monetize AI tools of any type</li>
+      <li><strong>Users</strong> discover, run, save, fork, and pay for those tools — in-browser, instantly, with zero setup</li>
+      <li><strong>The platform</strong> handles hosting, execution, billing, safety, ranking, and analytics</li>
+    </ul>
+
+    <div class="callout callout-gold">
+      <strong>Core Thesis</strong>
+      Most AI marketplaces are link lists. Socrates differentiates by running everything natively: every tool executes inside the platform, every run produces ranking data, every fork generates attribution revenue. The platform gets smarter and more defensible the more it is used.
+    </div>
+
+    <h3 id="primitives">Core Primitives</h3>
+    <table class="spec-table">
+      <thead><tr><th>Primitive</th><th>Description</th><th>Examples</th><th>Creator Type</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Prompt App</strong></td><td>Static or templated prompt with defined inputs/outputs. Simplest primitive.</td><td>Essay Writer, Email Generator, Translator</td><td>Anyone</td></tr>
+        <tr><td><strong>Chat Agent</strong></td><td>Persistent conversational AI with memory, persona, and optional tools.</td><td>D&D DM, Tutor Bot, Support Agent</td><td>Anyone</td></tr>
+        <tr><td><strong>Workflow Agent</strong></td><td>Multi-step autonomous executor. Can call tools, search web, write files.</td><td>Research Agent, PR Writer, SEO Auditor</td><td>Advanced builders</td></tr>
+        <tr><td><strong>Connector / Tool</strong></td><td>Callable function that integrates with an external API. Used by agents.</td><td>Gmail Reader, Slack Notifier, Stripe Lookup</td><td>Developers</td></tr>
+        <tr><td><strong>Model Wrapper</strong></td><td>Exposes a hosted or fine-tuned model via a clean API endpoint.</td><td>MedGPT, Legal-LM, Domain-specific models</td><td>ML Engineers</td></tr>
+        <tr><td><strong>Dataset</strong></td><td>Structured evaluation sets, training examples, or RAG corpora.</td><td>Med benchmarks, law case sets, FAQ corpora</td><td>Researchers</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 2. ARCHITECTURE -->
+  <div class="spec-section" id="architecture">
+    <h2>2. Architecture</h2>
+
+    <div class="arch-box">
+<span style="color:var(--gold)">┌──────────────────────────────────────────────────────────────────────┐</span>
+<span style="color:var(--gold)">│                         SOCRATES PLATFORM                            │</span>
+<span style="color:var(--gold)">└──────────────────────────────────────────────────────────────────────┘</span>
+<span style="color:var(--muted)">                                                                        </span>
+<span style="color:#a3e635">  FRONTEND (Next.js 15 / React 18)</span>
+  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+  │  Marketplace │  │  Tool Runner│  │  Studio     │  │  Dashboard  │
+  │  (Discovery) │  │  (Execute)  │  │  (Build)    │  │  (Analytics)│
+  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
+         └────────────────┴────────────────┴────────────────┘
+                                   │
+<span style="color:#a3e635">  API GATEWAY (Next.js API Routes + tRPC)</span>
+         ┌─────────────────────────┴──────────────────────────┐
+         │                                                     │
+<span style="color:var(--purple-light)">  CORE SERVICES                                   PLATFORM SERVICES</span>
+  ┌───────────────┐  ┌────────────┐               ┌────────────┐
+  │  Tool Service │  │ User/Auth  │               │  Ranking   │
+  │  (CRUD, ver.) │  │ Service    │               │  Engine    │
+  └───────────────┘  └────────────┘               └────────────┘
+  ┌───────────────┐  ┌────────────┐               ┌────────────┐
+  │  Run Service  │  │  Billing   │               │  Analytics │
+  │  (Execution)  │  │  Service   │               │  Pipeline  │
+  └───────────────┘  └────────────┘               └────────────┘
+  ┌───────────────┐  ┌────────────┐               ┌────────────┐
+  │  Safety Layer │  │  Notif.    │               │  Search    │
+  │  (Scan/Block) │  │  Service   │               │  (Elastic) │
+  └───────────────┘  └────────────┘               └────────────┘
+         │
+<span style="color:var(--gold)">  AI EXECUTION LAYER</span>
+  ┌─────────────────────────────────────────────────────────────┐
+  │  Sandboxed Runners  │  Model Router  │  Tool Orchestrator   │
+  │  (per-run VMs)      │  (GPT/Claude/  │  (LangChain/Custom)  │
+  │                     │  Gemini/etc.)  │                       │
+  └─────────────────────────────────────────────────────────────┘
+         │
+<span style="color:var(--muted)">  DATA LAYER</span>
+  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐
+  │ PostgreSQL │  │  Redis     │  │  S3/R2     │  │Elasticsearch│
+  │ (primary)  │  │  (cache/   │  │  (files,   │  │(search +   │
+  │            │  │   queues)  │  │  outputs)  │  │ analytics) │
+  └────────────┘  └────────────┘  └────────────┘  └────────────┘
+    </div>
+
+    <h3 id="tech-stack">Tech Stack</h3>
+    <table class="spec-table">
+      <thead><tr><th>Layer</th><th>Technology</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Frontend</strong></td><td>Next.js 15, React 18, Tailwind CSS, shadcn/ui</td><td>SSR for SEO, App Router for streaming, fast DX</td></tr>
+        <tr><td><strong>API</strong></td><td>tRPC + Next.js API Routes</td><td>Type-safe end-to-end, easy to extend</td></tr>
+        <tr><td><strong>Database</strong></td><td>PostgreSQL via Supabase</td><td>Relational integrity, auth, real-time subscriptions</td></tr>
+        <tr><td><strong>Cache / Queues</strong></td><td>Redis (Upstash)</td><td>Run queuing, rate limiting, session cache</td></tr>
+        <tr><td><strong>File Storage</strong></td><td>Cloudflare R2</td><td>Cheap egress, S3-compatible, outputs + assets</td></tr>
+        <tr><td><strong>Search</strong></td><td>Elasticsearch / Typesense</td><td>Full-text search across 48K+ tools with facets</td></tr>
+        <tr><td><strong>AI Execution</strong></td><td>Custom orchestration layer</td><td>Route to GPT-4, Claude 3.5, Gemini, local models</td></tr>
+        <tr><td><strong>Auth</strong></td><td>Clerk or Supabase Auth</td><td>OAuth (Google, GitHub), email/pass, SSO for enterprise</td></tr>
+        <tr><td><strong>Payments</strong></td><td>Stripe + Stripe Connect</td><td>Subscriptions, usage billing, builder payouts</td></tr>
+        <tr><td><strong>Analytics</strong></td><td>PostHog (self-hosted) + custom pipeline</td><td>Product analytics + proprietary ranking signals</td></tr>
+        <tr><td><strong>Hosting</strong></td><td>Vercel (frontend) + Railway/Fly.io (services)</td><td>Fast deploys, global edge, autoscale</td></tr>
+        <tr><td><strong>Execution Sandbox</strong></td><td>Firecracker microVMs / E2B</td><td>Isolated per-run execution for agents with tools</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 3. DATA MODELS -->
+  <div class="spec-section" id="data-models">
+    <h2>3. Data Models</h2>
+
+    <h3 id="tool-schema">Tool Schema</h3>
+    <pre><code><span class="code-comment">-- tools table (PostgreSQL)</span>
+<span class="code-key">CREATE TABLE</span> tools (
+  id            UUID        <span class="code-key">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  slug          TEXT        <span class="code-key">UNIQUE NOT NULL</span>,   <span class="code-comment">-- url-friendly id</span>
+  creator_id    UUID        <span class="code-key">REFERENCES</span> users(id),
+  name          TEXT        <span class="code-key">NOT NULL</span>,
+  description   TEXT        <span class="code-key">NOT NULL</span>,
+  type          tool_type   <span class="code-key">NOT NULL</span>,           <span class="code-comment">-- enum</span>
+  category      TEXT        <span class="code-key">NOT NULL</span>,
+  tags          TEXT[],
+  icon_emoji    TEXT,
+  
+  <span class="code-comment">-- The actual tool definition</span>
+  system_prompt TEXT,                                <span class="code-comment">-- for prompt apps / agents</span>
+  input_schema  JSONB       <span class="code-key">NOT NULL DEFAULT</span> <span class="code-str">'[]'</span>, <span class="code-comment">-- field definitions</span>
+  output_schema JSONB,                               <span class="code-comment">-- expected output structure</span>
+  sample_output TEXT,
+  model_config  JSONB,                               <span class="code-comment">-- model, temp, max_tokens, etc.</span>
+  tool_calls    JSONB,                               <span class="code-comment">-- for agents: callable connectors</span>
+  
+  <span class="code-comment">-- Versioning</span>
+  version       TEXT        <span class="code-key">NOT NULL DEFAULT</span> <span class="code-str">'1.0.0'</span>,
+  changelog     TEXT,
+  forked_from   UUID        <span class="code-key">REFERENCES</span> tools(id),
+  
+  <span class="code-comment">-- Monetization</span>
+  price_model   price_type  <span class="code-key">NOT NULL DEFAULT</span> <span class="code-str">'free'</span>,
+  price_amount  NUMERIC(10,2),
+  stripe_price_id TEXT,
+  
+  <span class="code-comment">-- Status</span>
+  status        tool_status <span class="code-key">NOT NULL DEFAULT</span> <span class="code-str">'pending_review'</span>,
+  is_featured   BOOLEAN     <span class="code-key">DEFAULT</span> <span class="code-num">false</span>,
+  
+  <span class="code-comment">-- Timestamps</span>
+  created_at    TIMESTAMPTZ <span class="code-key">DEFAULT</span> now(),
+  updated_at    TIMESTAMPTZ <span class="code-key">DEFAULT</span> now()
+);
+
+<span class="code-key">CREATE TYPE</span> tool_type    <span class="code-key">AS ENUM</span> (<span class="code-str">'prompt_app', 'chat_agent', 'workflow_agent', 'connector', 'model_wrapper', 'dataset'</span>);
+<span class="code-key">CREATE TYPE</span> price_type   <span class="code-key">AS ENUM</span> (<span class="code-str">'free', 'monthly', 'per_run', 'one_time'</span>);
+<span class="code-key">CREATE TYPE</span> tool_status  <span class="code-key">AS ENUM</span> (<span class="code-str">'pending_review', 'live', 'suspended', 'draft'</span>);</code></pre>
+
+    <h4>Input Schema (JSONB array)</h4>
+    <pre><code>[
+  {
+    <span class="code-key">"id"</span>:          <span class="code-str">"topic"</span>,
+    <span class="code-key">"label"</span>:       <span class="code-str">"Essay Topic"</span>,
+    <span class="code-key">"type"</span>:        <span class="code-str">"text"</span>,        <span class="code-comment">// text | textarea | select | number | file</span>
+    <span class="code-key">"placeholder"</span>: <span class="code-str">"e.g. The fall of Rome"</span>,
+    <span class="code-key">"required"</span>:    <span class="code-num">true</span>,
+    <span class="code-key">"options"</span>:     <span class="code-num">null</span>           <span class="code-comment">// only for "select" type</span>
+  },
+  {
+    <span class="code-key">"id"</span>:          <span class="code-str">"length"</span>,
+    <span class="code-key">"label"</span>:       <span class="code-str">"Length"</span>,
+    <span class="code-key">"type"</span>:        <span class="code-str">"select"</span>,
+    <span class="code-key">"options"</span>:     [<span class="code-str">"Short"</span>, <span class="code-str">"Medium"</span>, <span class="code-str">"Long"</span>],
+    <span class="code-key">"required"</span>:    <span class="code-num">true</span>
+  }
+]</code></pre>
+
+    <h3 id="user-schema">User Schema (abbreviated)</h3>
+    <pre><code><span class="code-key">CREATE TABLE</span> users (
+  id              UUID    <span class="code-key">PRIMARY KEY</span>,
+  username        TEXT    <span class="code-key">UNIQUE NOT NULL</span>,
+  email           TEXT    <span class="code-key">UNIQUE NOT NULL</span>,
+  role            TEXT    <span class="code-key">DEFAULT</span> <span class="code-str">'user'</span>,     <span class="code-comment">-- user | builder | verified_builder | admin</span>
+  stripe_account  TEXT,                           <span class="code-comment">-- Stripe Connect account ID</span>
+  balance_cents   INT     <span class="code-key">DEFAULT</span> <span class="code-num">0</span>,
+  created_at      TIMESTAMPTZ <span class="code-key">DEFAULT</span> now()
+);
+
+<span class="code-key">CREATE TABLE</span> runs (
+  id          UUID        <span class="code-key">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  tool_id     UUID        <span class="code-key">REFERENCES</span> tools(id),
+  user_id     UUID        <span class="code-key">REFERENCES</span> users(id),
+  inputs      JSONB       <span class="code-key">NOT NULL</span>,
+  output      TEXT,
+  model_used  TEXT,
+  tokens_in   INT,
+  tokens_out  INT,
+  latency_ms  INT,
+  rating      SMALLINT,  <span class="code-comment">-- 1-5 star, user-provided</span>
+  thumbs      SMALLINT,  <span class="code-comment">-- 1 = up, -1 = down</span>
+  re_ran      BOOLEAN    <span class="code-key">DEFAULT</span> <span class="code-num">false</span>,
+  created_at  TIMESTAMPTZ <span class="code-key">DEFAULT</span> now()
+);</code></pre>
+  </div>
+
+  <!-- 4. API -->
+  <div class="spec-section" id="api">
+    <h2>4. API Reference</h2>
+    <p>All endpoints are RESTful JSON. Authentication via Bearer JWT. Rate limits apply per user tier.</p>
+
+    <h3 id="api-tools">Tools Endpoints</h3>
+    <table class="spec-table">
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-green">GET</span></td><td><span class="inline-code">/api/tools</span></td><td>Optional</td><td>List tools. Supports ?category, ?type, ?sort, ?q, ?page.</td></tr>
+        <tr><td><span class="badge badge-green">GET</span></td><td><span class="inline-code">/api/tools/:slug</span></td><td>Optional</td><td>Get single tool details and input schema.</td></tr>
+        <tr><td><span class="badge badge-purple">POST</span></td><td><span class="inline-code">/api/tools</span></td><td>Required</td><td>Create a new tool draft. Returns tool ID.</td></tr>
+        <tr><td><span class="badge badge-gold">PATCH</span></td><td><span class="inline-code">/api/tools/:id</span></td><td>Owner</td><td>Update tool. Bumps version if system_prompt or schema changes.</td></tr>
+        <tr><td><span class="badge badge-red">DELETE</span></td><td><span class="inline-code">/api/tools/:id</span></td><td>Owner</td><td>Archive tool (soft delete). Does not remove run history.</td></tr>
+        <tr><td><span class="badge badge-purple">POST</span></td><td><span class="inline-code">/api/tools/:id/publish</span></td><td>Owner</td><td>Submit for review. Status: draft → pending_review.</td></tr>
+        <tr><td><span class="badge badge-purple">POST</span></td><td><span class="inline-code">/api/tools/:id/fork</span></td><td>Required</td><td>Fork a tool. Sets forked_from = original ID.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="api-run">Run Endpoint</h3>
+    <p>This is the most critical endpoint. It accepts user inputs, routes to the correct model, executes the tool, streams the output, and records analytics.</p>
+
+    <pre><code><span class="code-comment">// POST /api/tools/:slug/run</span>
+<span class="code-comment">// Request</span>
+{
+  <span class="code-key">"inputs"</span>: {
+    <span class="code-str">"topic"</span>:  <span class="code-str">"The fall of the Roman Empire"</span>,
+    <span class="code-str">"length"</span>: <span class="code-str">"Medium"</span>,
+    <span class="code-str">"tone"</span>:   <span class="code-str">"Academic"</span>
+  },
+  <span class="code-key">"stream"</span>: <span class="code-num">true</span>
+}
+
+<span class="code-comment">// Response (streaming SSE when stream: true)</span>
+<span class="code-key">event:</span> chunk
+<span class="code-key">data:</span> {"delta": "The Roman Empire, at its height..."}
+
+<span class="code-key">event:</span> chunk
+<span class="code-key">data:</span> {"delta": "...commanded over 70 million subjects..."}
+
+<span class="code-key">event:</span> done
+<span class="code-key">data:</span> {
+  "run_id":    <span class="code-str">"run_abc123"</span>,
+  "tokens_in":  <span class="code-num">312</span>,
+  "tokens_out": <span class="code-num">874</span>,
+  "latency_ms": <span class="code-num">1840</span>
+}</code></pre>
+
+    <div class="callout callout-purple">
+      <strong>Execution Flow</strong>
+      1. Validate inputs against tool's input_schema → 2. Check user's subscription/credit balance → 3. Render system prompt with input interpolation → 4. Route to configured model (with fallback) → 5. Stream response → 6. Write run record → 7. Trigger analytics event → 8. Charge if pay-per-run
+    </div>
+  </div>
+
+  <!-- 5. PAGES & FLOWS -->
+  <div class="spec-section" id="pages">
+    <h2>5. Pages &amp; Flows</h2>
+
+    <h3 id="marketplace-page">Marketplace Page <span class="inline-code">/explore</span></h3>
+    <ul>
+      <li><strong>Left sidebar:</strong> Categories (16+), Type filters, Price filter</li>
+      <li><strong>Top bar:</strong> Full-text search (Typesense), Sort (Trending / Rating / Newest / Most Runs)</li>
+      <li><strong>Tool cards:</strong> Icon, name, type badge, description (3 lines), author, rating, run count, price</li>
+      <li><strong>Hover:</strong> Quick-run button, Fork button, Save to collection</li>
+      <li><strong>Trending section:</strong> Top 6 by trending score (recalculated every 15 min)</li>
+      <li><strong>Pagination:</strong> Infinite scroll with virtualization (react-window)</li>
+    </ul>
+
+    <h3 id="publish-flow">Publish Flow <span class="inline-code">/studio/new</span></h3>
+    <ol>
+      <li><strong>Step 1 — Type Selection:</strong> Pick primitive (Prompt App / Agent / Chat / Model / Connector / Dataset)</li>
+      <li><strong>Step 2 — Details:</strong> Name (60 chars), description (200 chars), category, tags, icon emoji</li>
+      <li><strong>Step 3 — Inputs &amp; Prompt:</strong> Visual input field builder + system prompt editor with variable interpolation (<span class="inline-code">{{variable}}</span>)</li>
+      <li><strong>Step 4 — Test &amp; Price:</strong> Live test against the real model + pricing model (free / monthly / per-run)</li>
+      <li><strong>Step 5 — Review &amp; Publish:</strong> Terms acceptance → submit for review (auto + human queue)</li>
+    </ol>
+
+    <h3 id="run-flow">Run Flow <span class="inline-code">/tools/:slug/run</span></h3>
+    <ul>
+      <li>Tool landing page: description, examples, creator profile, rating histogram, recent outputs (anonymized)</li>
+      <li>Run panel: dynamic form generated from input_schema, sample-fill button, "Test with example" button</li>
+      <li>Execution: streaming output with typing animation, token counter, latency indicator</li>
+      <li>Post-run: thumbs up/down, star rating, copy, share link, fork, "Run again with changes"</li>
+      <li>History: Logged-in users see all previous runs for this tool with inputs/outputs</li>
+    </ul>
+  </div>
+
+  <!-- 6. MONETIZATION -->
+  <div class="spec-section" id="monetization">
+    <h2>6. Monetization</h2>
+
+    <h3>Revenue Models</h3>
+    <table class="spec-table">
+      <thead><tr><th>Model</th><th>How it works</th><th>Platform cut</th><th>Builder gets</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Free</strong></td><td>No charge. Platform subsidizes execution cost for marketing/retention.</td><td>—</td><td>—</td></tr>
+        <tr><td><strong>Monthly Subscription</strong></td><td>User pays $X/month via Stripe. Unlimited runs within limits.</td><td>20%</td><td>80%</td></tr>
+        <tr><td><strong>Pay-per-Run</strong></td><td>User pays $X per execution. Charged to Socrates Credits balance.</td><td>20%</td><td>80%</td></tr>
+        <tr><td><strong>One-Time Purchase</strong></td><td>Permanent access to a tool for a single payment.</td><td>20%</td><td>80%</td></tr>
+        <tr><td><strong>Enterprise License</strong></td><td>Private org deployment. Platform negotiates and manages.</td><td>25%</td><td>75%</td></tr>
+        <tr><td><strong>Fork Attribution</strong></td><td>When a forked tool earns revenue, 8% flows to the original creator.</td><td>—</td><td>8% upstream</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Socrates Credits</h3>
+    <p>Users maintain a credit balance (like Roblox Robux). Credits are spent on per-run tools and can be purchased in bundles. This decouples payment from individual micro-transactions and reduces friction.</p>
+    <ul>
+      <li><span class="inline-code">100 credits = $1.00</span></li>
+      <li>Bulk discounts: 5K credits for $45, 20K for $160</li>
+      <li>Builders set run cost in credits (minimum 1, typical 5–100)</li>
+      <li>Platform takes 20% of credits redeemed by each builder</li>
+    </ul>
+
+    <h3>Builder Payouts</h3>
+    <ul>
+      <li>Automatic monthly payout via Stripe Connect to builder's bank account</li>
+      <li>Minimum payout threshold: $25</li>
+      <li>Detailed earnings breakdown: by tool, by date, by revenue source</li>
+      <li>Real-time balance visible in dashboard</li>
+    </ul>
+  </div>
+
+  <!-- 7. SAFETY -->
+  <div class="spec-section" id="safety">
+    <h2>7. Safety &amp; Trust</h2>
+
+    <div class="callout callout-red">
+      <strong>Non-Negotiable</strong>
+      Safety infrastructure must be in place before any public launch. Without it, one viral bad-actor tool destroys the platform's reputation permanently.
+    </div>
+
+    <h3>Automated Checks (at publish time)</h3>
+    <ul>
+      <li><strong>Jailbreak detection:</strong> Scan system prompt for known bypass patterns using a fine-tuned classifier</li>
+      <li><strong>PII leak detection:</strong> Check if prompt could cause the model to output sensitive user data</li>
+      <li><strong>Malware patterns:</strong> Flag prompts designed to extract credentials, social-engineer, etc.</li>
+      <li><strong>CSAM / NSFW:</strong> Hard block on any content involving minors or explicit content (unless platform section is explicitly adult-gated)</li>
+      <li><strong>Output sampling:</strong> Run 10 internal test queries on every new tool before approval</li>
+    </ul>
+
+    <h3>Human Review Queue</h3>
+    <ul>
+      <li>All new tools require human review before going live (&lt;24h SLA)</li>
+      <li>AI-flagged tools go to a priority review queue</li>
+      <li>Verified Builders (track record, ID verified) get expedited review (&lt;4h)</li>
+    </ul>
+
+    <h3>Runtime Safety</h3>
+    <ul>
+      <li>Output moderation: Every run passes through a lightweight classifier before being returned to the user</li>
+      <li>Rate limiting: Per-user and per-tool to prevent abuse</li>
+      <li>User reporting: "Report" button on every tool and every run output</li>
+      <li>Tool suspension: Automated tripwire if report rate spikes above threshold</li>
+    </ul>
+  </div>
+
+  <!-- 8. ANALYTICS -->
+  <div class="spec-section" id="analytics">
+    <h2>8. Analytics System</h2>
+    <p>The analytics system is a core competitive moat. It produces signals that power ranking, helps builders improve their tools, and creates data network effects as usage grows.</p>
+
+    <h3>Events Captured (per run)</h3>
+    <pre><code>{
+  <span class="code-key">"event"</span>:       <span class="code-str">"tool_run"</span>,
+  <span class="code-key">"tool_id"</span>:     <span class="code-str">"uuid"</span>,
+  <span class="code-key">"user_id"</span>:     <span class="code-str">"uuid | null"</span>,
+  <span class="code-key">"session_id"</span>:  <span class="code-str">"uuid"</span>,
+  <span class="code-key">"latency_ms"</span>:  <span class="code-num">1840</span>,
+  <span class="code-key">"tokens_in"</span>:   <span class="code-num">312</span>,
+  <span class="code-key">"tokens_out"</span>:  <span class="code-num">874</span>,
+  <span class="code-key">"thumbs"</span>:      <span class="code-num">1</span>,        <span class="code-comment">// 1=up, -1=down, 0=none</span>
+  <span class="code-key">"re_ran"</span>:      <span class="code-num">false</span>,    <span class="code-comment">// did user run this tool again within session?</span>
+  <span class="code-key">"copied"</span>:      <span class="code-num">true</span>,     <span class="code-comment">// did user copy the output?</span>
+  <span class="code-key">"forked"</span>:      <span class="code-num">false</span>,
+  <span class="code-key">"source"</span>:      <span class="code-str">"trending"</span>,<span class="code-comment">// how they found it</span>
+  <span class="code-key">"category"</span>:    <span class="code-str">"writing"</span>,
+  <span class="code-key">"timestamp"</span>:   <span class="code-str">"ISO8601"</span>
+}</code></pre>
+
+    <h3>Builder Dashboard Metrics</h3>
+    <ul>
+      <li>Total runs / unique users / new users (by day, week, month)</li>
+      <li>Retention: % of users who ran again (by 1d, 7d, 30d cohort)</li>
+      <li>Success signals: thumbs up rate, copy rate, re-run rate</li>
+      <li>Revenue: earnings by tool, by day, by source (subscription / per-run / fork)</li>
+      <li>Search signals: what users searched to find the tool</li>
+      <li>AI Insights: platform-generated recommendations ("add a follow-up option to boost retention")</li>
+    </ul>
+  </div>
+
+  <!-- 9. RANKING -->
+  <div class="spec-section" id="ranking">
+    <h2>9. Ranking Algorithm</h2>
+    <p>Trending score is recalculated every 15 minutes. It rewards tools that users actually find valuable — not just ones with the most raw clicks.</p>
+
+    <div class="arch-box" style="font-family:'Inter',sans-serif;line-height:2">
+<span style="color:var(--gold)">TrendingScore = (</span>
+  <span style="color:var(--purple-light)">  RecencyWeight</span> × log(runs_last_48h + 1)
+  + <span style="color:var(--purple-light)">QualityWeight</span>  × (thumbs_up_rate × 0.4 + re_run_rate × 0.35 + copy_rate × 0.25)
+  + <span style="color:var(--purple-light)">GrowthWeight</span>   × (runs_today / avg_runs_last_7d)
+  + <span style="color:var(--purple-light)">RatingWeight</span>   × normalize(avg_rating, 0, 5)
+  − <span style="color:var(--red)">PenaltyWeight</span>  × report_rate
+<span style="color:var(--gold)">)</span>
+
+<span style="color:var(--muted)">Where:</span>
+  RecencyWeight = <span style="color:var(--gold)">1.0</span>  (most important — recency keeps things fresh)
+  QualityWeight = <span style="color:var(--gold)">2.5</span>  (highest — quality over volume)
+  GrowthWeight  = <span style="color:var(--gold)">0.8</span>  (momentum matters)
+  RatingWeight  = <span style="color:var(--gold)">0.6</span>  (lagging indicator, weighted lower)
+  PenaltyWeight = <span style="color:var(--gold)">5.0</span>  (strong deterrent for safety violations)
+    </div>
+
+    <div class="callout callout-green">
+      <strong>Anti-Gaming</strong>
+      The algorithm is designed so the only way to rank high is to build a genuinely useful tool. Raw clicks and self-promotion do not help. Quality signals (re-run rate, copy rate, thumbs) are weighted highest because they are hardest to fake.
+    </div>
+  </div>
+
+  <!-- 10. ROADMAP -->
+  <div class="spec-section" id="roadmap">
+    <h2>10. Roadmap</h2>
+
+    <div class="phase-grid">
+      <div class="phase-card">
+        <div class="phase-num">1</div>
+        <div>
+          <div class="phase-timeline">Months 1–2 · Foundation</div>
+          <div class="phase-title">MVP: Marketplace + Run + Publish</div>
+          <div class="phase-items">
+            ✓ Auth (Clerk) + user profiles<br>
+            ✓ Tool CRUD + 5-step publish flow<br>
+            ✓ In-browser tool runner (Prompt Apps only)<br>
+            ✓ Basic marketplace (browse + search)<br>
+            ✓ Safety: automated scan + human review queue<br>
+            ✓ Basic analytics (runs, unique users, thumbs)<br>
+            ✓ Free tools only at this stage
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-num">2</div>
+        <div>
+          <div class="phase-timeline">Months 3–4 · Monetization + Chat Agents</div>
+          <div class="phase-title">Revenue + Engagement</div>
+          <div class="phase-items">
+            ✓ Stripe Connect: subscriptions + credits system<br>
+            ✓ Builder payouts + earnings dashboard<br>
+            ✓ Chat Agent support (persistent conversation, memory)<br>
+            ✓ Fork + remix + attribution revenue<br>
+            ✓ Full builder analytics dashboard<br>
+            ✓ Trending algorithm v1<br>
+            ✓ Collections (save tools to playlists)
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-num">3</div>
+        <div>
+          <div class="phase-timeline">Months 5–7 · Agents + Connectors</div>
+          <div class="phase-title">Power Users + Ecosystem</div>
+          <div class="phase-items">
+            ✓ Workflow Agents (multi-step, tool-calling)<br>
+            ✓ Connector marketplace (Slack, Gmail, Notion, etc.)<br>
+            ✓ Sandboxed execution (Firecracker/E2B)<br>
+            ✓ Agent-to-agent calling (agents import other tools)<br>
+            ✓ API access for builders (external integrations)<br>
+            ✓ Verified Builder program<br>
+            ✓ AI Insights recommendations for builders
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-num">4</div>
+        <div>
+          <div class="phase-timeline">Months 8–12 · Models + Enterprise</div>
+          <div class="phase-title">Full Platform</div>
+          <div class="phase-items">
+            ✓ Model Wrapper support (hosted fine-tuned models)<br>
+            ✓ Dataset marketplace<br>
+            ✓ Enterprise: private org deployments<br>
+            ✓ White-label Socrates for companies<br>
+            ✓ SDK + CLI for developer builders<br>
+            ✓ Advanced ranking (personalized, not just trending)<br>
+            ✓ Builder program: grants, spotlight, conferences
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-gold" style="margin-top:32px">
+      <strong>Launch Strategy</strong>
+      Start with an invite-only builder beta (50–100 builders, hand-selected for quality). Let them publish 500+ tools before opening to the public. Launch publicly with "500 AI tools on day one" as the hook. This avoids the cold-start problem and ensures quality from the start — exactly what Roblox did by partnering with game developers before launch.
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+// Active TOC tracking
+const sections = document.querySelectorAll('.spec-section[id], h3[id]');
+const links = document.querySelectorAll('.toc a');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const id = e.target.id;
+      const link = document.querySelector(`.toc a[href="#${id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
