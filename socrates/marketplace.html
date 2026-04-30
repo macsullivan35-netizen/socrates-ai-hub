@@ -844,6 +844,36 @@ function thumbUp() {
 
 renderTools(TOOLS);
 updateKeyBtn();
+
+// Load real tools from Supabase and merge with demo tools
+async function loadRealTools() {
+  try {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co', 'sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+    const { data: realTools } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
+    if (realTools && realTools.length > 0) {
+      const mapped = realTools.map(t => ({
+        id: t.id,
+        name: t.name,
+        creator: t.profiles?.display_name || t.profiles?.username || 'Builder',
+        cat: t.category,
+        type: t.type,
+        desc: t.description,
+        icon: t.icon,
+        tags: t.tags || [],
+        price: t.price > 0 ? `$${t.price}/run` : 'Free',
+        rating: t.rating,
+        runs: t.runs,
+        system_prompt: t.system_prompt,
+        input_placeholder: t.input_placeholder,
+        real: true
+      }));
+      renderTools([...mapped, ...TOOLS]);
+    }
+  } catch(e) { /* fallback to demo tools */ }
+}
+loadRealTools();
 </script>
+<script type="module" src="js/auth-ui.js"></script>
 </body>
 </html>

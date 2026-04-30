@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings — Socrates</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.12);--purple:#6d28d9;--purple-dim:rgba(109,40,217,.09);--green:#16a34a;--bg:#f9f8f5;--bg2:#f2f0ea;--surface:#fff;--border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 60px;background:rgba(249,248,245,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+    .nav-logo{display:flex;align-items:center;gap:10px;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold);text-decoration:none}
+    .nav-links{display:flex;align-items:center;gap:32px}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
+    .nav-links a:hover{color:var(--text)}
+    .nav-cta{display:flex;gap:12px}
+    main{max-width:640px;margin:0 auto;padding:120px 24px 80px}
+    h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;margin-bottom:8px}
+    h1 span{color:var(--gold)}
+    .sub{color:var(--muted);font-size:15px;margin-bottom:48px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:20px}
+    .card h3{font-size:16px;font-weight:700;margin-bottom:6px}
+    .card p{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+    label{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px}
+    input[type=text],input[type=email],input[type=password],textarea{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
+    input:focus,textarea:focus{border-color:var(--gold)}
+    .btn{padding:11px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all .2s}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff}
+    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(154,110,12,.3)}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+    .saved-badge{display:none;background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.3);color:var(--green);font-size:12px;font-weight:600;padding:6px 14px;border-radius:100px}
+    .key-row{display:flex;gap:10px}
+    .key-row input{flex:1}
+    #notLoggedIn{text-align:center;padding:80px 24px}
+    #notLoggedIn h2{font-family:'Playfair Display',serif;font-size:28px;margin-bottom:12px}
+    #notLoggedIn p{color:var(--muted);margin-bottom:24px}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg viewBox="0 0 40 40" fill="none" style="width:32px;height:32px"><circle cx="20" cy="20" r="18" stroke="#9a6e0c" stroke-width="2"/><path d="M13 16c0-3.866 3.134-7 7-7s7 3.134 7 7c0 3.5-2.5 5.5-4 7v2" stroke="#9a6e0c" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="29" r="1.5" fill="#9a6e0c"/></svg>
+    Socrates
+  </a>
+  <div class="nav-links">
+    <a href="marketplace.html">Explore</a>
+    <a href="publish.html">Builders</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="download.html">Download</a>
+    <a href="dashboard.html">Dashboard</a>
+  </div>
+  <div class="nav-cta"></div>
+</nav>
+
+<main>
+  <div id="notLoggedIn" style="display:none">
+    <h2>Sign in to access Settings</h2>
+    <p>You need an account to manage your settings.</p>
+    <button class="btn btn-gold" onclick="openAuthModal('login')">Sign In</button>
+  </div>
+
+  <div id="settingsContent">
+    <h1>Your <span>Settings</span></h1>
+    <p class="sub">Manage your profile and API keys.</p>
+
+    <!-- PROFILE -->
+    <div class="card">
+      <h3>👤 Profile</h3>
+      <p>This is how you appear on the platform to other users and tool buyers.</p>
+      <label>Display Name</label>
+      <input type="text" id="displayName" placeholder="Your name" style="margin-bottom:14px"/>
+      <label>Bio</label>
+      <textarea id="bio" rows="3" placeholder="Tell people what you build..." style="margin-bottom:18px;resize:vertical"></textarea>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn btn-gold" onclick="saveProfile()">Save Profile</button>
+        <span id="profileSaved" class="saved-badge">✓ Saved</span>
+      </div>
+    </div>
+
+    <!-- OPENAI KEY -->
+    <div class="card">
+      <h3>🤖 OpenAI API Key</h3>
+      <p>Add your OpenAI key to run AI tools. It's stored securely in your account and never shared. Get a free key at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--gold)">platform.openai.com</a>.</p>
+      <label>API Key</label>
+      <div class="key-row">
+        <input type="password" id="openaiKey" placeholder="sk-..."/>
+        <button class="btn btn-ghost" onclick="toggleKeyVis()">👁</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+        <button class="btn btn-gold" onclick="saveApiKey()">Save Key</button>
+        <span id="keySaved" class="saved-badge">✓ Key saved</span>
+      </div>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div class="card">
+      <h3>📧 Account</h3>
+      <p>Your account email address.</p>
+      <label>Email</label>
+      <input type="email" id="accountEmail" disabled style="opacity:.6;cursor:not-allowed"/>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import { supabase, getUser, getProfile } from './js/supabase-client.js';
+  import './js/auth-ui.js';
+
+  let currentUser = null;
+
+  async function loadSettings() {
+    const user = await getUser();
+    if (!user) {
+      document.getElementById('settingsContent').style.display = 'none';
+      document.getElementById('notLoggedIn').style.display = 'block';
+      return;
+    }
+    currentUser = user;
+    document.getElementById('accountEmail').value = user.email;
+
+    const profile = await getProfile(user.id);
+    if (profile) {
+      document.getElementById('displayName').value = profile.display_name || '';
+      document.getElementById('bio').value = profile.bio || '';
+      if (profile.openai_key) {
+        document.getElementById('openaiKey').value = profile.openai_key;
+      }
+    }
+  }
+
+  window.saveProfile = async function() {
+    if (!currentUser) return;
+    const { error } = await supabase.from('profiles').update({
+      display_name: document.getElementById('displayName').value,
+      bio: document.getElementById('bio').value
+    }).eq('id', currentUser.id);
+    if (!error) {
+      const badge = document.getElementById('profileSaved');
+      badge.style.display = 'inline-flex';
+      setTimeout(() => badge.style.display = 'none', 3000);
+    }
+  };
+
+  window.saveApiKey = async function() {
+    if (!currentUser) return;
+    const key = document.getElementById('openaiKey').value.trim();
+    const { error } = await supabase.from('profiles').update({ openai_key: key }).eq('id', currentUser.id);
+    if (!error) {
+      const badge = document.getElementById('keySaved');
+      badge.style.display = 'inline-flex';
+      setTimeout(() => badge.style.display = 'none', 3000);
+      showToast('✅ API key saved — you can now run AI tools!');
+    }
+  };
+
+  window.toggleKeyVis = function() {
+    const input = document.getElementById('openaiKey');
+    input.type = input.type === 'password' ? 'text' : 'password';
+  };
+
+  loadSettings();
+</script>
+</body>
+</html>

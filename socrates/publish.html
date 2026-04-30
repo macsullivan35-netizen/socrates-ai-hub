@@ -785,6 +785,20 @@ function publish() {
 function resetForm() {
   location.reload();
 }
+
+// Save real tool to Supabase when published
+async function publishRealTool(toolData) {
+  try {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co', 'sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.openAuthModal('login'); return false; }
+    const { error } = await sb.from('tools').insert([{ ...toolData, creator_id: user.id, is_published: true }]);
+    return !error;
+  } catch(e) { return false; }
+}
+window.publishRealTool = publishRealTool;
 </script>
+<script type="module" src="js/auth-ui.js"></script>
 </body>
 </html>
