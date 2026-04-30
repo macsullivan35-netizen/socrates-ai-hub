@@ -101,6 +101,26 @@
       background:var(--purple-dim);border-color:var(--purple);color:var(--purple-light);
     }
 
+    /* CATEGORY SCROLL BAR */
+    .cat-scroll-wrap{
+      width:100%;overflow-x:auto;margin-bottom:16px;
+      scrollbar-width:none;-ms-overflow-style:none;
+    }
+    .cat-scroll-wrap::-webkit-scrollbar{display:none}
+    .cat-scroll{
+      display:flex;gap:6px;padding:2px 0;width:max-content;
+    }
+    .cat-pill{
+      display:flex;align-items:center;gap:6px;
+      padding:7px 16px;border-radius:100px;font-size:13px;font-weight:600;
+      border:1px solid var(--border);background:var(--surface);color:var(--muted);
+      cursor:pointer;transition:all .2s;white-space:nowrap;user-select:none;
+    }
+    .cat-pill:hover{border-color:var(--gold-light);color:var(--gold)}
+    .cat-pill.active{
+      background:var(--gold-dim);border-color:var(--gold);color:var(--gold);
+    }
+
     /* SORT ROW */
     .sort-row{
       display:flex;align-items:center;justify-content:space-between;
@@ -317,6 +337,29 @@
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" id="searchInput" placeholder="Search 48,000+ AI tools..." oninput="doSearch(this.value)"/>
+      </div>
+    </div>
+
+    <!-- CATEGORY SCROLL BAR -->
+    <div class="cat-scroll-wrap">
+      <div class="cat-scroll">
+        <div class="cat-pill active" onclick="catPillFilter(this,'all')">🌐 All</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'writing')">✍️ Writing</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'coding')">💻 Coding</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'study')">📚 Study</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'business')">💼 Business</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'creative')">🎨 Creative</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'research')">🔬 Research</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'health')">⚕️ Health</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'finance')">💰 Finance</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'fun')">🎮 Fun &amp; Games</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'automation')">🤖 Automation</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'translation')">🌐 Translation</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'science')">🔭 Science</div>
+        <div class="cat-pill" onclick="catPillFilter(this,'tutoring')">🎓 Tutoring</div>
+        <div class="cat-pill" onclick="filterType('model')">🧠 Models</div>
+        <div class="cat-pill" onclick="filterType('agent')">⚡ Agents</div>
+        <div class="cat-pill" onclick="filterType('tool')">🔗 Connectors</div>
       </div>
     </div>
 
@@ -559,6 +602,18 @@ function filterCat(cat) {
   activeFilter = cat;
   document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
   event.currentTarget.classList.add('active');
+  applyFilters();
+}
+
+function catPillFilter(el, cat) {
+  activeFilter = cat;
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  // Also sync sidebar
+  document.querySelectorAll('.sidebar-link').forEach(s => {
+    s.classList.remove('active');
+    if (s.textContent.toLowerCase().includes(cat)) s.classList.add('active');
+  });
   applyFilters();
 }
 
