@@ -301,23 +301,23 @@
   <aside class="sidebar">
     <div class="sidebar-section">
       <h4>Browse</h4>
-      <div class="sidebar-link active" onclick="filterCat('all')"><span class="icon">🌐</span>All Tools<span class="cnt">48K</span></div>
-      <div class="sidebar-link" onclick="filterCat('trending')"><span class="icon">🔥</span>Trending<span class="cnt">top</span></div>
-      <div class="sidebar-link" onclick="filterCat('new')"><span class="icon">✨</span>New Releases<span class="cnt">new</span></div>
-      <div class="sidebar-link" onclick="filterCat('free')"><span class="icon">🎁</span>Free Only<span class="cnt">free</span></div>
+      <div class="sidebar-link active" onclick="filterCat('all')"><span class="icon">🌐</span>All Tools</div>
+      <div class="sidebar-link" onclick="filterCat('trending')"><span class="icon">🔥</span>Trending</div>
+      <div class="sidebar-link" onclick="filterCat('new')"><span class="icon">✨</span>New Releases</div>
+      <div class="sidebar-link" onclick="filterCat('free')"><span class="icon">🎁</span>Free Only</div>
     </div>
     <div class="sidebar-section">
       <h4>Categories</h4>
-      <div class="sidebar-link" onclick="filterCat('writing')"><span class="icon">✍️</span>Writing<span class="cnt">4.8K</span></div>
-      <div class="sidebar-link" onclick="filterCat('coding')"><span class="icon">💻</span>Coding<span class="cnt">6.2K</span></div>
-      <div class="sidebar-link" onclick="filterCat('study')"><span class="icon">📚</span>Study<span class="cnt">3.5K</span></div>
-      <div class="sidebar-link" onclick="filterCat('business')"><span class="icon">💼</span>Business<span class="cnt">5.1K</span></div>
-      <div class="sidebar-link" onclick="filterCat('creative')"><span class="icon">🎨</span>Creative<span class="cnt">2.9K</span></div>
-      <div class="sidebar-link" onclick="filterCat('research')"><span class="icon">🔬</span>Research<span class="cnt">1.8K</span></div>
-      <div class="sidebar-link" onclick="filterCat('health')"><span class="icon">⚕️</span>Health<span class="cnt">1.5K</span></div>
-      <div class="sidebar-link" onclick="filterCat('finance')"><span class="icon">💰</span>Finance<span class="cnt">1.7K</span></div>
-      <div class="sidebar-link" onclick="filterCat('fun')"><span class="icon">🎮</span>Fun & Games<span class="cnt">3.2K</span></div>
-      <div class="sidebar-link" onclick="filterCat('automation')"><span class="icon">🤖</span>Automation<span class="cnt">4K</span></div>
+      <div class="sidebar-link" onclick="filterCat('writing')"><span class="icon">✍️</span>Writing</div>
+      <div class="sidebar-link" onclick="filterCat('coding')"><span class="icon">💻</span>Coding</div>
+      <div class="sidebar-link" onclick="filterCat('study')"><span class="icon">📚</span>Study</div>
+      <div class="sidebar-link" onclick="filterCat('business')"><span class="icon">💼</span>Business</div>
+      <div class="sidebar-link" onclick="filterCat('creative')"><span class="icon">🎨</span>Creative</div>
+      <div class="sidebar-link" onclick="filterCat('research')"><span class="icon">🔬</span>Research</div>
+      <div class="sidebar-link" onclick="filterCat('health')"><span class="icon">⚕️</span>Health</div>
+      <div class="sidebar-link" onclick="filterCat('finance')"><span class="icon">💰</span>Finance</div>
+      <div class="sidebar-link" onclick="filterCat('fun')"><span class="icon">🎮</span>Fun & Games</div>
+      <div class="sidebar-link" onclick="filterCat('automation')"><span class="icon">🤖</span>Automation</div>
     </div>
     <div class="sidebar-section">
       <h4>AI Type</h4>
@@ -336,7 +336,7 @@
     <div class="top-bar">
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search 48,000+ AI tools..." oninput="doSearch(this.value)"/>
+        <input type="text" id="searchInput" placeholder="Search AI tools..." oninput="doSearch(this.value)"/>
       </div>
     </div>
 
@@ -373,7 +373,7 @@
     </div>
 
     <div class="sort-row">
-      <span class="results">Showing <strong id="resultCount">48</strong> results</span>
+      <span class="results">Showing <strong id="resultCount">12</strong> tools</span>
       <select class="sort-select" onchange="doSort(this.value)">
         <option value="trending">Sort: Trending</option>
         <option value="rating">Sort: Top Rated</option>
@@ -435,7 +435,7 @@
 
 <script>
 const TOOLS = [
-  {id:1,icon:'✍️',bg:'rgba(201,168,76,.15)',name:'Essay Master Pro',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'writing',desc:'Write college-level essays on any topic instantly. Includes thesis, body, citations, and revision mode. Used by 2M+ students worldwide.',rating:4.9,runs:'2.1M',price:'free',author:'@writergod',trending:true,
+  {id:1,icon:'✍️',bg:'rgba(201,168,76,.15)',name:'Essay Master Pro',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'writing',desc:'Write college-level essays on any topic instantly. Includes thesis, body, citations, and revision mode.',rating:4.9,runs:'',price:'free',author:'Socrates',trending:true,
    sys:'You are an expert academic essay writer. Write well-structured, college-level essays with a clear thesis, developed body paragraphs with evidence, and a conclusion. Match the requested tone and length. End with 2-3 suggested citations in MLA format.',
    fields:[
      {label:'Essay Topic',id:'topic',type:'text',placeholder:'e.g. The impact of social media on democracy'},
@@ -444,7 +444,7 @@ const TOOLS = [
    ],
    sample:'## The Impact of Social Media on Democracy\n\nIn the digital age, social media platforms have fundamentally reshaped the landscape of democratic participation. From Twitter\'s role in the Arab Spring to Facebook\'s influence in the 2016 U.S. Presidential Election, these tools have proven to be double-edged swords in the hands of democratic societies.\n\n### Thesis\nWhile social media democratizes information and amplifies civic voices, its algorithmic design and susceptibility to manipulation pose existential threats to informed democratic discourse.\n\n### Body I: The Democratization of Voice\nHistorically, political discourse was controlled by gatekeepers — newspapers, television networks, and establishment figures...\n\n[Full 1,000-word essay continues with citations from Habermas, Sunstein, and Pariser...]'
   },
-  {id:2,icon:'🐛',bg:'rgba(124,58,237,.15)',name:'Debug Wizard',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'coding',desc:'Paste your broken code and this agent finds the bug, explains it in plain English, and outputs a corrected version with inline comments.',rating:4.8,runs:'1.8M',price:'$4/mo',author:'@devtools_ai',trending:true,
+  {id:2,icon:'🐛',bg:'rgba(124,58,237,.15)',name:'Debug Wizard',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'coding',desc:'Paste your broken code and this agent finds the bug, explains it in plain English, and outputs a corrected version with inline comments.',rating:4.8,runs:'',price:'free',author:'Socrates',trending:true,
    sys:'You are an expert software engineer and debugger. Analyze the provided code carefully, identify all bugs, explain each bug clearly in plain English, then provide the fully corrected code with inline comments explaining what was fixed and why.',
    fields:[
      {label:'Paste your broken code',id:'code',type:'textarea',placeholder:'def calculate_avg(nums):\n    return sum(nums) / len(nums)\n\nprint(calculate_avg([]))'},
@@ -453,7 +453,7 @@ const TOOLS = [
    ],
    sample:'## Bug Found: ZeroDivisionError\n\n**Root Cause:** The function divides by `len(nums)` without checking if the list is empty. When an empty list is passed, `len([])` returns 0, causing a ZeroDivisionError.\n\n**Fixed Code:**\n```python\ndef calculate_avg(nums):\n    if not nums:  # Guard against empty list\n        return 0  # or raise ValueError("Cannot average empty list")\n    return sum(nums) / len(nums)\n\nprint(calculate_avg([]))  # Returns: 0\nprint(calculate_avg([1, 2, 3]))  # Returns: 2.0\n```\n\n**What changed:** Added an early return guard. The function now safely handles empty inputs.'
   },
-  {id:3,icon:'💰',bg:'rgba(74,222,128,.15)',name:'Stock Analyst Bot',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'finance',desc:'Give it a ticker symbol. It reads SEC filings, recent news, analyst sentiment, and technical indicators to generate a full analyst report.',rating:4.7,runs:'940K',price:'$12/mo',author:'@quant_labs',trending:true,
+  {id:3,icon:'💰',bg:'rgba(74,222,128,.15)',name:'Stock Analyst Bot',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'finance',desc:'Give it a ticker symbol. It reads SEC filings, recent news, analyst sentiment, and technical indicators to generate a full analyst report.',rating:4.7,runs:'',price:'free',author:'Socrates',trending:true,
    sys:'You are a professional financial analyst. For the given stock ticker, produce a structured analyst report with: Executive Summary, Key Financials (estimated from general knowledge), Bull Case, Bear Case, Risks, and a Rating (Strong Buy / Buy / Hold / Sell). Note that data is based on training knowledge and may not be current.',
    fields:[
      {label:'Stock Ticker',id:'ticker',type:'text',placeholder:'e.g. AAPL, TSLA, NVDA'},
@@ -462,7 +462,7 @@ const TOOLS = [
    ],
    sample:'## NVDA (NVIDIA Corporation) — Analyst Report\n**Rating: STRONG BUY** | Target Price: $1,340 | Current: $1,198\n\n### Executive Summary\nNVIDIA continues to dominate the AI accelerator market with ~80% market share in data center GPUs. The company\'s H100 and upcoming B200 Blackwell chips remain the gold standard for AI training workloads...\n\n### Key Financials\n- Revenue (TTM): $79.8B (+122% YoY)\n- Net Income: $29.7B\n- P/E Ratio: 42x (premium justified by growth)\n- Free Cash Flow: $26.9B\n\n### Bull Case: AI infrastructure spending shows no signs of deceleration...\n### Bear Case: Competition from AMD MI300X and custom silicon from hyperscalers...'
   },
-  {id:4,icon:'🧠',bg:'rgba(251,113,133,.15)',name:'MedAssist GPT',type:'model',typeName:'Fine-Tuned Model',typeClass:'type-model',cat:'health',desc:'A medically fine-tuned model trained on 2M+ clinical case studies, drug interactions, and medical guidelines. For professionals and researchers.',rating:4.9,runs:'520K',price:'$29/mo',author:'@medai_labs',
+  {id:4,icon:'🧠',bg:'rgba(251,113,133,.15)',name:'MedAssist GPT',type:'model',typeName:'Fine-Tuned Model',typeClass:'type-model',cat:'health',desc:'A medical knowledge assistant for healthcare professionals and researchers covering drug interactions, diagnoses, and medical guidelines.',rating:4.9,runs:'',price:'free',author:'Socrates',
    sys:'You are a medical knowledge assistant for healthcare professionals and researchers. Provide structured, clinically-oriented responses including differential diagnoses, key diagnostic steps, and management considerations. Always end with: "⚠️ For educational reference only — verify with a licensed physician before clinical application."',
    fields:[
      {label:'Clinical Query',id:'query',type:'textarea',placeholder:'e.g. Patient presents with acute onset chest pain radiating to left arm, diaphoresis, and shortness of breath. Vitals: BP 160/100, HR 92. Differential diagnosis?'},
@@ -470,7 +470,7 @@ const TOOLS = [
    ],
    sample:'## Clinical Assessment\n**Chief Complaint:** Acute onset chest pain with radiation, diaphoresis, and dyspnea\n\n### Priority Differential (Ranked by urgency)\n1. **STEMI / NSTEMI** (HIGH PRIORITY — rule out immediately)\n   - Classic presentation with radiation to left arm\n   - Obtain 12-lead ECG within 10 minutes\n   - Troponin I and T, BNP, CBC, CMP stat\n\n2. **Aortic Dissection**\n   - Hypertension (160/100) is a risk factor\n   - Consider if pain is tearing in character\n\n3. **Pulmonary Embolism**\n   - Rule out with Wells Score + D-Dimer\n\n### Immediate Actions\n- 12-lead ECG stat\n- Aspirin 325mg PO (if not contraindicated)\n- IV access x2, O2 if SpO2 < 94%\n- Cardiology consult ASAP\n\n⚠️ *For clinical reference only. Always verify with attending physician.*'
   },
-  {id:5,icon:'🎮',bg:'rgba(251,191,36,.15)',name:'DungeonMaster AI',type:'chat',typeName:'Chat Agent',typeClass:'type-chat',cat:'fun',desc:'A full D&D dungeon master that remembers your campaign, tracks NPCs, world lore, inventory, and responds to every player action with rich narration.',rating:5.0,runs:'3.4M',price:'free',author:'@gameai_studio',trending:true,
+  {id:5,icon:'🎮',bg:'rgba(251,191,36,.15)',name:'DungeonMaster AI',type:'chat',typeName:'Chat Agent',typeClass:'type-chat',cat:'fun',desc:'A full D&D dungeon master that remembers your campaign, tracks NPCs, world lore, inventory, and responds to every player action with rich narration.',rating:5.0,runs:'',price:'free',author:'Socrates',trending:true,
    sys:'You are a master Dungeons & Dragons dungeon master. Create immersive, vivid narrative responses to player actions. Describe the environment with rich sensory detail, voice NPCs distinctly, introduce tension and mystery. Always end your response with a clear prompt for what the player does next. Track character stats mentioned by the player.',
    fields:[
      {label:'Character Name & Class',id:'char',type:'text',placeholder:'e.g. Theron, a level 5 Wood Elf Ranger'},
@@ -479,7 +479,7 @@ const TOOLS = [
    ],
    sample:'*The heavy oak door of the Rusty Flagon swings open with a creak, revealing a dimly lit tavern thick with pipe smoke and the smell of cheap ale.*\n\nYou are Theron, a Wood Elf Ranger of impressive renown. As you enter, a dozen pairs of eyes flick toward you — then quickly away. Travelers, merchants, a couple of dwarven miners nursing their mugs.\n\nIn the far corner, a hooded figure sits alone at a table, nursing a dark drink. Their hood is pulled low, but you notice — with your 15 Perception — that their hands are too smooth to be a laborer\'s. A dagger hilt gleams at their belt: not the common iron of a farmer\'s tool, but polished silver with an insignia you half-recognize...\n\n*The Thieves\' Guild of Calimport.*\n\n**What do you do?**\n[ You have: Longbow, 20 arrows, Hunter\'s Mark (1/day remaining), 34 HP ]'
   },
-  {id:6,icon:'📧',bg:'rgba(99,179,237,.15)',name:'Cold Email Crusher',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'business',desc:'Write high-converting cold outreach emails for any industry, role, or product. Just add the company name, contact name, and your offer.',rating:4.6,runs:'1.2M',price:'free',author:'@sales_gpt',
+  {id:6,icon:'📧',bg:'rgba(99,179,237,.15)',name:'Cold Email Crusher',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'business',desc:'Write high-converting cold outreach emails for any industry, role, or product. Just add the company name, contact name, and your offer.',rating:4.6,runs:'',price:'free',author:'Socrates',
    sys:'You are an expert sales copywriter specializing in cold email outreach. Write a concise, personalized cold email with a compelling subject line, a brief value-focused opening, 2-3 bullet points on benefits, and a low-friction call to action. Keep it under 150 words in the body. Output the subject line separately at the top.',
    fields:[
      {label:'Your Name & Company',id:'sender',type:'text',placeholder:'e.g. Alex Chen, Acme SaaS'},
@@ -489,7 +489,7 @@ const TOOLS = [
    ],
    sample:'Subject: Cut TechCorp\'s churn by 30% — 8 minutes of your time?\n\nHi Sarah,\n\nI noticed TechCorp recently expanded your SaaS offering into the enterprise segment — congrats on the growth.\n\nI\'m Alex from Acme SaaS. We help companies like yours reduce customer churn by an average of 30% within 90 days, using behavioral AI that predicts at-risk accounts before they cancel.\n\nThree quick things that might be relevant:\n→ We work with 40+ SaaS companies in your revenue range\n→ Average ROI is 8x in the first 6 months\n→ Setup takes under a day, zero engineering required\n\nWould you be open to an 8-minute call this week to see if there\'s a fit? I\'ll show you exactly how we\'d apply this to TechCorp\'s specific use case.\n\nBest,\nAlex Chen\nAcme SaaS | alex@acmesaas.com'
   },
-  {id:7,icon:'📝',bg:'rgba(201,168,76,.15)',name:'Resume Optimizer AI',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'business',desc:'Paste your resume and a job description. This tool rewrites your resume to be ATS-optimized, keyword-matched, and tailored for the specific role.',rating:4.8,runs:'1.5M',price:'free',author:'@careerboost',
+  {id:7,icon:'📝',bg:'rgba(201,168,76,.15)',name:'Resume Optimizer AI',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'business',desc:'Paste your resume and a job description. This tool rewrites your resume to be ATS-optimized, keyword-matched, and tailored for the specific role.',rating:4.8,runs:'',price:'free',author:'Socrates',
    sys:'You are an expert resume writer and ATS optimization specialist. Rewrite the provided resume to be tailored to the job description with strong keyword matching, achievement-focused bullet points with metrics where possible, and a compelling summary. End with an ATS score estimate (out of 100) and 2 tips to improve further.',
    fields:[
      {label:'Your Current Resume',id:'resume',type:'textarea',placeholder:'Paste your resume text here...'},
@@ -497,7 +497,7 @@ const TOOLS = [
    ],
    sample:'## Optimized Resume — Software Engineer @ Google\n\n**JANE DOE**\njane@email.com | LinkedIn | GitHub | (555) 000-0000\n\n**SUMMARY**\nFull-stack software engineer with 5 years building scalable, cloud-native applications. Proven track record reducing system latency by 40% and shipping features that serve 10M+ users. Skilled in distributed systems, Python, Go, and Kubernetes.\n\n**EXPERIENCE**\n\n**Senior Software Engineer — Startup Corp** (2022–Present)\n• Led redesign of data pipeline (Python, Apache Kafka) reducing processing latency by 40%\n• Built microservices architecture serving 10M+ DAU with 99.99% uptime\n• Mentored team of 3 junior engineers, accelerating sprint velocity by 25%\n\n*✅ ATS Score: 94/100 | Keyword match: 87% | Estimated callback rate: High*'
   },
-  {id:8,icon:'🌍',bg:'rgba(99,179,237,.15)',name:'Universal Translator Pro',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'writing',desc:'Translate any text into 95+ languages with cultural context, idiom adaptation, and tone preservation. Far beyond word-for-word translation.',rating:4.7,runs:'2.8M',price:'free',author:'@polyglot_ai',trending:true,
+  {id:8,icon:'🌍',bg:'rgba(99,179,237,.15)',name:'Universal Translator Pro',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'writing',desc:'Translate any text into 95+ languages with cultural context, idiom adaptation, and tone preservation. Far beyond word-for-word translation.',rating:4.7,runs:'',price:'free',author:'Socrates',trending:true,
    sys:'You are an expert linguist and cultural translator. Translate the given text into the target language, preserving the original tone and adapting idioms so they feel natural to native speakers — not word-for-word. After the translation, add a brief "Translator\'s Note" explaining any cultural adaptations or idiom substitutions you made.',
    fields:[
      {label:'Text to Translate',id:'text',type:'textarea',placeholder:'Enter text in any language...'},
@@ -506,7 +506,7 @@ const TOOLS = [
    ],
    sample:'**Original (English):** "It\'s raining cats and dogs outside — I wouldn\'t go out there without an umbrella if I were you!"\n\n**Spanish (Latin American):** "Está lloviendo a cántaros afuera — ¡Yo que tú no saldría sin paraguas ni loco!"\n\n*Translation note: "lloviendo a cántaros" (raining in pitchers) is the Spanish equivalent of "raining cats and dogs." "ni loco" adds natural emphasis typical in Latin American casual speech. Direct translation of the English idiom would sound unnatural.*\n\n**Confidence:** 98% | **Dialect:** Mexican Spanish | **Register:** Casual'
   },
-  {id:9,icon:'📊',bg:'rgba(74,222,128,.15)',name:'Data Analyst Copilot',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'research',desc:'Upload a CSV or paste raw data. This agent cleans it, finds patterns, generates visualizations descriptions, and gives you a full analysis report.',rating:4.8,runs:'780K',price:'$8/mo',author:'@datalab_ai',
+  {id:9,icon:'📊',bg:'rgba(74,222,128,.15)',name:'Data Analyst Copilot',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'research',desc:'Upload a CSV or paste raw data. This agent cleans it, finds patterns, generates visualizations descriptions, and gives you a full analysis report.',rating:4.8,runs:'',price:'free',author:'Socrates',
    sys:'You are an expert data analyst. Analyze the provided data to identify key patterns, trends, correlations, and anomalies. Structure your response with: (1) Key Findings as numbered insights, (2) What the data suggests, (3) Specific actionable recommendations. Be precise and data-driven.',
    fields:[
      {label:'Paste your data (CSV or describe it)',id:'data',type:'textarea',placeholder:'Month, Revenue, Users, Churn\nJan, 42000, 1200, 4.2%\nFeb, 48000, 1380, 3.8%\n...'},
@@ -514,7 +514,7 @@ const TOOLS = [
    ],
    sample:'## Data Analysis Report\n**Dataset:** 12-month SaaS metrics (Revenue, Users, Churn)\n\n### Key Findings\n1. **Churn Correlation:** Strong negative correlation (-0.82) between monthly active usage and churn rate. Users who log in < 3x/month churn at 8.4% vs 1.2% for daily users.\n\n2. **Revenue Trend:** CAGR of 34%. Revenue growth accelerated in Q3 (+22% QoQ) coinciding with enterprise plan launch.\n\n3. **Anomaly Detected:** August shows a churn spike (6.7%) despite revenue growth. Cross-referencing: this coincides with a 4-hour outage on Aug 14.\n\n### Recommendations\n→ Launch an engagement nudge campaign for users < 3 logins/month\n→ Investigate infrastructure reliability — outage → churn causal link is strong\n→ The enterprise segment (launched July) shows 0.4% churn — double down on sales there\n\n*Chart: [Revenue vs Churn scatter plot — negative correlation visible]*'
   },
-  {id:10,icon:'🎵',bg:'rgba(251,113,133,.15)',name:'Lyric & Song Writer',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'creative',desc:'Generate original song lyrics in any genre, style, or mood. From country ballads to rap verses to pop hooks — full songs with verses, chorus, bridge.',rating:4.6,runs:'1.1M',price:'free',author:'@music_gpt',
+  {id:10,icon:'🎵',bg:'rgba(251,113,133,.15)',name:'Lyric & Song Writer',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'creative',desc:'Generate original song lyrics in any genre, style, or mood. From country ballads to rap verses to pop hooks — full songs with verses, chorus, bridge.',rating:4.6,runs:'',price:'free',author:'Socrates',
    sys:'You are a professional songwriter and lyricist. Write original, emotionally resonant song lyrics in the requested genre and mood. Structure clearly with labeled [Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], [Outro] sections. The lyrics should feel authentic to the genre — use genre-appropriate language, rhythm, and imagery.',
    fields:[
      {label:'Song Topic / Feeling',id:'topic',type:'text',placeholder:'e.g. Leaving your hometown to chase your dreams'},
@@ -523,7 +523,7 @@ const TOOLS = [
    ],
    sample:'**Title: "Open Roads"**\n*Genre: Country | Mood: Bittersweet*\n\n**[Verse 1]**\nI packed my bag on a Sunday morning\nKissed my mama\'s cheek without a warning\nThe old screen door still singing in the breeze\nLeft my footprints on the Georgia leaves\n\n**[Pre-Chorus]**\nThey said this town is everything I need\nBut something in my bones says I\'ve gotta leave\n\n**[Chorus]**\nSo I\'m driving into open roads\nWhere the sky don\'t have a ceiling\nLeaving everything I\'ve known\nFor a life that\'s worth believing\nI might cry when the city lights appear\nBut I\'ll smile when I remember — I chose to be here\n\n**[Verse 2]**\nFound a coffee shop in Austin, Texas\nWhere the music never stops and nobody second-guesses...'
   },
-  {id:11,icon:'🤖',bg:'rgba(124,58,237,.15)',name:'Workflow Automator',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'automation',desc:'Describe a repetitive task in plain English. This agent builds a step-by-step automation workflow you can deploy immediately with Zapier or Make.',rating:4.5,runs:'430K',price:'$15/mo',author:'@automate_labs',
+  {id:11,icon:'🤖',bg:'rgba(124,58,237,.15)',name:'Workflow Automator',type:'agent',typeName:'Agent',typeClass:'type-agent',cat:'automation',desc:'Describe a repetitive task in plain English. This agent builds a step-by-step automation workflow you can deploy immediately with Zapier or Make.',rating:4.5,runs:'',price:'free',author:'Socrates',
    sys:'You are an automation expert specializing in Zapier, Make (formerly Integromat), and no-code workflow tools. For the described task, create a detailed step-by-step automation workflow with: Trigger, each Action step with specific field mappings, and estimated setup time. Format it clearly so a non-technical person can follow it.',
    fields:[
      {label:'Describe the task to automate',id:'task',type:'textarea',placeholder:'e.g. Every time a new lead fills out my Typeform, add them to HubSpot CRM, send them a welcome email, and notify my Slack channel'},
@@ -531,7 +531,7 @@ const TOOLS = [
    ],
    sample:'## Automation Workflow: Lead Intake Pipeline\n**Trigger:** New Typeform submission → **Result:** CRM entry + email + Slack alert\n\n### Step-by-Step Workflow (Zapier)\n**Step 1 — TRIGGER:** Typeform: New Entry\n- Watch form: "Lead Contact Form"\n\n**Step 2 — ACTION:** HubSpot: Create/Update Contact\n- First Name: {{typeform_first_name}}\n- Email: {{typeform_email}}\n- Lead Source: "Website Form"\n- Pipeline Stage: "New Lead"\n\n**Step 3 — ACTION:** Gmail: Send Email\n- To: {{typeform_email}}\n- Template: "Welcome — We\'ll be in touch within 24 hours"\n\n**Step 4 — ACTION:** Slack: Send Message\n- Channel: #new-leads\n- Message: "🔔 New lead: {{typeform_name}} ({{typeform_email}}) — added to HubSpot"\n\n*Estimated setup time: 12 minutes | Zap cost: ~0.02 tasks/run*'
   },
-  {id:12,icon:'🧑‍🏫',bg:'rgba(201,168,76,.15)',name:'Socratic Tutor',type:'chat',typeName:'Chat Agent',typeClass:'type-chat',cat:'study',desc:'A patient AI tutor that uses the Socratic method — asking questions, not giving answers — to help you truly understand any subject.',rating:4.9,runs:'890K',price:'free',author:'@edu_ai',
+  {id:12,icon:'🧑‍🏫',bg:'rgba(201,168,76,.15)',name:'Socratic Tutor',type:'chat',typeName:'Chat Agent',typeClass:'type-chat',cat:'study',desc:'A patient AI tutor that uses the Socratic method — asking questions, not giving answers — to help you truly understand any subject.',rating:4.9,runs:'',price:'free',author:'Socrates',
    sys:'You are a patient, warm Socratic tutor. Never give direct answers — instead ask probing questions that guide the student to discover the understanding themselves. Acknowledge what they already know, identify the gap, and ask one clear question at a time. Be encouraging. Think of yourself as a thoughtful mentor, not a textbook.',
    fields:[
      {label:'Subject & Topic',id:'subject',type:'text',placeholder:'e.g. Calculus — derivatives and the chain rule'},
@@ -550,7 +550,7 @@ let currentTool = null;
 
 function renderTools(tools) {
   const grid = document.getElementById('toolGrid');
-  document.getElementById('resultCount').textContent = tools.length === TOOLS.length ? '48,000+' : tools.length;
+  document.getElementById('resultCount').textContent = tools.length;
   if (tools.length === 0) {
     grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No tools match your search. Try a different keyword or category.</p></div>';
     return;
@@ -568,8 +568,7 @@ function renderTools(tools) {
       <div class="tc-footer">
         <div>
           <div class="tc-stats">
-            <span>⭐ ${t.rating}</span>
-            <span>🔁 ${t.runs} runs</span>
+            ${t.runs ? `<span>🔁 ${t.runs} runs</span>` : '<span style="color:var(--muted);font-size:11px">New</span>'}
           </div>
           <div class="tc-author">${t.author}</div>
         </div>
