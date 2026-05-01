@@ -474,6 +474,7 @@ async function publishTool() {
       'sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM'
     );
     const { data: { user } } = await sb.auth.getUser();
+    if (!user) throw new Error('Please sign in before publishing so your tool can be saved.');
 
     const toolRow = {
       name: generatedTool.name,
@@ -498,10 +499,9 @@ async function publishTool() {
     addMsg('bot', `🎉 Your tool is live! Head to the Marketplace to see it in action.`);
 
   } catch(e) {
-    // Even if DB save fails, show success — the tool was built
-    document.getElementById('publishArea').classList.remove('visible');
-    document.getElementById('successBanner').classList.add('visible');
-    addMsg('bot', `🎉 Your tool is ready! (Note: you may need to log in to save it to your profile.)` );
+    btn.disabled = false;
+    btn.textContent = 'Try Publishing Again';
+    addMsg('bot', `I couldn't publish this tool yet: ${e.message}. Your generated tool is still in the preview, so please fix the issue and try again.`);
   }
 }
 
