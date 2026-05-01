@@ -553,11 +553,26 @@ const TOOLS = [
   },
 ];
 
+let allTools = [...TOOLS];
 let currentTools = [...TOOLS];
 let activeFilter = 'all';
 let activeType = 'all';
 let searchQuery = '';
 let currentTool = null;
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
 
 function renderTools(tools) {
   const grid = document.getElementById('toolGrid');
@@ -567,30 +582,33 @@ function renderTools(tools) {
     return;
   }
   grid.innerHTML = tools.map(t => `
-    <div class="tool-card" onclick="openTool(${t.id})">
+    <div class="tool-card" data-tool-id="${escapeAttr(t.id)}">
       <div class="tc-header">
-        <div class="tc-icon" style="background:${t.bg}">${t.icon}</div>
+        <div class="tc-icon" style="background:${escapeAttr(t.bg || 'rgba(201,168,76,.15)')}">${escapeHtml(t.icon || '✨')}</div>
         <div class="tc-meta">
-          <h3>${t.name}</h3>
-          <span class="tc-type ${t.typeClass}">${t.typeName}</span>
+          <h3>${escapeHtml(t.name)}</h3>
+          <span class="tc-type ${escapeAttr(t.typeClass || 'type-prompt')}">${escapeHtml(t.typeName || 'Prompt App')}</span>
         </div>
       </div>
-      <div class="tc-desc">${t.desc}</div>
+      <div class="tc-desc">${escapeHtml(t.desc)}</div>
       <div class="tc-footer">
         <div>
           <div class="tc-stats">
-            ${t.runs ? `<span>🔁 ${t.runs} runs</span>` : '<span style="color:var(--muted);font-size:11px">New</span>'}
+            ${t.runs ? `<span>🔁 ${escapeHtml(t.runs)} runs</span>` : '<span style="color:var(--muted);font-size:11px">New</span>'}
           </div>
-          <div class="tc-author">${t.author}</div>
+          <div class="tc-author">${escapeHtml(t.author)}</div>
         </div>
-        <div class="tc-price ${t.price === 'free' ? 'price-free' : 'price-paid'}">${t.price === 'free' ? 'Free' : t.price}</div>
+        <div class="tc-price ${t.price === 'free' ? 'price-free' : 'price-paid'}">${t.price === 'free' ? 'Free' : escapeHtml(t.price)}</div>
       </div>
     </div>
   `).join('');
+  grid.querySelectorAll('.tool-card').forEach(card => {
+    card.addEventListener('click', () => openTool(card.dataset.toolId));
+  });
 }
 
 function applyFilters() {
-  let tools = [...TOOLS];
+  let tools = [...allTools];
   if (activeFilter === 'trending') tools = tools.filter(t => t.trending);
   else if (activeFilter === 'free') tools = tools.filter(t => t.price === 'free');
   else if (activeFilter !== 'all' && activeFilter !== 'new') tools = tools.filter(t => t.cat === activeFilter);
@@ -655,7 +673,7 @@ function doSort(val) {
 }
 
 function openTool(id) {
-  currentTool = TOOLS.find(t => t.id === id);
+  currentTool = allTools.find(t => String(t.id) === String(id));
   if (!currentTool) return;
   document.getElementById('modalIcon').textContent = currentTool.icon;
   document.getElementById('modalIcon').style.background = currentTool.bg;
@@ -665,16 +683,16 @@ function openTool(id) {
   const fieldsEl = document.getElementById('modalFields');
   fieldsEl.innerHTML = currentTool.fields.map(f => {
     if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
+      return `<label>${escapeHtml(f.label)}</label>
+        <select id="${escapeAttr(f.id)}">
+          ${f.options.map(o => `<option>${escapeHtml(o)}</option>`).join('')}
         </select>`;
     } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
+      return `<label>${escapeHtml(f.label)}</label>
+        <textarea id="${escapeAttr(f.id)}" placeholder="${escapeAttr(f.placeholder || '')}"></textarea>`;
     } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
+      return `<label>${escapeHtml(f.label)}</label>
+        <input type="text" id="${escapeAttr(f.id)}" placeholder="${escapeAttr(f.placeholder || '')}"/>`;
     }
   }).join('');
 
@@ -895,14 +913,18 @@ updateKeyBtn();
       const mapped = realTools.map(t => ({
         id: t.id, name: t.name,
         creator: t.profiles?.display_name || t.profiles?.username || 'Builder',
-        cat: t.category, type: t.type, desc: t.description,
-        icon: t.icon, tags: t.tags || [],
+        cat: (t.category || 'other').toLowerCase(), type: t.type || 'prompt', desc: t.description,
+        icon: t.icon || '✨', bg: 'rgba(201,168,76,.15)', tags: t.tags || [],
+        typeName: t.type === 'agent' ? 'Agent' : t.type === 'chat' ? 'Chat Agent' : 'Prompt App',
+        typeClass: t.type === 'agent' ? 'type-agent' : t.type === 'chat' ? 'type-chat' : 'type-prompt',
         price: t.price > 0 ? `$${t.price}/run` : 'free',
         runs: t.runs || '', author: t.profiles?.username || 'Builder',
         sys: t.system_prompt, real: true,
         fields: [{ label: 'Your input', id: 'userinput', type: 'textarea', placeholder: t.input_placeholder || 'Describe what you want...' }]
       }));
-      renderTools([...mapped, ...TOOLS]);
+      allTools = [...mapped, ...TOOLS];
+      currentTools = [...allTools];
+      applyFilters();
     }
   } catch(e) { /* silently fall back to demo tools only */ }
 })();
