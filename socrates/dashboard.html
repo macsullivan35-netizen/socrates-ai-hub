@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Builder Dashboard — Socrates</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Chart.js removed — charts replaced with real empty states -->
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -291,16 +291,22 @@
     <div class="chart-grid">
       <div class="chart-card">
         <h3>Runs Over Time</h3>
-        <div class="ch-sub">Daily run count across all tools — last 30 days</div>
-        <div class="chart-wrap">
-          <canvas id="runsChart"></canvas>
+        <div class="ch-sub">Daily run count across all your tools</div>
+        <div class="chart-wrap" id="runsChartWrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted)">
+          <div style="font-size:40px">📊</div>
+          <div style="font-size:14px;font-weight:600">No runs yet</div>
+          <div style="font-size:12px;text-align:center;max-width:220px">Publish a tool and share it — run data will appear here automatically.</div>
+          <a href="publish.html" style="margin-top:8px;padding:8px 18px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:100px;color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">Publish a Tool →</a>
         </div>
       </div>
       <div class="chart-card">
         <h3>Revenue by Tool</h3>
-        <div class="ch-sub">This month's earnings breakdown</div>
-        <div class="chart-wrap">
-          <canvas id="revenueChart"></canvas>
+        <div class="ch-sub">Earnings breakdown from Stripe</div>
+        <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted)">
+          <div style="font-size:40px">💰</div>
+          <div style="font-size:14px;font-weight:600">No revenue yet</div>
+          <div style="font-size:12px;text-align:center;max-width:220px">Set a price on your tools and revenue will show here after your first sale.</div>
+          <a href="https://dashboard.stripe.com" target="_blank" style="margin-top:8px;padding:8px 18px;background:var(--purple-dim);border:1px solid var(--purple);border-radius:100px;color:var(--purple-light);font-size:12px;font-weight:700;text-decoration:none">Open Stripe ↗</a>
         </div>
       </div>
     </div>
@@ -308,17 +314,21 @@
     <!-- SECOND CHART ROW -->
     <div class="chart-grid" style="margin-bottom:24px">
       <div class="chart-card">
-        <h3>User Retention Cohort</h3>
-        <div class="ch-sub">% of users who returned each week</div>
-        <div class="chart-wrap">
-          <canvas id="retentionChart"></canvas>
+        <h3>User Retention</h3>
+        <div class="ch-sub">% of users who return after first run</div>
+        <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted)">
+          <div style="font-size:40px">🔄</div>
+          <div style="font-size:14px;font-weight:600">No data yet</div>
+          <div style="font-size:12px;text-align:center;max-width:220px">Retention data will appear once users start running your tools.</div>
         </div>
       </div>
       <div class="chart-card">
         <h3>Users by Category</h3>
         <div class="ch-sub">Which categories your users come from</div>
-        <div class="chart-wrap" style="height:200px">
-          <canvas id="catChart"></canvas>
+        <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted)">
+          <div style="font-size:40px">🌐</div>
+          <div style="font-size:14px;font-weight:600">No data yet</div>
+          <div style="font-size:12px;text-align:center;max-width:220px">Category breakdown appears after your first users run your tools.</div>
         </div>
       </div>
     </div>
@@ -530,123 +540,8 @@
 </div>
 
 <script>
-const CHART_DEFAULTS = {
-  color: 'rgba(201,168,76,1)',
-  gridColor: 'rgba(255,255,255,0.05)',
-  textColor: '#888899',
-  font: 'Inter'
-};
-
-Chart.defaults.color = CHART_DEFAULTS.textColor;
-Chart.defaults.font.family = CHART_DEFAULTS.font;
-Chart.defaults.font.size = 11;
-
-// RUNS CHART
-const days = [];
-const runs = [];
-for (let i = 29; i >= 0; i--) {
-  const d = new Date(); d.setDate(d.getDate() - i);
-  days.push(d.toLocaleDateString('en-US', {month:'short',day:'numeric'}));
-  runs.push(Math.floor(2200 + Math.random() * 1800 + (29-i) * 40));
-}
-
-new Chart(document.getElementById('runsChart'), {
-  type: 'line',
-  data: {
-    labels: days,
-    datasets: [{
-      label: 'Daily Runs',
-      data: runs,
-      borderColor: '#c9a84c',
-      backgroundColor: 'rgba(201,168,76,0.08)',
-      borderWidth: 2,
-      fill: true,
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-    scales: {
-      x: { grid: { color: CHART_DEFAULTS.gridColor }, ticks: { maxTicksLimit: 8 } },
-      y: { grid: { color: CHART_DEFAULTS.gridColor }, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(1)+'K' : v } }
-    }
-  }
-});
-
-// REVENUE PIE — populated by real Stripe data below
-let revenueChart = new Chart(document.getElementById('revenueChart'), {
-  type: 'doughnut',
-  data: {
-    labels: ['Loading…'],
-    datasets: [{
-      data: [1],
-      backgroundColor: ['#e8e5db'],
-      borderColor: '#f9f8f5',
-      borderWidth: 3,
-      hoverOffset: 8
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'bottom', labels: { padding: 16, boxWidth: 12, boxHeight: 12 } },
-      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $${ctx.parsed.toLocaleString()}` } }
-    },
-    cutout: '65%'
-  }
-});
-
-// RETENTION CHART
-const weeks = ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8'];
-new Chart(document.getElementById('retentionChart'), {
-  type: 'bar',
-  data: {
-    labels: weeks,
-    datasets: [{
-      label: 'Retention %',
-      data: [100, 78, 65, 58, 52, 48, 44, 40],
-      backgroundColor: weeks.map((_, i) => `rgba(124,58,237,${0.9 - i*0.08})`),
-      borderRadius: 6,
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { color: CHART_DEFAULTS.gridColor } },
-      y: {
-        grid: { color: CHART_DEFAULTS.gridColor },
-        ticks: { callback: v => v + '%' },
-        max: 110
-      }
-    }
-  }
-});
-
-// CATEGORY PIE
-new Chart(document.getElementById('catChart'), {
-  type: 'doughnut',
-  data: {
-    labels: ['Writing', 'Study', 'Business', 'Creative', 'Other'],
-    datasets: [{
-      data: [44, 26, 18, 8, 4],
-      backgroundColor: ['#c9a84c', '#7c3aed', '#4ade80', '#f472b6', '#888899'],
-      borderColor: '#0e0e1c',
-      borderWidth: 3,
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'right', labels: { padding: 12, boxWidth: 10, boxHeight: 10 } },
-      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } }
-    },
-    cutout: '55%'
-  }
-});
+// Charts removed — replaced with real empty states above
+// Charts will be rebuilt with real data once tools have runs
 
 function setRange(btn, range) {
   document.querySelectorAll('.dr-btn').forEach(b => b.classList.remove('active'));
