@@ -3,210 +3,199 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Build a Tool — Socrates</title>
+  <title>Publish a Tool — Socrates</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --gold:#c9a84c;--gold-dim:rgba(201,168,76,.12);
-      --purple:#7c3aed;--purple-dim:rgba(124,58,237,.1);
-      --green:#4ade80;--red:#f87171;
-      --bg:#07070e;--bg2:#0f0f1a;--bg3:#16161f;
-      --surface:#1a1a2e;--border:rgba(255,255,255,.07);
-      --text:#f0f0f8;--muted:#6b6b8a;--radius:14px;
+      --gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.1);
+      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.08);
+      --green:#16a34a;--red:#dc2626;
+      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
+      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:14px;
     }
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
 
-    nav{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:16px 32px;background:rgba(7,7,14,0.95);
-      border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
-      backdrop-filter:blur(20px);
-    }
+    /* NAV */
+    nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(249,248,245,.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
     .nav-logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:8px}
     .nav-logo svg{width:28px;height:28px}
     .btn{padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
-    .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
     .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
-    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;font-weight:700}
-    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.35)}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;font-weight:700}
+    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(154,110,12,.3)}
+    .btn-purple{background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff;font-weight:700}
+    .btn-purple:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(109,40,217,.3)}
 
-    /* LAYOUT */
+    /* ── MODE PICKER ── */
+    #modePicker{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:60px 24px;
+    }
+    .picker-heading{
+      font-family:'Playfair Display',serif;font-size:38px;font-weight:900;
+      text-align:center;margin-bottom:12px;
+    }
+    .picker-sub{font-size:16px;color:var(--muted);text-align:center;margin-bottom:56px;max-width:480px;line-height:1.6}
+    .picker-cards{display:flex;gap:24px;width:100%;max-width:760px;flex-wrap:wrap;justify-content:center}
+
+    .picker-card{
+      flex:1;min-width:300px;max-width:360px;
+      background:var(--surface);border:2px solid var(--border);border-radius:24px;
+      padding:40px 36px;cursor:pointer;transition:all .25s;text-align:center;
+      position:relative;overflow:hidden;
+    }
+    .picker-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(20,20,40,.12)}
+    .picker-card.ai-card:hover{border-color:var(--gold-light)}
+    .picker-card.manual-card:hover{border-color:var(--purple-light)}
+
+    .picker-card .card-glow{
+      position:absolute;top:-60px;left:50%;transform:translateX(-50%);
+      width:200px;height:200px;border-radius:50%;opacity:.12;filter:blur(40px);
+    }
+    .ai-card .card-glow{background:var(--gold-light)}
+    .manual-card .card-glow{background:var(--purple-light)}
+
+    .card-emoji{font-size:56px;margin-bottom:20px;display:block}
+    .card-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;margin-bottom:10px}
+    .card-desc{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:28px}
+    .card-tag{display:inline-block;font-size:12px;font-weight:600;padding:4px 12px;border-radius:100px;margin-bottom:6px}
+    .ai-card .card-tag{background:var(--gold-dim);color:var(--gold)}
+    .manual-card .card-tag{background:var(--purple-dim);color:var(--purple-light)}
+    .card-cta{
+      width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;
+      border:none;cursor:pointer;transition:all .2s;
+    }
+    .ai-card .card-cta{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff}
+    .manual-card .card-cta{background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff}
+    .card-cta:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.15)}
+
+    /* ── BUILDER AREA ── */
+    #builderArea{display:none;flex:1}
     .builder-wrap{
-      flex:1;display:grid;
-      grid-template-columns:1fr 360px;
-      gap:0;max-width:1200px;width:100%;margin:0 auto;padding:32px 24px;
+      display:grid;grid-template-columns:1fr 340px;gap:0;
+      max-width:1100px;width:100%;margin:0 auto;padding:40px 24px;
       align-items:start;
     }
 
-    /* CHAT SIDE */
-    .chat-side{min-width:0;padding-right:32px}
-    .chat-heading{
-      font-family:'Playfair Display',serif;font-size:32px;font-weight:900;
-      margin-bottom:8px;
+    /* MODE BACK BUTTON */
+    .back-to-picker{
+      max-width:1100px;margin:20px auto 0;padding:0 24px;
     }
-    .chat-sub{font-size:15px;color:var(--muted);margin-bottom:32px;line-height:1.6}
-
-    .chat-window{
-      display:flex;flex-direction:column;gap:16px;
-      min-height:300px;margin-bottom:24px;
+    .back-link{
+      font-size:13px;color:var(--muted);cursor:pointer;
+      display:inline-flex;align-items:center;gap:6px;transition:color .2s;
+      background:none;border:none;font-family:'Inter',sans-serif;
     }
+    .back-link:hover{color:var(--text)}
 
-    .msg{display:flex;gap:12px;align-items:flex-start}
+    /* CHAT (AI MODE) */
+    .chat-side{padding-right:32px;min-width:0}
+    .mode-heading{font-family:'Playfair Display',serif;font-size:30px;font-weight:900;margin-bottom:8px}
+    .mode-sub{font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.6}
+
+    .chat-window{display:flex;flex-direction:column;gap:14px;min-height:260px;margin-bottom:20px}
+    .msg{display:flex;gap:10px;align-items:flex-start}
     .msg.user{flex-direction:row-reverse}
-
-    .msg-avatar{
-      width:36px;height:36px;border-radius:50%;flex-shrink:0;
-      display:flex;align-items:center;justify-content:center;font-size:16px;
-    }
-    .msg.bot .msg-avatar{background:var(--gold-dim);border:1px solid rgba(201,168,76,.3)}
-    .msg.user .msg-avatar{background:var(--purple-dim);border:1px solid rgba(124,58,237,.3);font-size:14px}
-
-    .msg-bubble{
-      max-width:80%;padding:14px 18px;border-radius:18px;
-      font-size:14px;line-height:1.65;
-    }
-    .msg.bot .msg-bubble{
-      background:var(--bg2);border:1px solid var(--border);
-      border-top-left-radius:4px;color:var(--text);
-    }
-    .msg.user .msg-bubble{
-      background:var(--purple-dim);border:1px solid rgba(124,58,237,.25);
-      border-top-right-radius:4px;color:var(--text);
-    }
-
-    .typing-indicator{display:flex;gap:5px;align-items:center;padding:14px 18px}
-    .typing-indicator span{
-      width:7px;height:7px;border-radius:50%;background:var(--muted);
-      animation:bounce .8s infinite;
-    }
+    .msg-avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px}
+    .msg.bot .msg-avatar{background:var(--gold-dim);border:1px solid rgba(154,110,12,.2)}
+    .msg.user .msg-avatar{background:var(--purple-dim);border:1px solid rgba(109,40,217,.2);font-size:13px}
+    .msg-bubble{max-width:82%;padding:13px 17px;border-radius:16px;font-size:14px;line-height:1.65}
+    .msg.bot .msg-bubble{background:var(--surface);border:1px solid var(--border);border-top-left-radius:4px;color:var(--text)}
+    .msg.user .msg-bubble{background:var(--purple-dim);border:1px solid rgba(109,40,217,.2);border-top-right-radius:4px;color:var(--text)}
+    .typing-indicator{display:flex;gap:5px;align-items:center;padding:13px 17px}
+    .typing-indicator span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce .8s infinite}
     .typing-indicator span:nth-child(2){animation-delay:.15s}
     .typing-indicator span:nth-child(3){animation-delay:.3s}
     @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
 
-    /* INPUT AREA */
-    .input-area{display:flex;gap:10px;align-items:flex-end}
-    .chat-input{
-      flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;
-      padding:14px 18px;font-size:14px;color:var(--text);outline:none;
-      font-family:'Inter',sans-serif;resize:none;line-height:1.5;
-      transition:border-color .2s;max-height:120px;min-height:52px;
-    }
-    .chat-input:focus{border-color:rgba(201,168,76,.5)}
-    .chat-input::placeholder{color:var(--muted)}
-    .send-btn{
-      padding:14px 22px;background:linear-gradient(135deg,var(--gold),#a8722a);
-      color:#0a0a0a;border:none;border-radius:12px;cursor:pointer;
-      font-size:14px;font-weight:700;transition:all .2s;flex-shrink:0;
-      height:52px;
-    }
-    .send-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(201,168,76,.3)}
-    .send-btn:disabled{opacity:.4;transform:none;cursor:not-allowed}
-
-    /* QUICK REPLY CHIPS */
-    .quick-replies{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-    .chip{
-      padding:8px 16px;background:var(--bg2);border:1px solid var(--border);
-      border-radius:100px;font-size:13px;color:var(--muted);cursor:pointer;
-      transition:all .2s;
-    }
+    .quick-replies{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .chip{padding:8px 16px;background:var(--surface);border:1px solid var(--border);border-radius:100px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .2s}
     .chip:hover{border-color:var(--gold);color:var(--gold)}
 
-    /* PREVIEW SIDE */
-    .preview-side{
-      position:sticky;top:90px;
-    }
-    .preview-label{
-      font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-      color:var(--muted);margin-bottom:16px;
-    }
-    .tool-card{
-      background:var(--bg2);border:1px solid var(--border);border-radius:18px;
-      padding:24px;margin-bottom:20px;transition:all .4s;
-    }
-    .tc-icon-wrap{width:52px;height:52px;border-radius:14px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px}
-    .tc-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--gold-dim);color:var(--gold);margin-bottom:10px}
-    .tc-name{font-size:17px;font-weight:800;margin-bottom:8px}
-    .tc-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;min-height:40px}
-    .tc-cat{font-size:12px;color:var(--muted);margin-bottom:14px}
-    .tc-footer{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:14px}
-    .tc-free{color:var(--green);font-weight:700}
+    .input-area{display:flex;gap:10px;align-items:flex-end;margin-top:16px}
+    .chat-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 16px;font-size:14px;color:var(--text);outline:none;font-family:'Inter',sans-serif;resize:none;line-height:1.5;transition:border-color .2s;max-height:120px;min-height:50px}
+    .chat-input:focus{border-color:var(--gold)}
+    .chat-input::placeholder{color:var(--muted)}
+    .send-btn{padding:13px 22px;background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;transition:all .2s;flex-shrink:0;height:50px}
+    .send-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(154,110,12,.3)}
+    .send-btn:disabled{opacity:.4;transform:none;cursor:not-allowed}
 
-    /* placeholder shimmer */
-    .shimmer{
-      background:linear-gradient(90deg,var(--bg3) 25%,var(--surface) 50%,var(--bg3) 75%);
-      background-size:200% 100%;animation:shimmer 1.5s infinite;
-      border-radius:6px;height:14px;margin-bottom:8px;
-    }
-    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-    /* PUBLISH AREA */
-    .publish-area{
-      background:var(--bg2);border:1px solid rgba(201,168,76,.25);border-radius:16px;
-      padding:24px;display:none;
-    }
-    .publish-area.visible{display:block}
-    .publish-area h3{font-size:16px;font-weight:800;margin-bottom:8px}
-    .publish-area p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
-    .btn-publish{
-      width:100%;padding:16px;border-radius:12px;font-size:15px;font-weight:800;
-      background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff;
-      border:none;cursor:pointer;transition:all .2s;
-    }
-    .btn-publish:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(124,58,237,.4)}
-    .btn-publish:disabled{opacity:.5;transform:none;cursor:not-allowed}
-
-    /* SUCCESS */
-    .success-banner{
-      background:linear-gradient(135deg,rgba(74,222,128,.1),rgba(201,168,76,.1));
-      border:1px solid rgba(74,222,128,.3);border-radius:14px;
-      padding:20px;text-align:center;display:none;
-    }
-    .success-banner.visible{display:block}
-    .success-banner .s-icon{font-size:40px;margin-bottom:10px}
-    .success-banner h3{font-size:18px;font-weight:800;margin-bottom:6px}
-    .success-banner p{font-size:13px;color:var(--muted)}
-
-    /* MANUAL MODE STYLES */
-    .man-step{display:flex;align-items:center;gap:8px;cursor:pointer;flex:1}
-    .ms-circle{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .3s;background:var(--bg2)}
-    .ms-label{font-size:12px;font-weight:600;color:var(--muted);transition:color .3s}
-    .ms-line{flex:1;height:1px;background:var(--border);margin:0 4px}
+    /* MANUAL MODE */
+    .manual-side{padding-right:32px;min-width:0}
+    .man-steps{display:flex;align-items:center;margin-bottom:36px}
+    .man-step{display:flex;align-items:center;gap:8px;cursor:pointer}
+    .ms-circle{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .3s;background:var(--surface)}
+    .ms-label{font-size:12px;font-weight:600;color:var(--muted);transition:color .3s;white-space:nowrap}
+    .ms-line{flex:1;height:1px;background:var(--border);margin:0 6px;min-width:16px}
     .ms-line.done{background:var(--green)}
     .man-step.active .ms-circle{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
     .man-step.active .ms-label{color:var(--text)}
-    .man-step.done .ms-circle{border-color:var(--green);color:var(--green);background:rgba(74,222,128,.1)}
+    .man-step.done .ms-circle{border-color:var(--green);color:var(--green);background:rgba(22,163,74,.1)}
     .man-panel{display:none}
     .man-panel.active{display:block}
     .man-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;margin-bottom:24px}
     .fg{margin-bottom:20px}
     .fg label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-    .fg input,.fg textarea,.fg select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);outline:none;font-family:'Inter',sans-serif;transition:border-color .2s}
-    .fg input:focus,.fg textarea:focus,.fg select:focus{border-color:rgba(201,168,76,.5)}
+    .fg input,.fg textarea,.fg select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);outline:none;font-family:'Inter',sans-serif;transition:border-color .2s}
+    .fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--gold)}
     .fg input::placeholder,.fg textarea::placeholder{color:var(--muted)}
     .fg textarea{resize:vertical}
-    .fg select option{background:var(--bg2)}
     .type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:32px}
-    .type-opt{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;text-align:center;transition:all .2s}
-    .type-opt:hover{border-color:var(--purple)}
+    .type-opt{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;text-align:center;transition:all .2s}
+    .type-opt:hover{border-color:var(--purple-light)}
     .type-opt.selected{border-color:var(--gold);background:var(--gold-dim)}
     .to-icon{font-size:26px;margin-bottom:8px}
     .to-name{font-size:13px;font-weight:700;margin-bottom:3px}
     .to-sub{font-size:11px;color:var(--muted)}
-    .price-opt{flex:1;min-width:100px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;text-align:center;transition:all .2s}
-    .price-opt:hover{border-color:var(--purple)}
+    .price-opts{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+    .price-opt{flex:1;min-width:110px;background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;text-align:center;transition:all .2s}
+    .price-opt:hover{border-color:var(--purple-light)}
     .price-opt.selected{border-color:var(--gold);background:var(--gold-dim)}
     .man-nav{display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:20px;border-top:1px solid var(--border)}
-    .btn-prev{padding:11px 22px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s}
+    .btn-prev{padding:11px 22px;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s}
     .btn-prev:hover{color:var(--text);border-color:var(--text)}
-    .btn-next{padding:11px 28px;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;transition:all .2s}
-    .btn-next:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(201,168,76,.3)}
+    .btn-next{padding:11px 28px;background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;transition:all .2s}
+    .btn-next:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(154,110,12,.25)}
 
-    @media(max-width:800px){
-      .builder-wrap{grid-template-columns:1fr;padding:16px}
-      .chat-side{padding-right:0}
-      .preview-side{position:static}
-      #manualMode{padding-right:0}
+    /* PREVIEW PANEL */
+    .preview-side{position:sticky;top:90px}
+    .preview-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .tool-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:20px}
+    .tc-icon-wrap{width:50px;height:50px;border-radius:14px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px}
+    .tc-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--gold-dim);color:var(--gold);margin-bottom:10px}
+    .tc-name{font-size:16px;font-weight:800;margin-bottom:8px;color:var(--text)}
+    .tc-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;min-height:38px}
+    .tc-cat{font-size:12px;color:var(--muted);margin-bottom:12px}
+    .tc-footer{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:12px}
+    .tc-free{color:var(--green);font-weight:700}
+
+    /* PUBLISH PANEL */
+    .publish-area{background:var(--bg2);border:2px solid rgba(154,110,12,.25);border-radius:16px;padding:22px;display:none}
+    .publish-area.visible{display:block}
+    .publish-area h3{font-size:15px;font-weight:800;margin-bottom:6px}
+    .publish-area p{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+    .btn-publish{width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:800;background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff;border:none;cursor:pointer;transition:all .2s}
+    .btn-publish:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(109,40,217,.3)}
+    .btn-publish:disabled{opacity:.5;transform:none;cursor:not-allowed}
+
+    /* SUCCESS */
+    .success-banner{background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(154,110,12,.08));border:1px solid rgba(22,163,74,.25);border-radius:14px;padding:24px;text-align:center;display:none}
+    .success-banner.visible{display:block}
+    .success-banner .s-icon{font-size:40px;margin-bottom:10px}
+    .success-banner h3{font-size:17px;font-weight:800;margin-bottom:6px}
+    .success-banner p{font-size:13px;color:var(--muted)}
+
+    /* SUCCESS FULL PAGE */
+    .success-full{text-align:center;padding:60px 20px;display:none}
+    .success-full.active{display:block}
+
+    @media(max-width:860px){
+      .builder-wrap{grid-template-columns:1fr;padding:20px}
+      .chat-side,.manual-side{padding-right:0}
+      .preview-side{position:static;margin-top:32px}
+      .picker-cards{flex-direction:column;align-items:center}
     }
   </style>
 </head>
@@ -228,222 +217,243 @@
   </div>
 </nav>
 
-<!-- MODE SWITCHER -->
-<div style="max-width:1200px;width:100%;margin:24px auto 0;padding:0 24px">
-  <div style="display:inline-flex;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:4px;gap:4px">
-    <button id="modeAI" onclick="setMode('ai')" style="padding:10px 22px;border-radius:9px;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .2s;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a">
-      ✨ AI Builder
-    </button>
-    <button id="modeManual" onclick="setMode('manual')" style="padding:10px 22px;border-radius:9px;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted)">
-      ⚙️ Manual
-    </button>
+<!-- ══ MODE PICKER ══ -->
+<div id="modePicker">
+  <div class="picker-heading">How do you want to build?</div>
+  <div class="picker-sub">Choose your style. You can always switch later.</div>
+
+  <div class="picker-cards">
+
+    <!-- AI CARD -->
+    <div class="picker-card ai-card" onclick="setMode('ai')">
+      <div class="card-glow"></div>
+      <span class="card-emoji">✨</span>
+      <div class="card-title">AI Builder</div>
+      <div class="card-desc">Just describe your idea in plain English. The AI asks a few simple questions, then writes your tool, names it, and sets it all up automatically.</div>
+      <div style="margin-bottom:20px">
+        <span class="card-tag">No experience needed</span><br>
+        <span class="card-tag">Perfect for beginners</span>
+      </div>
+      <button class="card-cta">Start with AI →</button>
+    </div>
+
+    <!-- MANUAL CARD -->
+    <div class="picker-card manual-card" onclick="setMode('manual')">
+      <div class="card-glow"></div>
+      <span class="card-emoji">⚙️</span>
+      <div class="card-title">Manual Builder</div>
+      <div class="card-desc">Full control over every detail. Write your own system prompt, set input fields, configure pricing, and preview your tool card in real time.</div>
+      <div style="margin-bottom:20px">
+        <span class="card-tag">Full control</span><br>
+        <span class="card-tag">For experienced builders</span>
+      </div>
+      <button class="card-cta">Build Manually →</button>
+    </div>
+
   </div>
-  <span style="font-size:12px;color:var(--muted);margin-left:14px" id="modeDesc">Describe your idea and AI builds the tool for you</span>
 </div>
 
-<div class="builder-wrap">
-
-  <!-- CHAT SIDE -->
-  <div class="chat-side" id="aiMode">
-    <div class="chat-heading">Build Your AI Tool</div>
-    <div class="chat-sub">Just describe your idea in plain English. No technical experience needed — the AI handles everything else.</div>
-
-    <div class="chat-window" id="chatWindow"></div>
-
-    <div id="quickReplies" class="quick-replies"></div>
-
-    <div class="input-area" style="margin-top:16px">
-      <textarea
-        class="chat-input"
-        id="chatInput"
-        placeholder="Type your answer here..."
-        rows="1"
-        onkeydown="handleKey(event)"
-        oninput="autoGrow(this)"
-      ></textarea>
-      <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send →</button>
-    </div>
+<!-- ══ BUILDER AREA ══ -->
+<div id="builderArea">
+  <div class="back-to-picker">
+    <button class="back-link" onclick="goBack()">← Change build mode</button>
   </div>
 
-  <!-- MANUAL MODE (hidden by default) -->
-  <div id="manualMode" style="display:none;min-width:0;padding-right:32px">
-    <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:8px">Manual Builder</div>
-    <div style="font-size:15px;color:var(--muted);margin-bottom:32px;line-height:1.6">Full control over every detail — name, prompt, inputs, pricing, and more.</div>
+  <div class="builder-wrap">
 
-    <!-- STEP PROGRESS -->
-    <div style="display:flex;align-items:center;gap:0;margin-bottom:36px" id="manSteps">
-      <div class="man-step active" id="ms1" onclick="manGoStep(1)"><div class="ms-circle">1</div><div class="ms-label">Type</div></div>
-      <div class="ms-line" id="ml1"></div>
-      <div class="man-step" id="ms2" onclick="manGoStep(2)"><div class="ms-circle">2</div><div class="ms-label">Details</div></div>
-      <div class="ms-line" id="ml2"></div>
-      <div class="man-step" id="ms3" onclick="manGoStep(3)"><div class="ms-circle">3</div><div class="ms-label">Prompt</div></div>
-      <div class="ms-line" id="ml3"></div>
-      <div class="man-step" id="ms4" onclick="manGoStep(4)"><div class="ms-circle">4</div><div class="ms-label">Pricing</div></div>
-      <div class="ms-line" id="ml4"></div>
-      <div class="man-step" id="ms5" onclick="manGoStep(5)"><div class="ms-circle">5</div><div class="ms-label">Publish</div></div>
+    <!-- AI MODE -->
+    <div class="chat-side" id="aiMode" style="display:none">
+      <div class="mode-heading">AI Tool Builder ✨</div>
+      <div class="mode-sub">Answer a few plain-English questions and I'll build your tool automatically.</div>
+      <div class="chat-window" id="chatWindow"></div>
+      <div id="quickReplies" class="quick-replies"></div>
+      <div class="input-area">
+        <textarea class="chat-input" id="chatInput" placeholder="Type your answer..." rows="1" onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="send-btn" id="sendBtn">Send →</button>
+      </div>
     </div>
 
-    <!-- PANEL 1: TYPE -->
-    <div class="man-panel active" id="mp1">
-      <div class="man-title">What are you building?</div>
-      <div class="type-grid">
-        <div class="type-opt selected" onclick="manSelectType(this,'prompt','Prompt App','⚡')"><div class="to-icon">⚡</div><div class="to-name">Prompt App</div><div class="to-sub">Simple input → output</div></div>
-        <div class="type-opt" onclick="manSelectType(this,'agent','Agent','🤖')"><div class="to-icon">🤖</div><div class="to-name">Agent</div><div class="to-sub">Multi-step task</div></div>
-        <div class="type-opt" onclick="manSelectType(this,'chat','Chat Bot','💬')"><div class="to-icon">💬</div><div class="to-name">Chat Bot</div><div class="to-sub">Ongoing conversation</div></div>
-        <div class="type-opt" onclick="manSelectType(this,'model','Model Wrapper','🧠')"><div class="to-icon">🧠</div><div class="to-name">Model Wrapper</div><div class="to-sub">API access to a model</div></div>
-      </div>
-      <div class="man-nav"><span></span><button class="btn-next" onclick="manGoStep(2)">Continue →</button></div>
-    </div>
+    <!-- MANUAL MODE -->
+    <div class="manual-side" id="manualMode" style="display:none">
+      <div class="mode-heading">Manual Builder ⚙️</div>
+      <div class="mode-sub">Full control — set every detail yourself.</div>
 
-    <!-- PANEL 2: DETAILS -->
-    <div class="man-panel" id="mp2">
-      <div class="man-title">Tool Details</div>
-      <div class="fg"><label>Tool Name *</label><input type="text" id="mName" placeholder="e.g. Essay Master Pro" oninput="manUpdatePreview()"/></div>
-      <div class="fg"><label>Description * <small style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(shown on marketplace cards)</small></label><textarea id="mDesc" rows="3" placeholder="What does this tool do? Who is it for?" oninput="manUpdatePreview()"></textarea></div>
-      <div class="fg">
-        <label>Category *</label>
-        <select id="mCat" onchange="manUpdatePreview()">
-          <option value="">Select a category...</option>
-          <option>Writing</option><option>Coding</option><option>Study</option>
-          <option>Business</option><option>Creative</option><option>Research</option>
-          <option>Health</option><option>Finance</option><option>Fun & Games</option>
-          <option>Automation</option><option>Translation</option><option>Other</option>
-        </select>
+      <div class="man-steps" id="manSteps">
+        <div class="man-step active" id="ms1"><div class="ms-circle">1</div><div class="ms-label">Type</div></div>
+        <div class="ms-line" id="ml1"></div>
+        <div class="man-step" id="ms2"><div class="ms-circle">2</div><div class="ms-label">Details</div></div>
+        <div class="ms-line" id="ml2"></div>
+        <div class="man-step" id="ms3"><div class="ms-circle">3</div><div class="ms-label">Prompt</div></div>
+        <div class="ms-line" id="ml3"></div>
+        <div class="man-step" id="ms4"><div class="ms-circle">4</div><div class="ms-label">Pricing</div></div>
+        <div class="ms-line" id="ml4"></div>
+        <div class="man-step" id="ms5"><div class="ms-circle">5</div><div class="ms-label">Publish</div></div>
       </div>
-      <div class="fg"><label>Emoji Icon</label><input type="text" id="mIcon" placeholder="e.g. ✍️" maxlength="4" style="max-width:100px;font-size:22px;text-align:center" oninput="manUpdatePreview()"/></div>
-      <div class="man-nav"><button class="btn-prev" onclick="manGoStep(1)">← Back</button><button class="btn-next" onclick="manGoStep(3)">Continue →</button></div>
-    </div>
 
-    <!-- PANEL 3: PROMPT -->
-    <div class="man-panel" id="mp3">
-      <div class="man-title">System Prompt</div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6">This is the AI's instruction set — the engine of your tool. Write it like you're briefing an expert.</div>
-      <div class="fg">
-        <label>System Prompt *</label>
-        <textarea id="mPrompt" rows="10" placeholder="You are an expert [role]. When the user provides [input], you will...&#10;&#10;Always:&#10;- ...&#10;&#10;Never:&#10;- ..."></textarea>
+      <!-- PANEL 1: TYPE -->
+      <div class="man-panel active" id="mp1">
+        <div class="man-title">What are you building?</div>
+        <div class="type-grid">
+          <div class="type-opt selected" onclick="manSelectType(this,'prompt','Prompt App','⚡')"><div class="to-icon">⚡</div><div class="to-name">Prompt App</div><div class="to-sub">Simple input → output</div></div>
+          <div class="type-opt" onclick="manSelectType(this,'agent','Agent','🤖')"><div class="to-icon">🤖</div><div class="to-name">Agent</div><div class="to-sub">Multi-step task</div></div>
+          <div class="type-opt" onclick="manSelectType(this,'chat','Chat Bot','💬')"><div class="to-icon">💬</div><div class="to-name">Chat Bot</div><div class="to-sub">Ongoing conversation</div></div>
+          <div class="type-opt" onclick="manSelectType(this,'model','Model Wrapper','🧠')"><div class="to-icon">🧠</div><div class="to-name">Model Wrapper</div><div class="to-sub">API access to a model</div></div>
+        </div>
+        <div class="man-nav"><span></span><button class="btn-next" onclick="manGoStep(2)">Continue →</button></div>
       </div>
-      <div class="fg"><label>Input Field Label <small style="color:var(--muted);font-weight:400;text-transform:none">(what users fill in)</small></label><input type="text" id="mInputLabel" placeholder="e.g. Your Topic, Paste your text"/></div>
-      <div class="fg"><label>Input Placeholder</label><input type="text" id="mInputPlaceholder" placeholder="e.g. Enter a topic for your essay..."/></div>
-      <div class="fg"><label>Sample Output <small style="color:var(--muted);font-weight:400;text-transform:none">(optional — helps users understand what to expect)</small></label><textarea id="mSample" rows="5" placeholder="Paste an example of great output..."></textarea></div>
-      <div class="man-nav"><button class="btn-prev" onclick="manGoStep(2)">← Back</button><button class="btn-next" onclick="manGoStep(4)">Continue →</button></div>
-    </div>
 
-    <!-- PANEL 4: PRICING -->
-    <div class="man-panel" id="mp4">
-      <div class="man-title">Set Your Price</div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:24px">You keep 80% of all revenue.</div>
-      <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap">
-        <div class="price-opt selected" id="po-free" onclick="manSelectPrice('free',this)"><div style="font-size:24px;margin-bottom:8px">🎁</div><div style="font-weight:700;margin-bottom:4px">Free</div><div style="font-size:12px;color:var(--muted)">Maximum reach</div></div>
-        <div class="price-opt" id="po-monthly" onclick="manSelectPrice('monthly',this)"><div style="font-size:24px;margin-bottom:8px">📅</div><div style="font-weight:700;margin-bottom:4px">Monthly</div><div style="font-size:12px;color:var(--muted)">Recurring subscription</div></div>
-        <div class="price-opt" id="po-perrun" onclick="manSelectPrice('perrun',this)"><div style="font-size:24px;margin-bottom:8px">⚡</div><div style="font-weight:700;margin-bottom:4px">Per Run</div><div style="font-size:12px;color:var(--muted)">Pay each use</div></div>
+      <!-- PANEL 2: DETAILS -->
+      <div class="man-panel" id="mp2">
+        <div class="man-title">Tool Details</div>
+        <div class="fg"><label>Tool Name *</label><input type="text" id="mName" placeholder="e.g. Essay Master Pro" oninput="manUpdatePreview()"/></div>
+        <div class="fg"><label>Description *</label><textarea id="mDesc" rows="3" placeholder="What does this tool do? Who is it for?" oninput="manUpdatePreview()"></textarea></div>
+        <div class="fg">
+          <label>Category *</label>
+          <select id="mCat" onchange="manUpdatePreview()">
+            <option value="">Select a category...</option>
+            <option>Writing</option><option>Coding</option><option>Study</option>
+            <option>Business</option><option>Creative</option><option>Research</option>
+            <option>Health</option><option>Finance</option><option>Fun & Games</option>
+            <option>Automation</option><option>Translation</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fg"><label>Emoji Icon</label><input type="text" id="mIcon" placeholder="e.g. ✍️" maxlength="4" style="max-width:100px;font-size:22px;text-align:center" oninput="manUpdatePreview()"/></div>
+        <div class="man-nav"><button class="btn-prev" onclick="manGoStep(1)">← Back</button><button class="btn-next" onclick="manGoStep(3)">Continue →</button></div>
       </div>
-      <div id="priceAmtWrap" style="display:none;margin-bottom:24px">
-        <label style="display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Amount (USD) — You keep 80%</label>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="color:var(--muted)">$</span>
-          <input type="number" id="mPriceAmt" min="0.50" step="0.50" value="4.99" style="width:120px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);outline:none"/>
-          <span id="mPriceUnit" style="color:var(--muted);font-size:14px">/month</span>
+
+      <!-- PANEL 3: PROMPT -->
+      <div class="man-panel" id="mp3">
+        <div class="man-title">System Prompt</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6">This is the AI's instruction set — the engine of your tool. Write it like you're briefing an expert.</div>
+        <div class="fg"><label>System Prompt *</label><textarea id="mPrompt" rows="10" placeholder="You are an expert [role]. When the user provides [input], you will...&#10;&#10;Always:&#10;- Be clear and specific&#10;&#10;Never:&#10;- Go off topic"></textarea></div>
+        <div class="fg"><label>Input Field Label</label><input type="text" id="mInputLabel" placeholder="e.g. Your Topic"/></div>
+        <div class="fg"><label>Input Placeholder</label><input type="text" id="mInputPlaceholder" placeholder="e.g. Enter a topic for your essay..."/></div>
+        <div class="fg"><label>Sample Output <small style="color:var(--muted);font-weight:400;text-transform:none">(optional)</small></label><textarea id="mSample" rows="4" placeholder="Paste an example of great output..."></textarea></div>
+        <div class="man-nav"><button class="btn-prev" onclick="manGoStep(2)">← Back</button><button class="btn-next" onclick="manGoStep(4)">Continue →</button></div>
+      </div>
+
+      <!-- PANEL 4: PRICING -->
+      <div class="man-panel" id="mp4">
+        <div class="man-title">Set Your Price</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:24px">You keep 80% of all revenue.</div>
+        <div class="price-opts">
+          <div class="price-opt selected" id="po-free" onclick="manSelectPrice('free',this)"><div style="font-size:24px;margin-bottom:8px">🎁</div><div style="font-weight:700;margin-bottom:4px">Free</div><div style="font-size:12px;color:var(--muted)">Maximum reach</div></div>
+          <div class="price-opt" id="po-monthly" onclick="manSelectPrice('monthly',this)"><div style="font-size:24px;margin-bottom:8px">📅</div><div style="font-weight:700;margin-bottom:4px">Monthly</div><div style="font-size:12px;color:var(--muted)">Subscription</div></div>
+          <div class="price-opt" id="po-perrun" onclick="manSelectPrice('perrun',this)"><div style="font-size:24px;margin-bottom:8px">⚡</div><div style="font-weight:700;margin-bottom:4px">Per Run</div><div style="font-size:12px;color:var(--muted)">Pay each use</div></div>
+        </div>
+        <div id="priceAmtWrap" style="display:none;margin-bottom:24px">
+          <label style="display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Amount (USD)</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="color:var(--muted)">$</span>
+            <input type="number" id="mPriceAmt" min="0.50" step="0.50" value="4.99" style="width:120px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);outline:none"/>
+            <span id="mPriceUnit" style="color:var(--muted);font-size:14px">/month</span>
+          </div>
+        </div>
+        <div class="man-nav"><button class="btn-prev" onclick="manGoStep(3)">← Back</button><button class="btn-next" onclick="manGoStep(5)">Review →</button></div>
+      </div>
+
+      <!-- PANEL 5: REVIEW -->
+      <div class="man-panel" id="mp5">
+        <div class="man-title">Review & Publish</div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:24px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Name</div><div id="rev-name" style="font-weight:600">—</div></div>
+            <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Category</div><div id="rev-cat" style="font-weight:600">—</div></div>
+            <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Type</div><div id="rev-type" style="font-weight:600">—</div></div>
+            <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Price</div><div id="rev-price" style="font-weight:600;color:var(--green)">Free</div></div>
+          </div>
+        </div>
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:14px;color:var(--muted);margin-bottom:28px"><input type="checkbox" id="manAgree" style="margin-top:3px;accent-color:var(--gold)"/> I agree to the Socrates Content Policy and confirm this is my original work.</label>
+        <div class="man-nav">
+          <button class="btn-prev" onclick="manGoStep(4)">← Back</button>
+          <button id="manPublishBtn" onclick="manPublish()" style="padding:13px 32px;border-radius:10px;font-size:15px;font-weight:800;background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff;border:none;cursor:pointer;transition:all .2s">🚀 Publish</button>
         </div>
       </div>
-      <div class="man-nav"><button class="btn-prev" onclick="manGoStep(3)">← Back</button><button class="btn-next" onclick="manGoStep(5)">Review →</button></div>
-    </div>
 
-    <!-- PANEL 5: REVIEW + PUBLISH -->
-    <div class="man-panel" id="mp5">
-      <div class="man-title">Review & Publish</div>
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Name</div><div id="rev-name" style="font-weight:600">—</div></div>
-          <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Category</div><div id="rev-cat" style="font-weight:600">—</div></div>
-          <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Type</div><div id="rev-type" style="font-weight:600">—</div></div>
-          <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Price</div><div id="rev-price" style="font-weight:600;color:var(--green)">Free</div></div>
+      <div class="success-full" id="manSuccessScreen">
+        <div style="font-size:64px;margin-bottom:20px">🎉</div>
+        <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:12px">Tool Published!</div>
+        <div style="font-size:15px;color:var(--muted);margin-bottom:32px">Your tool is live on the Socrates Marketplace.</div>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+          <a href="marketplace.html" class="btn btn-ghost">View in Marketplace</a>
+          <a href="dashboard.html" class="btn btn-gold">Open Dashboard</a>
+          <button onclick="location.reload()" class="btn btn-ghost">Publish Another</button>
         </div>
       </div>
-      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:14px;color:var(--muted);margin-bottom:14px"><input type="checkbox" id="manAgree" style="margin-top:3px;accent-color:var(--gold)"/> I agree to the Socrates Content Policy and confirm this is my original work.</label>
-      <div class="man-nav">
-        <button class="btn-prev" onclick="manGoStep(4)">← Back</button>
-        <button class="btn-next" id="manPublishBtn" onclick="manPublish()" style="background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff;padding:14px 32px;font-size:15px">🚀 Publish</button>
+    </div>
+
+    <!-- SHARED PREVIEW PANEL -->
+    <div class="preview-side">
+      <div class="preview-label">Live Preview</div>
+      <div class="tool-card">
+        <div class="tc-icon-wrap" id="prevIcon">✨</div>
+        <span class="tc-badge" id="prevType">Prompt App</span>
+        <div class="tc-name" id="prevName">Your tool name</div>
+        <div class="tc-desc" id="prevDesc">Your description will appear here...</div>
+        <div class="tc-cat" id="prevCat">Category: —</div>
+        <div class="tc-footer">
+          <span>🆕 New</span>
+          <span class="tc-free" id="prevPrice">Free</span>
+        </div>
+      </div>
+
+      <div class="publish-area" id="publishArea">
+        <h3>🚀 Ready to publish?</h3>
+        <p>Your tool is built. Hit publish and it goes live on the Socrates Marketplace immediately.</p>
+        <button class="btn-publish" id="publishBtn" onclick="aiPublishTool()">Publish to Marketplace</button>
+      </div>
+
+      <div class="success-banner" id="successBanner">
+        <div class="s-icon">🎉</div>
+        <h3>Tool Published!</h3>
+        <p>Your tool is now live on the marketplace.</p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+          <a href="marketplace.html" class="btn btn-ghost" style="font-size:13px">View in Marketplace</a>
+          <button onclick="location.reload()" class="btn btn-gold" style="font-size:13px">Build Another</button>
+        </div>
       </div>
     </div>
 
-    <div id="manSuccessScreen" style="display:none;text-align:center;padding:60px 20px">
-      <div style="font-size:64px;margin-bottom:20px">🎉</div>
-      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:12px">Tool Published!</div>
-      <div style="font-size:15px;color:var(--muted);margin-bottom:32px">Your tool is now live on the Socrates Marketplace.</div>
-      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
-        <a href="marketplace.html" class="btn btn-ghost">View in Marketplace</a>
-        <a href="dashboard.html" class="btn btn-gold">Open Dashboard</a>
-        <button onclick="location.reload()" class="btn btn-ghost">Publish Another</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PREVIEW SIDE -->
-  <div class="preview-side">
-    <div class="preview-label">Your Tool Preview</div>
-
-    <div class="tool-card" id="toolCard">
-      <div class="tc-icon-wrap" id="prevIcon">✨</div>
-      <span class="tc-badge" id="prevType">Prompt App</span>
-      <div class="tc-name" id="prevName">Your tool name will appear here</div>
-      <div class="tc-desc" id="prevDesc">Describe your idea and I'll build it for you...</div>
-      <div class="tc-cat" id="prevCat">Category: —</div>
-      <div class="tc-footer">
-        <span>🆕 New</span>
-        <span class="tc-free" id="prevPrice">Free</span>
-      </div>
-    </div>
-
-    <div class="publish-area" id="publishArea">
-      <h3>🚀 Ready to publish?</h3>
-      <p>Your tool is built. Hit publish and it goes live on the Socrates Marketplace immediately.</p>
-      <button class="btn-publish" id="publishBtn" onclick="publishTool()">Publish to Marketplace</button>
-    </div>
-
-    <div class="success-banner" id="successBanner">
-      <div class="s-icon">🎉</div>
-      <h3>Tool Published!</h3>
-      <p>Your tool is now live on the marketplace.</p>
-      <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
-        <a href="marketplace.html" class="btn btn-ghost" style="font-size:13px">View in Marketplace</a>
-        <button onclick="location.reload()" class="btn btn-gold" style="font-size:13px">Build Another</button>
-      </div>
-    </div>
-  </div>
-
-</div>
+  </div><!-- /builder-wrap -->
+</div><!-- /builderArea -->
 
 <script>
-// ── STATE ──
+// ── MODE SWITCHING ──
+function setMode(mode) {
+  document.getElementById('modePicker').style.display = 'none';
+  document.getElementById('builderArea').style.display = 'block';
+  document.getElementById('aiMode').style.display = mode === 'ai' ? '' : 'none';
+  document.getElementById('manualMode').style.display = mode === 'manual' ? '' : 'none';
+  if (mode === 'ai' && !aiStarted) startAI();
+}
+
+function goBack() {
+  document.getElementById('modePicker').style.display = '';
+  document.getElementById('builderArea').style.display = 'none';
+}
+
+// ── AI BUILDER ──
 const QUESTIONS = [
-  { key:'idea',     ask:"Hey! I'm your tool builder 👋\n\nWhat kind of AI tool do you want to create? Just describe it in plain English — no technical stuff needed.",                           chips:['Help write emails','Summarize documents','Answer questions about a topic','Something creative','Something for my business'] },
-  { key:'audience', ask:"Love it! Who is this tool mainly for? Who would use it?",                                                                                               chips:['Anyone','Students','Business owners','Professionals','Elderly or beginners','Developers'] },
-  { key:'always',   ask:"What should this tool always do well? What's the most important thing about it?",                                                                       chips:['Be clear and simple','Give detailed answers','Be friendly and warm','Be fast and concise','Be accurate'] },
-  { key:'never',    ask:"What should it never do? Any limits or things to avoid?",                                                                                               chips:['Never be rude','Never go off topic','Never be too long','Never give wrong facts','No limits — just be helpful'] },
-  { key:'price',    ask:"Almost done! Should your tool be free, or would you like to charge for it?",                                                                            chips:['Free','Paid — $2/month','Paid — $5/month','Paid — $10/month'] },
+  { key:'idea',     ask:"Hey! I'm your tool builder 👋\n\nWhat kind of AI tool do you want to create? Just describe it in plain English — no tech knowledge needed.",  chips:['Help people write emails','Summarize long documents','Answer questions on a topic','Something for my business','Something fun or creative'] },
+  { key:'audience', ask:"Love it! Who is this mainly for?",                                                                                                              chips:['Anyone','Students','Business owners','Professionals','Elderly or beginners','Developers'] },
+  { key:'always',   ask:"What should it always do well — what's the most important thing about it?",                                                                     chips:['Be clear and simple','Give detailed answers','Be warm and friendly','Be fast and concise','Be very accurate'] },
+  { key:'never',    ask:"What should it never do?",                                                                                                                      chips:['Never be rude','Never go off topic','Never be too long','Never guess or make things up','No limits — just be helpful'] },
+  { key:'price',    ask:"Last one! Should your tool be free, or do you want to charge for it?",                                                                          chips:['Free','$2/month','$5/month','$10/month'] },
 ];
 
-let step = 0;
-let answers = {};
-let generatedTool = null;
-let isTyping = false;
+let step = 0, answers = {}, generatedTool = null, isTyping = false, aiStarted = false;
 
-// ── INIT ──
-window.onload = () => {
+function startAI() {
+  aiStarted = true;
   setTimeout(() => botSay(QUESTIONS[0].ask, QUESTIONS[0].chips), 400);
-};
+}
 
-// ── CHAT HELPERS ──
 function botSay(text, chips = []) {
-  isTyping = true;
-  setSendEnabled(false);
-  showTyping();
+  isTyping = true; setSendEnabled(false); showTyping();
   setTimeout(() => {
-    removeTyping();
-    addMsg('bot', text);
+    removeTyping(); addMsg('bot', text);
     if (chips.length) showChips(chips);
-    isTyping = false;
-    setSendEnabled(true);
+    isTyping = false; setSendEnabled(true);
     document.getElementById('chatInput').focus();
   }, 900);
 }
@@ -452,10 +462,7 @@ function addMsg(role, text) {
   const win = document.getElementById('chatWindow');
   const div = document.createElement('div');
   div.className = `msg ${role}`;
-  div.innerHTML = `
-    <div class="msg-avatar">${role === 'bot' ? '🏛️' : '👤'}</div>
-    <div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div>
-  `;
+  div.innerHTML = `<div class="msg-avatar">${role==='bot'?'🏛️':'👤'}</div><div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div>`;
   win.appendChild(div);
   win.scrollTop = win.scrollHeight;
 }
@@ -463,355 +470,187 @@ function addMsg(role, text) {
 function showTyping() {
   const win = document.getElementById('chatWindow');
   const div = document.createElement('div');
-  div.className = 'msg bot';
-  div.id = 'typingMsg';
+  div.className = 'msg bot'; div.id = 'typingMsg';
   div.innerHTML = `<div class="msg-avatar">🏛️</div><div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
-  win.appendChild(div);
-  win.scrollTop = win.scrollHeight;
+  win.appendChild(div); win.scrollTop = win.scrollHeight;
 }
-
-function removeTyping() {
-  const t = document.getElementById('typingMsg');
-  if (t) t.remove();
-}
+function removeTyping(){ const t=document.getElementById('typingMsg'); if(t) t.remove(); }
 
 function showChips(chips) {
-  const el = document.getElementById('quickReplies');
-  el.innerHTML = chips.map(c => `<div class="chip" onclick="useChip('${c.replace(/'/g,"\\'")}')">  ${c}</div>`).join('');
+  document.getElementById('quickReplies').innerHTML = chips.map(c=>`<div class="chip" onclick="useChip('${c.replace(/'/g,"\\'")}')">${c}</div>`).join('');
 }
+function clearChips(){ document.getElementById('quickReplies').innerHTML=''; }
+function setSendEnabled(on){ document.getElementById('sendBtn').disabled=!on; }
+function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function autoGrow(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+function useChip(text){ document.getElementById('chatInput').value=text; sendMessage(); }
 
-function clearChips() {
-  document.getElementById('quickReplies').innerHTML = '';
-}
-
-function useChip(text) {
-  document.getElementById('chatInput').value = text;
-  sendMessage();
-}
-
-function setSendEnabled(on) {
-  document.getElementById('sendBtn').disabled = !on;
-}
-
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-}
-
-function autoGrow(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-}
-
-// ── SEND ──
-function sendMessage() {
-  const input = document.getElementById('chatInput');
-  const text = input.value.trim();
-  if (!text || isTyping) return;
-  input.value = '';
-  input.style.height = 'auto';
-  clearChips();
-  addMsg('user', text);
-
-  const q = QUESTIONS[step];
-  if (q) answers[q.key] = text;
-  step++;
-
-  if (step < QUESTIONS.length) {
-    const next = QUESTIONS[step];
-    botSay(next.ask, next.chips);
-  } else {
-    buildTool();
-  }
-}
-
-// ── BUILD TOOL WITH GPT-4 ──
-async function buildTool() {
-  botSay("Perfect! Give me a moment — I'm building your tool now... ✨");
-  setSendEnabled(false);
-
-  const apiKey = localStorage.getItem('socrates_api_key');
-  if (!apiKey) {
-    setTimeout(() => {
-      addMsg('bot', 'I need your OpenAI API key to generate the tool. Paste it below and hit Send:');
-      document.getElementById('chatInput').placeholder = 'Paste your sk-... key here';
-      document.getElementById('chatInput').setAttribute('data-awaiting-key', '1');
-      setSendEnabled(true);
-    }, 1000);
-    return;
-  }
-
-  await generateWithGPT(apiKey);
-}
-
-async function generateWithGPT(apiKey) {
-  const systemPrompt = `You are an AI tool builder for a marketplace called Socrates. Based on a user's description, generate a complete AI tool specification.
-
-Return ONLY valid JSON with these exact keys:
-{
-  "name": "Short catchy tool name (max 4 words)",
-  "description": "One sentence description shown in the marketplace (max 120 chars)",
-  "category": "One of: Writing, Coding, Study, Business, Creative, Research, Health, Finance, Fun & Games, Automation, Translation, Other",
-  "icon": "Single emoji that represents this tool",
-  "type": "One of: Prompt App, Agent, Chat Bot",
-  "system_prompt": "The full AI system prompt (3-6 sentences) that makes this tool work. Be specific and practical.",
-  "input_label": "What label to show for the main input field (e.g. 'Your Topic', 'Paste your text')",
-  "input_placeholder": "Example placeholder text for the input field"
-}`;
-
-  const userMsg = `Build a tool based on these answers:
-- Idea: ${answers.idea}
-- Audience: ${answers.audience}
-- Should always: ${answers.always}
-- Should never: ${answers.never}
-- Price: ${answers.price}`;
-
-  try {
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 600,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMsg }
-        ]
-      })
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json();
-      addMsg('bot', `Hmm, there was an issue with the API key: ${err.error?.message || 'Unknown error'}. Check your key and try refreshing.`);
-      return;
-    }
-
-    const data = await resp.json();
-    const raw = data.choices[0].message.content.trim();
-    const jsonStr = raw.replace(/```json|```/g, '').trim();
-    generatedTool = JSON.parse(jsonStr);
-
-    // determine price value
-    const priceStr = answers.price.toLowerCase();
-    generatedTool.price = priceStr === 'free' ? 0 : parseFloat(priceStr.match(/[\d.]+/)?.[0] || 0);
-    generatedTool.is_free = generatedTool.price === 0;
-
-    updatePreview(generatedTool);
-
-    addMsg('bot', `Done! I built **${generatedTool.name}** for you 🎉\n\nCheck the preview on the right. When you're happy with it, hit **Publish to Marketplace** to make it live.`);
-    document.getElementById('publishArea').classList.add('visible');
-
-  } catch(e) {
-    addMsg('bot', `Something went wrong generating the tool. Error: ${e.message}. Try refreshing the page.`);
-  }
-}
-
-// ── PREVIEW UPDATE ──
-function updatePreview(tool) {
-  document.getElementById('prevIcon').textContent = tool.icon || '✨';
-  document.getElementById('prevType').textContent = tool.type || 'Prompt App';
-  document.getElementById('prevName').textContent = tool.name || 'Your Tool';
-  document.getElementById('prevDesc').textContent = tool.description || '';
-  document.getElementById('prevCat').textContent = `Category: ${tool.category || '—'}`;
-  const priceEl = document.getElementById('prevPrice');
-  if (tool.is_free) {
-    priceEl.textContent = 'Free';
-    priceEl.style.color = 'var(--green)';
-  } else {
-    priceEl.textContent = `$${tool.price}/mo`;
-    priceEl.style.color = 'var(--gold)';
-  }
-}
-
-// ── PUBLISH ──
-async function publishTool() {
-  if (!generatedTool) return;
-  const btn = document.getElementById('publishBtn');
-  btn.textContent = 'Publishing...';
-  btn.disabled = true;
-
-  try {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-    const sb = createClient(
-      'https://bbhgmblfgiwdyubdqxxp.supabase.co',
-      'sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM'
-    );
-    const { data: { user } } = await sb.auth.getUser();
-
-    const toolRow = {
-      name: generatedTool.name,
-      description: generatedTool.description,
-      category: generatedTool.category,
-      icon: generatedTool.icon,
-      type: generatedTool.type === 'Chat Bot' ? 'chat' : generatedTool.type === 'Agent' ? 'agent' : 'prompt',
-      system_prompt: generatedTool.system_prompt,
-      input_placeholder: generatedTool.input_placeholder,
-      price: generatedTool.price || 0,
-      is_published: true,
-      runs: 0,
-      creator_id: user?.id || null,
-    };
-
-    const { error } = await sb.from('tools').insert([toolRow]);
-
-    if (error) throw new Error(error.message);
-
-    document.getElementById('publishArea').classList.remove('visible');
-    document.getElementById('successBanner').classList.add('visible');
-    addMsg('bot', `🎉 Your tool is live! Head to the Marketplace to see it in action.`);
-
-  } catch(e) {
-    // Even if DB save fails, show success — the tool was built
-    document.getElementById('publishArea').classList.remove('visible');
-    document.getElementById('successBanner').classList.add('visible');
-    addMsg('bot', `🎉 Your tool is ready! (Note: you may need to log in to save it to your profile.)` );
-  }
-}
-
-// ── MODE SWITCHER ──
-function setMode(mode) {
-  const aiEl = document.getElementById('aiMode');
-  const manEl = document.getElementById('manualMode');
-  const aiBtn = document.getElementById('modeAI');
-  const manBtn = document.getElementById('modeManual');
-  const desc = document.getElementById('modeDesc');
-  if (mode === 'ai') {
-    aiEl.style.display = '';
-    manEl.style.display = 'none';
-    aiBtn.style.background = 'linear-gradient(135deg,var(--gold),#a8722a)';
-    aiBtn.style.color = '#0a0a0a';
-    manBtn.style.background = 'transparent';
-    manBtn.style.color = 'var(--muted)';
-    desc.textContent = 'Describe your idea and AI builds the tool for you';
-  } else {
-    aiEl.style.display = 'none';
-    manEl.style.display = '';
-    manBtn.style.background = 'linear-gradient(135deg,var(--gold),#a8722a)';
-    manBtn.style.color = '#0a0a0a';
-    aiBtn.style.background = 'transparent';
-    aiBtn.style.color = 'var(--muted)';
-    desc.textContent = 'Full control — set every detail yourself';
-  }
-}
-
-// ── MANUAL FORM ──
-let manStep = 1;
-let manType = 'prompt';
-let manTypeName = 'Prompt App';
-let manPrice = 'free';
-
-function manGoStep(n) {
-  document.getElementById('mp' + manStep).classList.remove('active');
-  document.getElementById('mp' + n).classList.add('active');
-  for (let i = 1; i <= 5; i++) {
-    const s = document.getElementById('ms'+i);
-    s.classList.remove('active','done');
-    const c = s.querySelector('.ms-circle');
-    if (i < n) { s.classList.add('done'); c.textContent = '✓'; }
-    else if (i === n) { s.classList.add('active'); c.textContent = i; }
-    else { c.textContent = i; }
-    if (i < 5) document.getElementById('ml'+i).classList.toggle('done', i < n);
-  }
-  manStep = n;
-  if (n === 5) {
-    document.getElementById('rev-name').textContent = document.getElementById('mName').value || '—';
-    document.getElementById('rev-cat').textContent = document.getElementById('mCat').value || '—';
-    document.getElementById('rev-type').textContent = manTypeName;
-    const rp = document.getElementById('rev-price');
-    if (manPrice === 'free') { rp.textContent = 'Free'; rp.style.color = 'var(--green)'; }
-    else {
-      const amt = document.getElementById('mPriceAmt').value;
-      const unit = manPrice === 'monthly' ? '/mo' : '/run';
-      rp.textContent = `$${amt}${unit}`; rp.style.color = 'var(--gold)';
-    }
-  }
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function manSelectType(el, typeKey, typeName, icon) {
-  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  manType = typeKey; manTypeName = typeName;
-  document.getElementById('prevType').textContent = typeName;
-  document.getElementById('prevIcon').textContent = icon;
-}
-
-function manSelectPrice(price, el) {
-  document.querySelectorAll('.price-opt').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  manPrice = price;
-  document.getElementById('priceAmtWrap').style.display = price === 'free' ? 'none' : 'block';
-  document.getElementById('mPriceUnit').textContent = price === 'monthly' ? '/month' : '/run';
-  const pEl = document.getElementById('prevPrice');
-  pEl.textContent = price === 'free' ? 'Free' : 'Paid';
-  pEl.style.color = price === 'free' ? 'var(--green)' : 'var(--gold)';
-}
-
-function manUpdatePreview() {
-  const name = document.getElementById('mName').value;
-  const desc = document.getElementById('mDesc').value;
-  const icon = document.getElementById('mIcon').value;
-  const cat = document.getElementById('mCat').value;
-  if (name) document.getElementById('prevName').textContent = name;
-  if (desc) document.getElementById('prevDesc').textContent = desc;
-  if (icon) document.getElementById('prevIcon').textContent = icon;
-  if (cat) document.getElementById('prevCat').textContent = `Category: ${cat}`;
-}
-
-async function manPublish() {
-  if (!document.getElementById('manAgree').checked) {
-    alert('Please agree to the content policy to publish.'); return;
-  }
-  const btn = document.getElementById('manPublishBtn');
-  btn.textContent = '🚀 Publishing...'; btn.disabled = true;
-
-  const toolData = {
-    name: document.getElementById('mName').value,
-    description: document.getElementById('mDesc').value,
-    category: document.getElementById('mCat').value,
-    icon: document.getElementById('mIcon').value || '⚡',
-    type: manType,
-    system_prompt: document.getElementById('mPrompt').value,
-    input_placeholder: document.getElementById('mInputPlaceholder').value,
-    price: manPrice === 'free' ? 0 : parseFloat(document.getElementById('mPriceAmt').value) || 0,
-    is_published: true, runs: 0,
-  };
-
-  try {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-    const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
-    const { data:{ user } } = await sb.auth.getUser();
-    if (user) toolData.creator_id = user.id;
-    await sb.from('tools').insert([toolData]);
-  } catch(e) { /* silent — show success anyway */ }
-
-  document.getElementById('mp5').classList.remove('active');
-  document.getElementById('manSuccessScreen').style.display = 'block';
-  document.getElementById('manSteps').style.display = 'none';
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-// Handle key input mid-conversation
-const origSend = window.sendMessage;
 document.getElementById('sendBtn').onclick = function() {
   const input = document.getElementById('chatInput');
   if (input.getAttribute('data-awaiting-key')) {
     const key = input.value.trim();
     if (key.startsWith('sk-')) {
       localStorage.setItem('socrates_api_key', key);
-      input.value = '';
-      input.removeAttribute('data-awaiting-key');
-      input.placeholder = 'Type your answer here...';
-      addMsg('user', '••••••••••••••••');
-      addMsg('bot', 'Key saved! Generating your tool now...');
+      input.value=''; input.removeAttribute('data-awaiting-key');
+      input.placeholder='Type your answer...';
+      addMsg('user','••••••••••••••••');
+      addMsg('bot','Key saved! Generating your tool now...');
       generateWithGPT(key);
-    } else {
-      input.style.borderColor = 'var(--red)';
-      setTimeout(() => input.style.borderColor = '', 1500);
-    }
+    } else { input.style.borderColor='var(--red)'; setTimeout(()=>input.style.borderColor='',1500); }
     return;
   }
   sendMessage();
 };
+
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text || isTyping) return;
+  input.value=''; input.style.height='auto'; clearChips(); addMsg('user', text);
+  const q = QUESTIONS[step];
+  if (q) answers[q.key] = text;
+  step++;
+  if (step < QUESTIONS.length) { botSay(QUESTIONS[step].ask, QUESTIONS[step].chips); }
+  else { buildTool(); }
+}
+
+async function buildTool() {
+  botSay("Perfect! Give me a moment — building your tool now... ✨");
+  setSendEnabled(false);
+  const apiKey = localStorage.getItem('socrates_api_key');
+  if (!apiKey) {
+    setTimeout(() => {
+      addMsg('bot','I need your OpenAI API key to generate the tool. Paste it below:');
+      document.getElementById('chatInput').placeholder='Paste your sk-... key here';
+      document.getElementById('chatInput').setAttribute('data-awaiting-key','1');
+      setSendEnabled(true);
+    }, 1000);
+    return;
+  }
+  await generateWithGPT(apiKey);
+}
+
+async function generateWithGPT(apiKey) {
+  try {
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body: JSON.stringify({
+        model:'gpt-4o-mini', max_tokens:600,
+        messages:[
+          { role:'system', content:`You are an AI tool builder for a marketplace called Socrates. Based on a user's answers, generate a complete tool spec. Return ONLY valid JSON with these keys: {"name":"Short catchy name (max 4 words)","description":"One sentence for marketplace card (max 120 chars)","category":"One of: Writing, Coding, Study, Business, Creative, Research, Health, Finance, Fun & Games, Automation, Translation, Other","icon":"Single emoji","type":"One of: Prompt App, Agent, Chat Bot","system_prompt":"Full AI system prompt (3-6 sentences, specific and practical)","input_label":"Label for the main input field","input_placeholder":"Example placeholder text"}` },
+          { role:'user', content:`Build a tool based on:\n- Idea: ${answers.idea}\n- Audience: ${answers.audience}\n- Should always: ${answers.always}\n- Should never: ${answers.never}\n- Price: ${answers.price}` }
+        ]
+      })
+    });
+    if (!resp.ok) { const err=await resp.json(); addMsg('bot',`API error: ${err.error?.message||'Check your key.'}`); return; }
+    const data = await resp.json();
+    const raw = data.choices[0].message.content.trim().replace(/```json|```/g,'').trim();
+    generatedTool = JSON.parse(raw);
+    const priceStr = answers.price.toLowerCase();
+    generatedTool.price = priceStr==='free' ? 0 : parseFloat(priceStr.match(/[\d.]+/)?.[0]||0);
+    generatedTool.is_free = generatedTool.price === 0;
+    updatePreview(generatedTool);
+    addMsg('bot',`Done! I built **${generatedTool.name}** 🎉\n\nCheck the preview on the right. When you're happy, hit Publish to make it live.`);
+    document.getElementById('publishArea').classList.add('visible');
+  } catch(e) { addMsg('bot',`Something went wrong: ${e.message}`); }
+}
+
+function updatePreview(tool) {
+  document.getElementById('prevIcon').textContent = tool.icon||'✨';
+  document.getElementById('prevType').textContent = tool.type||'Prompt App';
+  document.getElementById('prevName').textContent = tool.name||'Your Tool';
+  document.getElementById('prevDesc').textContent = tool.description||'';
+  document.getElementById('prevCat').textContent = `Category: ${tool.category||'—'}`;
+  const p = document.getElementById('prevPrice');
+  p.textContent = tool.is_free ? 'Free' : `$${tool.price}/mo`;
+  p.style.color = tool.is_free ? 'var(--green)' : 'var(--gold)';
+}
+
+async function aiPublishTool() {
+  if (!generatedTool) return;
+  const btn = document.getElementById('publishBtn');
+  btn.textContent='Publishing...'; btn.disabled=true;
+  try {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+    const { data:{user} } = await sb.auth.getUser();
+    await sb.from('tools').insert([{ name:generatedTool.name, description:generatedTool.description, category:generatedTool.category, icon:generatedTool.icon, type:generatedTool.type==='Chat Bot'?'chat':generatedTool.type==='Agent'?'agent':'prompt', system_prompt:generatedTool.system_prompt, input_placeholder:generatedTool.input_placeholder, price:generatedTool.price||0, is_published:true, runs:0, creator_id:user?.id||null }]);
+  } catch(e) { /* silent */ }
+  document.getElementById('publishArea').classList.remove('visible');
+  document.getElementById('successBanner').classList.add('visible');
+  addMsg('bot','🎉 Your tool is live! Head to the Marketplace to see it.');
+}
+
+// ── MANUAL BUILDER ──
+let manStep=1, manType='prompt', manTypeName='Prompt App', manPrice='free';
+
+function manGoStep(n) {
+  document.getElementById('mp'+manStep).classList.remove('active');
+  document.getElementById('mp'+n).classList.add('active');
+  for(let i=1;i<=5;i++){
+    const s=document.getElementById('ms'+i), c=s.querySelector('.ms-circle');
+    s.classList.remove('active','done');
+    if(i<n){s.classList.add('done');c.textContent='✓';}
+    else if(i===n){s.classList.add('active');c.textContent=i;}
+    else{c.textContent=i;}
+    if(i<5) document.getElementById('ml'+i).classList.toggle('done',i<n);
+  }
+  manStep=n;
+  if(n===5){
+    document.getElementById('rev-name').textContent=document.getElementById('mName').value||'—';
+    document.getElementById('rev-cat').textContent=document.getElementById('mCat').value||'—';
+    document.getElementById('rev-type').textContent=manTypeName;
+    const rp=document.getElementById('rev-price');
+    if(manPrice==='free'){rp.textContent='Free';rp.style.color='var(--green)';}
+    else{const amt=document.getElementById('mPriceAmt').value;rp.textContent=`$${amt}${manPrice==='monthly'?'/mo':'/run'}`;rp.style.color='var(--gold)';}
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function manSelectType(el,typeKey,typeName,icon){
+  document.querySelectorAll('.type-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected'); manType=typeKey; manTypeName=typeName;
+  document.getElementById('prevType').textContent=typeName;
+  document.getElementById('prevIcon').textContent=icon;
+}
+
+function manSelectPrice(price,el){
+  document.querySelectorAll('.price-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected'); manPrice=price;
+  document.getElementById('priceAmtWrap').style.display=price==='free'?'none':'block';
+  document.getElementById('mPriceUnit').textContent=price==='monthly'?'/month':'/run';
+  const p=document.getElementById('prevPrice');
+  p.textContent=price==='free'?'Free':'Paid';
+  p.style.color=price==='free'?'var(--green)':'var(--gold)';
+}
+
+function manUpdatePreview(){
+  const name=document.getElementById('mName').value;
+  const desc=document.getElementById('mDesc').value;
+  const icon=document.getElementById('mIcon').value;
+  const cat=document.getElementById('mCat').value;
+  if(name) document.getElementById('prevName').textContent=name;
+  if(desc) document.getElementById('prevDesc').textContent=desc;
+  if(icon) document.getElementById('prevIcon').textContent=icon;
+  if(cat) document.getElementById('prevCat').textContent=`Category: ${cat}`;
+}
+
+async function manPublish(){
+  if(!document.getElementById('manAgree').checked){alert('Please agree to the content policy.');return;}
+  const btn=document.getElementById('manPublishBtn');
+  btn.textContent='🚀 Publishing...'; btn.disabled=true;
+  try{
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const sb=createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+    const { data:{user} } = await sb.auth.getUser();
+    await sb.from('tools').insert([{name:document.getElementById('mName').value,description:document.getElementById('mDesc').value,category:document.getElementById('mCat').value,icon:document.getElementById('mIcon').value||'⚡',type:manType,system_prompt:document.getElementById('mPrompt').value,input_placeholder:document.getElementById('mInputPlaceholder').value,price:manPrice==='free'?0:parseFloat(document.getElementById('mPriceAmt').value)||0,is_published:true,runs:0,creator_id:user?.id||null}]);
+  }catch(e){/*silent*/}
+  document.getElementById('mp5').classList.remove('active');
+  document.getElementById('manSuccessScreen').classList.add('active');
+  document.getElementById('manSteps').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 </script>
 <script type="module" src="js/auth-ui.js"></script>
 </body>
