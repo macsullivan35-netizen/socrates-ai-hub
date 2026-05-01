@@ -418,6 +418,16 @@
 
     <div id="modalFields"></div>
 
+    <!-- Inline API key prompt — shown instead of run button when no key saved -->
+    <div id="inlineKeyPrompt" style="display:none;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:8px">🔑 Add your OpenAI key to run tools</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Your key is stored only in your browser — never sent anywhere except OpenAI. Get one free at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--gold)">platform.openai.com/api-keys</a></div>
+      <div style="display:flex;gap:8px">
+        <input type="password" id="inlineKeyInput" placeholder="sk-..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+        <button onclick="saveInlineKey()" style="padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;cursor:pointer;white-space:nowrap">Save & Run</button>
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn-run" id="runBtn" onclick="runTool()">▶ Run Tool</button>
     </div>
@@ -672,6 +682,8 @@ function openTool(id) {
   document.getElementById('outputContent').textContent = '';
   document.getElementById('runBtn').disabled = false;
   document.getElementById('runBtn').textContent = '▶ Run Tool';
+  document.getElementById('runBtn').style.display = '';
+  document.getElementById('inlineKeyPrompt').style.display = 'none';
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -731,13 +743,29 @@ function updateKeyBtn() {
 }
 
 // ── REAL OPENAI STREAMING RUN ──
+function saveInlineKey() {
+  const key = document.getElementById('inlineKeyInput').value.trim();
+  if (!key.startsWith('sk-')) {
+    document.getElementById('inlineKeyInput').style.borderColor = '#f87171';
+    document.getElementById('inlineKeyInput').placeholder = 'Must start with sk-...';
+    return;
+  }
+  localStorage.setItem('socrates_api_key', key);
+  updateKeyBtn();
+  document.getElementById('inlineKeyPrompt').style.display = 'none';
+  document.getElementById('runBtn').style.display = '';
+  runTool();
+}
+
 async function runTool() {
   const apiKey = getKey();
   if (!apiKey) {
-    pendingRun = true;
-    openKeyModal();
+    document.getElementById('inlineKeyPrompt').style.display = 'block';
+    document.getElementById('runBtn').style.display = 'none';
     return;
   }
+  document.getElementById('inlineKeyPrompt').style.display = 'none';
+  document.getElementById('runBtn').style.display = '';
 
   const btn = document.getElementById('runBtn');
   const output = document.getElementById('outputBox');
@@ -855,34 +883,29 @@ searchQuery = '';
 renderTools(TOOLS);
 updateKeyBtn();
 
-// Load real tools from Supabase and merge with demo tools
-async function loadRealTools() {
+// Supabase real tool loading — silently skipped if it fails
+(async () => {
   try {
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-    const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co', 'sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
-    const { data: realTools } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
-    if (realTools && realTools.length > 0) {
+    const SUPA_URL = 'https://bbhgmblfgiwdyubdqxxp.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGdtYmxmZ2l3ZHl1YmRxeHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NTI5NzUsImV4cCI6MjA2MTUyODk3NX0.s2YG5sIuZoKaYJfQzMdlhQ9rWdL-yiSh7G3vLR_bFLg';
+    const sb = createClient(SUPA_URL, SUPA_KEY);
+    const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
+    if (!error && realTools && realTools.length > 0) {
       const mapped = realTools.map(t => ({
-        id: t.id,
-        name: t.name,
+        id: t.id, name: t.name,
         creator: t.profiles?.display_name || t.profiles?.username || 'Builder',
-        cat: t.category,
-        type: t.type,
-        desc: t.description,
-        icon: t.icon,
-        tags: t.tags || [],
-        price: t.price > 0 ? `$${t.price}/run` : 'Free',
-        rating: t.rating,
-        runs: t.runs,
-        system_prompt: t.system_prompt,
-        input_placeholder: t.input_placeholder,
-        real: true
+        cat: t.category, type: t.type, desc: t.description,
+        icon: t.icon, tags: t.tags || [],
+        price: t.price > 0 ? `$${t.price}/run` : 'free',
+        runs: t.runs || '', author: t.profiles?.username || 'Builder',
+        sys: t.system_prompt, real: true,
+        fields: [{ label: 'Your input', id: 'userinput', type: 'textarea', placeholder: t.input_placeholder || 'Describe what you want...' }]
       }));
       renderTools([...mapped, ...TOOLS]);
     }
-  } catch(e) { /* fallback to demo tools */ }
-}
-loadRealTools();
+  } catch(e) { /* silently fall back to demo tools only */ }
+})();
 </script>
 <script type="module" src="js/auth-ui.js"></script>
 </body>
