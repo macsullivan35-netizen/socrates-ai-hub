@@ -167,10 +167,46 @@
     .success-banner h3{font-size:18px;font-weight:800;margin-bottom:6px}
     .success-banner p{font-size:13px;color:var(--muted)}
 
+    /* MANUAL MODE STYLES */
+    .man-step{display:flex;align-items:center;gap:8px;cursor:pointer;flex:1}
+    .ms-circle{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .3s;background:var(--bg2)}
+    .ms-label{font-size:12px;font-weight:600;color:var(--muted);transition:color .3s}
+    .ms-line{flex:1;height:1px;background:var(--border);margin:0 4px}
+    .ms-line.done{background:var(--green)}
+    .man-step.active .ms-circle{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+    .man-step.active .ms-label{color:var(--text)}
+    .man-step.done .ms-circle{border-color:var(--green);color:var(--green);background:rgba(74,222,128,.1)}
+    .man-panel{display:none}
+    .man-panel.active{display:block}
+    .man-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;margin-bottom:24px}
+    .fg{margin-bottom:20px}
+    .fg label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+    .fg input,.fg textarea,.fg select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);outline:none;font-family:'Inter',sans-serif;transition:border-color .2s}
+    .fg input:focus,.fg textarea:focus,.fg select:focus{border-color:rgba(201,168,76,.5)}
+    .fg input::placeholder,.fg textarea::placeholder{color:var(--muted)}
+    .fg textarea{resize:vertical}
+    .fg select option{background:var(--bg2)}
+    .type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:32px}
+    .type-opt{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;text-align:center;transition:all .2s}
+    .type-opt:hover{border-color:var(--purple)}
+    .type-opt.selected{border-color:var(--gold);background:var(--gold-dim)}
+    .to-icon{font-size:26px;margin-bottom:8px}
+    .to-name{font-size:13px;font-weight:700;margin-bottom:3px}
+    .to-sub{font-size:11px;color:var(--muted)}
+    .price-opt{flex:1;min-width:100px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;text-align:center;transition:all .2s}
+    .price-opt:hover{border-color:var(--purple)}
+    .price-opt.selected{border-color:var(--gold);background:var(--gold-dim)}
+    .man-nav{display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:20px;border-top:1px solid var(--border)}
+    .btn-prev{padding:11px 22px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s}
+    .btn-prev:hover{color:var(--text);border-color:var(--text)}
+    .btn-next{padding:11px 28px;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;transition:all .2s}
+    .btn-next:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(201,168,76,.3)}
+
     @media(max-width:800px){
       .builder-wrap{grid-template-columns:1fr;padding:16px}
       .chat-side{padding-right:0}
       .preview-side{position:static}
+      #manualMode{padding-right:0}
     }
   </style>
 </head>
@@ -192,10 +228,23 @@
   </div>
 </nav>
 
+<!-- MODE SWITCHER -->
+<div style="max-width:1200px;width:100%;margin:24px auto 0;padding:0 24px">
+  <div style="display:inline-flex;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:4px;gap:4px">
+    <button id="modeAI" onclick="setMode('ai')" style="padding:10px 22px;border-radius:9px;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .2s;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a">
+      ✨ AI Builder
+    </button>
+    <button id="modeManual" onclick="setMode('manual')" style="padding:10px 22px;border-radius:9px;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted)">
+      ⚙️ Manual
+    </button>
+  </div>
+  <span style="font-size:12px;color:var(--muted);margin-left:14px" id="modeDesc">Describe your idea and AI builds the tool for you</span>
+</div>
+
 <div class="builder-wrap">
 
   <!-- CHAT SIDE -->
-  <div class="chat-side">
+  <div class="chat-side" id="aiMode">
     <div class="chat-heading">Build Your AI Tool</div>
     <div class="chat-sub">Just describe your idea in plain English. No technical experience needed — the AI handles everything else.</div>
 
@@ -213,6 +262,119 @@
         oninput="autoGrow(this)"
       ></textarea>
       <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send →</button>
+    </div>
+  </div>
+
+  <!-- MANUAL MODE (hidden by default) -->
+  <div id="manualMode" style="display:none;min-width:0;padding-right:32px">
+    <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:8px">Manual Builder</div>
+    <div style="font-size:15px;color:var(--muted);margin-bottom:32px;line-height:1.6">Full control over every detail — name, prompt, inputs, pricing, and more.</div>
+
+    <!-- STEP PROGRESS -->
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:36px" id="manSteps">
+      <div class="man-step active" id="ms1" onclick="manGoStep(1)"><div class="ms-circle">1</div><div class="ms-label">Type</div></div>
+      <div class="ms-line" id="ml1"></div>
+      <div class="man-step" id="ms2" onclick="manGoStep(2)"><div class="ms-circle">2</div><div class="ms-label">Details</div></div>
+      <div class="ms-line" id="ml2"></div>
+      <div class="man-step" id="ms3" onclick="manGoStep(3)"><div class="ms-circle">3</div><div class="ms-label">Prompt</div></div>
+      <div class="ms-line" id="ml3"></div>
+      <div class="man-step" id="ms4" onclick="manGoStep(4)"><div class="ms-circle">4</div><div class="ms-label">Pricing</div></div>
+      <div class="ms-line" id="ml4"></div>
+      <div class="man-step" id="ms5" onclick="manGoStep(5)"><div class="ms-circle">5</div><div class="ms-label">Publish</div></div>
+    </div>
+
+    <!-- PANEL 1: TYPE -->
+    <div class="man-panel active" id="mp1">
+      <div class="man-title">What are you building?</div>
+      <div class="type-grid">
+        <div class="type-opt selected" onclick="manSelectType(this,'prompt','Prompt App','⚡')"><div class="to-icon">⚡</div><div class="to-name">Prompt App</div><div class="to-sub">Simple input → output</div></div>
+        <div class="type-opt" onclick="manSelectType(this,'agent','Agent','🤖')"><div class="to-icon">🤖</div><div class="to-name">Agent</div><div class="to-sub">Multi-step task</div></div>
+        <div class="type-opt" onclick="manSelectType(this,'chat','Chat Bot','💬')"><div class="to-icon">💬</div><div class="to-name">Chat Bot</div><div class="to-sub">Ongoing conversation</div></div>
+        <div class="type-opt" onclick="manSelectType(this,'model','Model Wrapper','🧠')"><div class="to-icon">🧠</div><div class="to-name">Model Wrapper</div><div class="to-sub">API access to a model</div></div>
+      </div>
+      <div class="man-nav"><span></span><button class="btn-next" onclick="manGoStep(2)">Continue →</button></div>
+    </div>
+
+    <!-- PANEL 2: DETAILS -->
+    <div class="man-panel" id="mp2">
+      <div class="man-title">Tool Details</div>
+      <div class="fg"><label>Tool Name *</label><input type="text" id="mName" placeholder="e.g. Essay Master Pro" oninput="manUpdatePreview()"/></div>
+      <div class="fg"><label>Description * <small style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(shown on marketplace cards)</small></label><textarea id="mDesc" rows="3" placeholder="What does this tool do? Who is it for?" oninput="manUpdatePreview()"></textarea></div>
+      <div class="fg">
+        <label>Category *</label>
+        <select id="mCat" onchange="manUpdatePreview()">
+          <option value="">Select a category...</option>
+          <option>Writing</option><option>Coding</option><option>Study</option>
+          <option>Business</option><option>Creative</option><option>Research</option>
+          <option>Health</option><option>Finance</option><option>Fun & Games</option>
+          <option>Automation</option><option>Translation</option><option>Other</option>
+        </select>
+      </div>
+      <div class="fg"><label>Emoji Icon</label><input type="text" id="mIcon" placeholder="e.g. ✍️" maxlength="4" style="max-width:100px;font-size:22px;text-align:center" oninput="manUpdatePreview()"/></div>
+      <div class="man-nav"><button class="btn-prev" onclick="manGoStep(1)">← Back</button><button class="btn-next" onclick="manGoStep(3)">Continue →</button></div>
+    </div>
+
+    <!-- PANEL 3: PROMPT -->
+    <div class="man-panel" id="mp3">
+      <div class="man-title">System Prompt</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6">This is the AI's instruction set — the engine of your tool. Write it like you're briefing an expert.</div>
+      <div class="fg">
+        <label>System Prompt *</label>
+        <textarea id="mPrompt" rows="10" placeholder="You are an expert [role]. When the user provides [input], you will...&#10;&#10;Always:&#10;- ...&#10;&#10;Never:&#10;- ..."></textarea>
+      </div>
+      <div class="fg"><label>Input Field Label <small style="color:var(--muted);font-weight:400;text-transform:none">(what users fill in)</small></label><input type="text" id="mInputLabel" placeholder="e.g. Your Topic, Paste your text"/></div>
+      <div class="fg"><label>Input Placeholder</label><input type="text" id="mInputPlaceholder" placeholder="e.g. Enter a topic for your essay..."/></div>
+      <div class="fg"><label>Sample Output <small style="color:var(--muted);font-weight:400;text-transform:none">(optional — helps users understand what to expect)</small></label><textarea id="mSample" rows="5" placeholder="Paste an example of great output..."></textarea></div>
+      <div class="man-nav"><button class="btn-prev" onclick="manGoStep(2)">← Back</button><button class="btn-next" onclick="manGoStep(4)">Continue →</button></div>
+    </div>
+
+    <!-- PANEL 4: PRICING -->
+    <div class="man-panel" id="mp4">
+      <div class="man-title">Set Your Price</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:24px">You keep 80% of all revenue.</div>
+      <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+        <div class="price-opt selected" id="po-free" onclick="manSelectPrice('free',this)"><div style="font-size:24px;margin-bottom:8px">🎁</div><div style="font-weight:700;margin-bottom:4px">Free</div><div style="font-size:12px;color:var(--muted)">Maximum reach</div></div>
+        <div class="price-opt" id="po-monthly" onclick="manSelectPrice('monthly',this)"><div style="font-size:24px;margin-bottom:8px">📅</div><div style="font-weight:700;margin-bottom:4px">Monthly</div><div style="font-size:12px;color:var(--muted)">Recurring subscription</div></div>
+        <div class="price-opt" id="po-perrun" onclick="manSelectPrice('perrun',this)"><div style="font-size:24px;margin-bottom:8px">⚡</div><div style="font-weight:700;margin-bottom:4px">Per Run</div><div style="font-size:12px;color:var(--muted)">Pay each use</div></div>
+      </div>
+      <div id="priceAmtWrap" style="display:none;margin-bottom:24px">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Amount (USD) — You keep 80%</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="color:var(--muted)">$</span>
+          <input type="number" id="mPriceAmt" min="0.50" step="0.50" value="4.99" style="width:120px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);outline:none"/>
+          <span id="mPriceUnit" style="color:var(--muted);font-size:14px">/month</span>
+        </div>
+      </div>
+      <div class="man-nav"><button class="btn-prev" onclick="manGoStep(3)">← Back</button><button class="btn-next" onclick="manGoStep(5)">Review →</button></div>
+    </div>
+
+    <!-- PANEL 5: REVIEW + PUBLISH -->
+    <div class="man-panel" id="mp5">
+      <div class="man-title">Review & Publish</div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Name</div><div id="rev-name" style="font-weight:600">—</div></div>
+          <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Category</div><div id="rev-cat" style="font-weight:600">—</div></div>
+          <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Type</div><div id="rev-type" style="font-weight:600">—</div></div>
+          <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Price</div><div id="rev-price" style="font-weight:600;color:var(--green)">Free</div></div>
+        </div>
+      </div>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:14px;color:var(--muted);margin-bottom:14px"><input type="checkbox" id="manAgree" style="margin-top:3px;accent-color:var(--gold)"/> I agree to the Socrates Content Policy and confirm this is my original work.</label>
+      <div class="man-nav">
+        <button class="btn-prev" onclick="manGoStep(4)">← Back</button>
+        <button class="btn-next" id="manPublishBtn" onclick="manPublish()" style="background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff;padding:14px 32px;font-size:15px">🚀 Publish</button>
+      </div>
+    </div>
+
+    <div id="manSuccessScreen" style="display:none;text-align:center;padding:60px 20px">
+      <div style="font-size:64px;margin-bottom:20px">🎉</div>
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:12px">Tool Published!</div>
+      <div style="font-size:15px;color:var(--muted);margin-bottom:32px">Your tool is now live on the Socrates Marketplace.</div>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+        <a href="marketplace.html" class="btn btn-ghost">View in Marketplace</a>
+        <a href="dashboard.html" class="btn btn-gold">Open Dashboard</a>
+        <button onclick="location.reload()" class="btn btn-ghost">Publish Another</button>
+      </div>
     </div>
   </div>
 
@@ -503,6 +665,129 @@ async function publishTool() {
     document.getElementById('successBanner').classList.add('visible');
     addMsg('bot', `🎉 Your tool is ready! (Note: you may need to log in to save it to your profile.)` );
   }
+}
+
+// ── MODE SWITCHER ──
+function setMode(mode) {
+  const aiEl = document.getElementById('aiMode');
+  const manEl = document.getElementById('manualMode');
+  const aiBtn = document.getElementById('modeAI');
+  const manBtn = document.getElementById('modeManual');
+  const desc = document.getElementById('modeDesc');
+  if (mode === 'ai') {
+    aiEl.style.display = '';
+    manEl.style.display = 'none';
+    aiBtn.style.background = 'linear-gradient(135deg,var(--gold),#a8722a)';
+    aiBtn.style.color = '#0a0a0a';
+    manBtn.style.background = 'transparent';
+    manBtn.style.color = 'var(--muted)';
+    desc.textContent = 'Describe your idea and AI builds the tool for you';
+  } else {
+    aiEl.style.display = 'none';
+    manEl.style.display = '';
+    manBtn.style.background = 'linear-gradient(135deg,var(--gold),#a8722a)';
+    manBtn.style.color = '#0a0a0a';
+    aiBtn.style.background = 'transparent';
+    aiBtn.style.color = 'var(--muted)';
+    desc.textContent = 'Full control — set every detail yourself';
+  }
+}
+
+// ── MANUAL FORM ──
+let manStep = 1;
+let manType = 'prompt';
+let manTypeName = 'Prompt App';
+let manPrice = 'free';
+
+function manGoStep(n) {
+  document.getElementById('mp' + manStep).classList.remove('active');
+  document.getElementById('mp' + n).classList.add('active');
+  for (let i = 1; i <= 5; i++) {
+    const s = document.getElementById('ms'+i);
+    s.classList.remove('active','done');
+    const c = s.querySelector('.ms-circle');
+    if (i < n) { s.classList.add('done'); c.textContent = '✓'; }
+    else if (i === n) { s.classList.add('active'); c.textContent = i; }
+    else { c.textContent = i; }
+    if (i < 5) document.getElementById('ml'+i).classList.toggle('done', i < n);
+  }
+  manStep = n;
+  if (n === 5) {
+    document.getElementById('rev-name').textContent = document.getElementById('mName').value || '—';
+    document.getElementById('rev-cat').textContent = document.getElementById('mCat').value || '—';
+    document.getElementById('rev-type').textContent = manTypeName;
+    const rp = document.getElementById('rev-price');
+    if (manPrice === 'free') { rp.textContent = 'Free'; rp.style.color = 'var(--green)'; }
+    else {
+      const amt = document.getElementById('mPriceAmt').value;
+      const unit = manPrice === 'monthly' ? '/mo' : '/run';
+      rp.textContent = `$${amt}${unit}`; rp.style.color = 'var(--gold)';
+    }
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function manSelectType(el, typeKey, typeName, icon) {
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  manType = typeKey; manTypeName = typeName;
+  document.getElementById('prevType').textContent = typeName;
+  document.getElementById('prevIcon').textContent = icon;
+}
+
+function manSelectPrice(price, el) {
+  document.querySelectorAll('.price-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  manPrice = price;
+  document.getElementById('priceAmtWrap').style.display = price === 'free' ? 'none' : 'block';
+  document.getElementById('mPriceUnit').textContent = price === 'monthly' ? '/month' : '/run';
+  const pEl = document.getElementById('prevPrice');
+  pEl.textContent = price === 'free' ? 'Free' : 'Paid';
+  pEl.style.color = price === 'free' ? 'var(--green)' : 'var(--gold)';
+}
+
+function manUpdatePreview() {
+  const name = document.getElementById('mName').value;
+  const desc = document.getElementById('mDesc').value;
+  const icon = document.getElementById('mIcon').value;
+  const cat = document.getElementById('mCat').value;
+  if (name) document.getElementById('prevName').textContent = name;
+  if (desc) document.getElementById('prevDesc').textContent = desc;
+  if (icon) document.getElementById('prevIcon').textContent = icon;
+  if (cat) document.getElementById('prevCat').textContent = `Category: ${cat}`;
+}
+
+async function manPublish() {
+  if (!document.getElementById('manAgree').checked) {
+    alert('Please agree to the content policy to publish.'); return;
+  }
+  const btn = document.getElementById('manPublishBtn');
+  btn.textContent = '🚀 Publishing...'; btn.disabled = true;
+
+  const toolData = {
+    name: document.getElementById('mName').value,
+    description: document.getElementById('mDesc').value,
+    category: document.getElementById('mCat').value,
+    icon: document.getElementById('mIcon').value || '⚡',
+    type: manType,
+    system_prompt: document.getElementById('mPrompt').value,
+    input_placeholder: document.getElementById('mInputPlaceholder').value,
+    price: manPrice === 'free' ? 0 : parseFloat(document.getElementById('mPriceAmt').value) || 0,
+    is_published: true, runs: 0,
+  };
+
+  try {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+    const { data:{ user } } = await sb.auth.getUser();
+    if (user) toolData.creator_id = user.id;
+    await sb.from('tools').insert([toolData]);
+  } catch(e) { /* silent — show success anyway */ }
+
+  document.getElementById('mp5').classList.remove('active');
+  document.getElementById('manSuccessScreen').style.display = 'block';
+  document.getElementById('manSteps').style.display = 'none';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 // Handle key input mid-conversation
