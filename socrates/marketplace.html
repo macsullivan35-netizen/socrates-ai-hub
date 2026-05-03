@@ -190,6 +190,9 @@
       backdrop-filter:blur(8px);padding:20px;
     }
     #keyOverlay{z-index:2000}
+    .model-chip{padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);transition:all .2s;user-select:none}
+    .model-chip:hover{border-color:var(--gold);color:var(--gold)}
+    .model-chip.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
     .modal-overlay.open{display:flex}
     .modal{
       background:var(--bg2);border:1px solid var(--border);
@@ -390,16 +393,34 @@
 
 <!-- API KEY MODAL -->
 <div class="modal-overlay" id="keyOverlay">
-  <div class="modal" style="max-width:500px">
+  <div class="modal" style="max-width:520px">
     <div style="text-align:center;margin-bottom:28px">
       <div style="font-size:48px;margin-bottom:12px">🔑</div>
-      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;margin-bottom:8px">Connect Your OpenAI Key</div>
-      <div style="font-size:14px;color:var(--muted);line-height:1.6">Your key is stored only in your browser — never sent to any server except OpenAI directly.</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;margin-bottom:8px">Connect Your AI Keys</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">Keys are stored only in your browser — never sent anywhere except the AI provider directly.</div>
     </div>
-    <label style="display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px">OpenAI API Key</label>
-    <input type="password" id="keyInput" placeholder="sk-..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);outline:none;font-family:'Inter',sans-serif;margin-bottom:8px"/>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--gold)">platform.openai.com/api-keys</a> — it costs ~$0.01 per run.</div>
-    <button onclick="saveKey()" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;cursor:pointer;">Save Key &amp; Run Tool</button>
+
+    <!-- OpenAI -->
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:32px;height:32px;background:#10a37f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">⚡</div>
+        <div><div style="font-size:14px;font-weight:700">OpenAI (GPT-4)</div><div style="font-size:11px;color:var(--muted)">platform.openai.com/api-keys · ~$0.01/run</div></div>
+        <div id="openaiStatus" style="margin-left:auto;font-size:12px;color:var(--muted)">Not connected</div>
+      </div>
+      <input type="password" id="keyInput" placeholder="sk-..." autocomplete="off" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+    </div>
+
+    <!-- Claude -->
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:32px;height:32px;background:#c17f45;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🏛️</div>
+        <div><div style="font-size:14px;font-weight:700">Claude (Anthropic)</div><div style="font-size:11px;color:var(--muted)">console.anthropic.com · ~$0.01/run</div></div>
+        <div id="claudeStatus" style="margin-left:auto;font-size:12px;color:var(--muted)">Not connected</div>
+      </div>
+      <input type="password" id="claudeKeyInput" placeholder="sk-ant-..." autocomplete="off" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+    </div>
+
+    <button onclick="saveKey()" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;cursor:pointer;">Save Keys</button>
     <button onclick="closeKeyModal()" style="width:100%;padding:10px;border-radius:12px;font-size:13px;font-weight:600;background:transparent;color:var(--muted);border:none;cursor:pointer;margin-top:8px;">Cancel</button>
   </div>
 </div>
@@ -417,6 +438,13 @@
     </div>
 
     <div id="modalFields"></div>
+
+    <!-- Model selector -->
+    <div id="modelSelector" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);width:100%;margin-bottom:4px">AI Model</div>
+      <div class="model-chip active" id="chip-gpt" onclick="selectModel('gpt')">⚡ GPT-4o</div>
+      <div class="model-chip" id="chip-claude" onclick="selectModel('claude')">🏛️ Claude</div>
+    </div>
 
     <!-- Inline API key prompt — shown instead of run button when no key saved -->
     <div id="inlineKeyPrompt" style="display:none;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:16px;margin-bottom:16px">
@@ -695,12 +723,30 @@ function closeModal() {
 
 // ── API KEY MANAGEMENT ──
 let pendingRun = false;
+let selectedModel = 'gpt';
 
 function getKey() { return localStorage.getItem('socrates_api_key'); }
+function getClaudeKey() { return localStorage.getItem('socrates_claude_key'); }
+
+function selectModel(model) {
+  selectedModel = model;
+  document.querySelectorAll('.model-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('chip-' + model).classList.add('active');
+  // if selected model has no key, show inline prompt
+  const hasKey = model === 'gpt' ? getKey() : getClaudeKey();
+  document.getElementById('inlineKeyPrompt').style.display = hasKey ? 'none' : 'block';
+  document.getElementById('runBtn').style.display = hasKey ? '' : 'none';
+  if (!hasKey) {
+    const inp = document.getElementById('inlineKeyInput');
+    inp.placeholder = model === 'gpt' ? 'Paste your sk-... OpenAI key' : 'Paste your sk-ant-... Claude key';
+  }
+}
 
 function openKeyModal() {
-  const existing = getKey();
-  if (existing) document.getElementById('keyInput').value = existing;
+  const oKey = getKey();
+  const cKey = getClaudeKey();
+  if (oKey) { document.getElementById('keyInput').value = oKey; document.getElementById('openaiStatus').textContent = '✅ Connected'; document.getElementById('openaiStatus').style.color = '#4ade80'; }
+  if (cKey) { document.getElementById('claudeKeyInput').value = cKey; document.getElementById('claudeStatus').textContent = '✅ Connected'; document.getElementById('claudeStatus').style.color = '#4ade80'; }
   document.getElementById('modalOverlay').classList.remove('open');
   document.getElementById('keyOverlay').classList.add('open');
 }
@@ -711,13 +757,14 @@ function closeKeyModal() {
 }
 
 function saveKey() {
-  const key = document.getElementById('keyInput').value.trim();
-  if (!key.startsWith('sk-')) {
-    document.getElementById('keyInput').style.borderColor = '#f87171';
-    document.getElementById('keyInput').placeholder = 'Must start with sk-...';
-    return;
+  const oKey = document.getElementById('keyInput').value.trim();
+  const cKey = document.getElementById('claudeKeyInput').value.trim();
+  if (oKey && oKey.startsWith('sk-') && !oKey.startsWith('sk-ant-')) {
+    localStorage.setItem('socrates_api_key', oKey);
   }
-  localStorage.setItem('socrates_api_key', key);
+  if (cKey && cKey.startsWith('sk-ant-')) {
+    localStorage.setItem('socrates_claude_key', cKey);
+  }
   updateKeyBtn();
   closeKeyModal();
   if (pendingRun) {
@@ -729,8 +776,10 @@ function saveKey() {
 
 function updateKeyBtn() {
   const btn = document.getElementById('keyBtn');
-  if (getKey()) {
-    btn.textContent = '✅ AI Connected';
+  const hasAny = getKey() || getClaudeKey();
+  if (hasAny) {
+    const models = [getKey() ? 'GPT-4' : null, getClaudeKey() ? 'Claude' : null].filter(Boolean).join(' + ');
+    btn.textContent = `✅ ${models}`;
     btn.style.borderColor = 'rgba(74,222,128,.4)';
     btn.style.color = '#4ade80';
   } else {
@@ -738,17 +787,21 @@ function updateKeyBtn() {
     btn.style.borderColor = '';
     btn.style.color = '';
   }
+  // show/hide Claude chip based on key availability
+  document.getElementById('chip-claude').style.opacity = getClaudeKey() ? '1' : '0.5';
 }
 
 // ── REAL OPENAI STREAMING RUN ──
 function saveInlineKey() {
   const key = document.getElementById('inlineKeyInput').value.trim();
-  if (!key.startsWith('sk-')) {
+  const isClaude = key.startsWith('sk-ant-');
+  const isOpenAI = key.startsWith('sk-') && !isClaude;
+  if (!isClaude && !isOpenAI) {
     document.getElementById('inlineKeyInput').style.borderColor = '#f87171';
-    document.getElementById('inlineKeyInput').placeholder = 'Must start with sk-...';
     return;
   }
-  localStorage.setItem('socrates_api_key', key);
+  if (isClaude) { localStorage.setItem('socrates_claude_key', key); selectedModel = 'claude'; }
+  else { localStorage.setItem('socrates_api_key', key); selectedModel = 'gpt'; }
   updateKeyBtn();
   document.getElementById('inlineKeyPrompt').style.display = 'none';
   document.getElementById('runBtn').style.display = '';
@@ -756,8 +809,10 @@ function saveInlineKey() {
 }
 
 async function runTool() {
-  const apiKey = getKey();
+  const apiKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
   if (!apiKey) {
+    const inp = document.getElementById('inlineKeyInput');
+    inp.placeholder = selectedModel === 'claude' ? 'Paste your sk-ant-... Claude key' : 'Paste your sk-... OpenAI key';
     document.getElementById('inlineKeyPrompt').style.display = 'block';
     document.getElementById('runBtn').style.display = 'none';
     return;
@@ -792,22 +847,25 @@ async function runTool() {
   content.innerHTML = '<span style="color:var(--muted);font-size:13px">Connecting to AI...</span>';
 
   try {
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        stream: true,
-        max_tokens: 1200,
-        messages: [
-          { role: 'system', content: currentTool.sys || 'You are a helpful AI assistant.' },
-          { role: 'user', content: userMessage || 'Please demonstrate what this tool can do with a sample output.' }
-        ]
-      })
-    });
+    const isClaude = selectedModel === 'claude';
+    const endpoint = isClaude
+      ? 'https://api.anthropic.com/v1/messages'
+      : 'https://api.openai.com/v1/chat/completions';
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (isClaude) {
+      headers['x-api-key'] = apiKey;
+      headers['anthropic-version'] = '2023-06-01';
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    } else {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    const body = isClaude
+      ? JSON.stringify({ model: 'claude-3-5-haiku-20241022', max_tokens: 1200, system: currentTool.sys || 'You are a helpful AI assistant.', messages: [{ role: 'user', content: userMessage || 'Please demonstrate what this tool can do with a sample output.' }] })
+      : JSON.stringify({ model: 'gpt-4o-mini', stream: true, max_tokens: 1200, messages: [{ role: 'system', content: currentTool.sys || 'You are a helpful AI assistant.' }, { role: 'user', content: userMessage || 'Please demonstrate what this tool can do with a sample output.' }] });
+
+    const resp = await fetch(endpoint, { method: 'POST', headers, body });
 
     if (!resp.ok) {
       const err = await resp.json();
@@ -818,28 +876,33 @@ async function runTool() {
     }
 
     content.textContent = '';
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
-        if (data === '[DONE]') break;
-        try {
-          const json = JSON.parse(data);
-          const delta = json.choices?.[0]?.delta?.content;
-          if (delta) {
-            content.textContent += delta;
-            output.scrollTop = output.scrollHeight;
-          }
-        } catch {}
+    if (isClaude) {
+      // Claude returns a regular JSON response (not streaming)
+      const data = await resp.json();
+      const text = data.content?.[0]?.text || '';
+      content.textContent = text;
+    } else {
+      // OpenAI streams
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') break;
+          try {
+            const json = JSON.parse(data);
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) { content.textContent += delta; output.scrollTop = output.scrollHeight; }
+          } catch {}
+        }
       }
     }
 
