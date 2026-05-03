@@ -691,9 +691,7 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
 }
 
-document.getElementById('modalOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
-});
+// Modal only closes via the ✕ button — clicking the backdrop does nothing
 
 // ── API KEY MANAGEMENT ──
 let pendingRun = false;
