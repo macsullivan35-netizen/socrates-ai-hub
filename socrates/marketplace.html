@@ -553,11 +553,44 @@ const TOOLS = [
   },
 ];
 
-let currentTools = [...TOOLS];
+let catalogTools = [...TOOLS];
+let currentTools = [...catalogTools];
 let activeFilter = 'all';
 let activeType = 'all';
 let searchQuery = '';
 let currentTool = null;
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+}
+
+function jsString(value) {
+  return JSON.stringify(String(value ?? '')).replace(/</g, '\\u003c');
+}
+
+function textForSearch(value) {
+  return String(value ?? '').toLowerCase();
+}
+
+function normalizeCategory(category) {
+  const value = String(category ?? 'other').toLowerCase();
+  if (value.includes('fun')) return 'fun';
+  return value;
+}
+
+function typeMeta(type) {
+  if (type === 'agent') return { typeName: 'Agent', typeClass: 'type-agent' };
+  if (type === 'chat') return { typeName: 'Chat Agent', typeClass: 'type-chat' };
+  if (type === 'model') return { typeName: 'Fine-Tuned Model', typeClass: 'type-model' };
+  if (type === 'connector') return { typeName: 'Connector', typeClass: 'type-connector' };
+  return { typeName: 'Prompt App', typeClass: 'type-prompt' };
+}
 
 function renderTools(tools) {
   const grid = document.getElementById('toolGrid');
@@ -567,30 +600,30 @@ function renderTools(tools) {
     return;
   }
   grid.innerHTML = tools.map(t => `
-    <div class="tool-card" onclick="openTool(${t.id})">
+    <div class="tool-card" onclick="openTool(${jsString(t.id)})">
       <div class="tc-header">
-        <div class="tc-icon" style="background:${t.bg}">${t.icon}</div>
+        <div class="tc-icon" style="background:${escapeHtml(t.bg || 'rgba(201,168,76,.15)')}">${escapeHtml(t.icon || '⚡')}</div>
         <div class="tc-meta">
-          <h3>${t.name}</h3>
-          <span class="tc-type ${t.typeClass}">${t.typeName}</span>
+          <h3>${escapeHtml(t.name)}</h3>
+          <span class="tc-type ${escapeHtml(t.typeClass || 'type-prompt')}">${escapeHtml(t.typeName || 'Prompt App')}</span>
         </div>
       </div>
-      <div class="tc-desc">${t.desc}</div>
+      <div class="tc-desc">${escapeHtml(t.desc)}</div>
       <div class="tc-footer">
         <div>
           <div class="tc-stats">
-            ${t.runs ? `<span>🔁 ${t.runs} runs</span>` : '<span style="color:var(--muted);font-size:11px">New</span>'}
+            ${t.runs ? `<span>🔁 ${escapeHtml(t.runs)} runs</span>` : '<span style="color:var(--muted);font-size:11px">New</span>'}
           </div>
-          <div class="tc-author">${t.author}</div>
+          <div class="tc-author">${escapeHtml(t.author)}</div>
         </div>
-        <div class="tc-price ${t.price === 'free' ? 'price-free' : 'price-paid'}">${t.price === 'free' ? 'Free' : t.price}</div>
+        <div class="tc-price ${t.price === 'free' ? 'price-free' : 'price-paid'}">${t.price === 'free' ? 'Free' : escapeHtml(t.price)}</div>
       </div>
     </div>
   `).join('');
 }
 
 function applyFilters() {
-  let tools = [...TOOLS];
+  let tools = [...catalogTools];
   if (activeFilter === 'trending') tools = tools.filter(t => t.trending);
   else if (activeFilter === 'free') tools = tools.filter(t => t.price === 'free');
   else if (activeFilter !== 'all' && activeFilter !== 'new') tools = tools.filter(t => t.cat === activeFilter);
@@ -598,10 +631,10 @@ function applyFilters() {
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     tools = tools.filter(t =>
-      t.name.toLowerCase().includes(q) ||
-      t.desc.toLowerCase().includes(q) ||
-      t.cat.toLowerCase().includes(q) ||
-      t.typeName.toLowerCase().includes(q)
+      textForSearch(t.name).includes(q) ||
+      textForSearch(t.desc).includes(q) ||
+      textForSearch(t.cat).includes(q) ||
+      textForSearch(t.typeName).includes(q)
     );
   }
   currentTools = tools;
@@ -655,7 +688,7 @@ function doSort(val) {
 }
 
 function openTool(id) {
-  currentTool = TOOLS.find(t => t.id === id);
+  currentTool = catalogTools.find(t => String(t.id) === String(id));
   if (!currentTool) return;
   document.getElementById('modalIcon').textContent = currentTool.icon;
   document.getElementById('modalIcon').style.background = currentTool.bg;
@@ -665,16 +698,16 @@ function openTool(id) {
   const fieldsEl = document.getElementById('modalFields');
   fieldsEl.innerHTML = currentTool.fields.map(f => {
     if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
+      return `<label>${escapeHtml(f.label)}</label>
+        <select id="${escapeHtml(f.id)}">
+          ${(f.options || []).map(o => `<option>${escapeHtml(o)}</option>`).join('')}
         </select>`;
     } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
+      return `<label>${escapeHtml(f.label)}</label>
+        <textarea id="${escapeHtml(f.id)}" placeholder="${escapeHtml(f.placeholder || '')}"></textarea>`;
     } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
+      return `<label>${escapeHtml(f.label)}</label>
+        <input type="text" id="${escapeHtml(f.id)}" placeholder="${escapeHtml(f.placeholder || '')}"/>`;
     }
   }).join('');
 
@@ -892,17 +925,22 @@ updateKeyBtn();
     const sb = createClient(SUPA_URL, SUPA_KEY);
     const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
-      const mapped = realTools.map(t => ({
+      const mapped = realTools.map(t => {
+        const meta = typeMeta(t.type);
+        return {
         id: t.id, name: t.name,
         creator: t.profiles?.display_name || t.profiles?.username || 'Builder',
-        cat: t.category, type: t.type, desc: t.description,
-        icon: t.icon, tags: t.tags || [],
+        cat: normalizeCategory(t.category), type: t.type || 'prompt', typeName: meta.typeName, typeClass: meta.typeClass,
+        desc: t.description,
+        icon: t.icon || '⚡', bg: 'rgba(201,168,76,.15)', tags: t.tags || [],
         price: t.price > 0 ? `$${t.price}/run` : 'free',
         runs: t.runs || '', author: t.profiles?.username || 'Builder',
-        sys: t.system_prompt, real: true,
+        sys: t.system_prompt || 'You are a helpful AI assistant.', real: true,
         fields: [{ label: 'Your input', id: 'userinput', type: 'textarea', placeholder: t.input_placeholder || 'Describe what you want...' }]
-      }));
-      renderTools([...mapped, ...TOOLS]);
+        };
+      });
+      catalogTools = [...mapped, ...TOOLS];
+      applyFilters();
     }
   } catch(e) { /* silently fall back to demo tools only */ }
 })();
