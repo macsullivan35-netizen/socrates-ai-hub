@@ -205,6 +205,25 @@
     .fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--gold)}
     .fg input::placeholder,.fg textarea::placeholder{color:var(--muted)}
     .fg textarea{resize:vertical}
+    .fg-hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+    .icon-upload-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px}
+    .btn-icon-file{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;
+      border:1px dashed var(--gold);color:var(--gold);background:var(--gold-dim);
+      cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;
+    }
+    .btn-icon-file:hover{border-style:solid;transform:translateY(-1px)}
+    .btn-icon-file input{display:none}
+    .btn-icon-clear{
+      padding:8px 14px;border-radius:10px;font-size:12px;font-weight:600;
+      border:1px solid var(--border);background:var(--surface);color:var(--muted);
+      cursor:pointer;font-family:'Inter',sans-serif;
+    }
+    .btn-icon-clear:hover{color:var(--text);border-color:var(--text)}
+    #prevIcon.prev-has-img{background:transparent!important;box-shadow:inset 0 0 0 1px var(--border)}
+    .prev-icon-img{width:50px;height:50px;object-fit:cover;border-radius:14px;display:block}
+
     .type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:32px}
     .type-grid .type-opt:nth-child(5):last-child{
       grid-column:1/-1;max-width:280px;width:100%;justify-self:center;
@@ -456,7 +475,15 @@
             <option>Automation</option><option>Translation</option><option>Other</option>
           </select>
         </div>
-        <div class="fg"><label>Emoji Icon</label><input type="text" id="mIcon" placeholder="e.g. ✍️" maxlength="4" style="max-width:100px;font-size:22px;text-align:center" oninput="manUpdatePreview()"/></div>
+        <div class="fg">
+          <label>Tool icon</label>
+          <div class="icon-upload-row">
+            <input type="text" id="mIcon" placeholder="✍️" maxlength="4" style="max-width:72px;font-size:22px;text-align:center" oninput="onManualEmojiInput()"/>
+            <label class="btn-icon-file">Upload image<input type="file" id="mIconFile" accept="image/jpeg,image/png,image/gif,image/webp" hidden onchange="onManualIconFile(event)"/></label>
+            <button type="button" class="btn-icon-clear" id="mIconClear" style="display:none" onclick="clearManualIconUpload()">Remove image</button>
+          </div>
+          <p class="fg-hint">Use an emoji, or upload a square image (max 220KB). Only one applies — uploading clears the emoji field.</p>
+        </div>
         <div class="man-nav"><button class="btn-prev" onclick="manGoStep(1)">← Back</button><button class="btn-next" onclick="manGoStep(3)">Continue →</button></div>
       </div>
 
@@ -542,7 +569,15 @@
             <option>Automation</option><option>Translation</option><option>Other</option>
           </select>
         </div>
-        <div class="fg"><label>Emoji icon</label><input type="text" id="advIcon" placeholder="🤗" maxlength="4" style="max-width:100px;font-size:22px;text-align:center" oninput="advUpdatePreview()"/></div>
+        <div class="fg">
+          <label>Tool icon</label>
+          <div class="icon-upload-row">
+            <input type="text" id="advIcon" placeholder="🤗" maxlength="4" style="max-width:72px;font-size:22px;text-align:center" oninput="onAdvEmojiInput()"/>
+            <label class="btn-icon-file">Upload image<input type="file" id="advIconFile" accept="image/jpeg,image/png,image/gif,image/webp" hidden onchange="onAdvIconFile(event)"/></label>
+            <button type="button" class="btn-icon-clear" id="advIconClear" style="display:none" onclick="clearAdvIconUpload()">Remove image</button>
+          </div>
+          <p class="fg-hint">Emoji or image (max 220KB) for the marketplace card.</p>
+        </div>
         <div class="fg"><label>Primary URL *</label><input type="url" id="advUrl" placeholder="https://huggingface.co/spaces/you/… or Inference / Replicate / docs link" oninput="advUpdatePreview()"/></div>
         <div class="fg"><label>Setup & API notes <small style="font-weight:400;text-transform:none;color:var(--muted)">(optional)</small></label><textarea id="advNotes" rows="4" placeholder="Tokens, headers, example JSON body, rate limits, pricing... Appears in your public description."></textarea></div>
         <div class="fg"><label>System prompt (for in-page Run) *</label><textarea id="advPrompt" rows="8" placeholder="Tell the assistant how to help: explain your endpoint, walk through a sample call, troubleshooting, etc."></textarea></div>
@@ -583,6 +618,14 @@
       <div class="publish-area" id="publishArea">
         <h3>🚀 Ready to publish?</h3>
         <p>Your tool is built. Hit publish and it goes live on the Socrates Marketplace immediately.</p>
+        <div class="fg" style="margin-bottom:16px">
+          <label style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Custom card image (optional)</label>
+          <div class="icon-upload-row">
+            <label class="btn-icon-file">Choose image<input type="file" id="aiIconFile" accept="image/jpeg,image/png,image/gif,image/webp" hidden onchange="onAiIconFile(event)"/></label>
+            <button type="button" class="btn-icon-clear" id="aiIconClear" style="display:none" onclick="clearAiIconUpload()">Remove image</button>
+          </div>
+          <p class="fg-hint">PNG, JPG, WebP, or GIF — max 220KB. Replaces the emoji on your marketplace card.</p>
+        </div>
         <button class="btn-publish" id="publishBtn" onclick="aiPublishTool()">Publish to Marketplace</button>
       </div>
 
@@ -601,6 +644,127 @@
 </div><!-- /builderArea -->
 
 <script>
+// ── Tool icon: emoji or uploaded image (stored as data URL in `icon` column) ──
+const MAX_ICON_FILE_BYTES = 220 * 1024;
+let manualIconImage = null;
+let advIconImage = null;
+let aiIconImage = null;
+
+function isImageIconString(s) {
+  return s && typeof s === 'string' && (s.startsWith('data:image') || /^https?:\/\//i.test(s));
+}
+
+function setPreviewIcon(icon) {
+  const el = document.getElementById('prevIcon');
+  if (!el) return;
+  const v = (icon && String(icon).trim()) ? icon : '✨';
+  if (isImageIconString(v)) {
+    el.classList.add('prev-has-img');
+    el.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = v;
+    img.alt = '';
+    img.className = 'prev-icon-img';
+    el.appendChild(img);
+  } else {
+    el.classList.remove('prev-has-img');
+    el.textContent = v;
+  }
+}
+
+function readIconFile(file, onOk) {
+  if (!file || !file.type.startsWith('image/')) {
+    alert('Please choose an image (PNG, JPG, WebP, or GIF).');
+    return;
+  }
+  if (file.size > MAX_ICON_FILE_BYTES) {
+    alert('That image is too large. Max size is 220KB (try resizing or compressing).');
+    return;
+  }
+  const r = new FileReader();
+  r.onload = () => onOk(r.result);
+  r.readAsDataURL(file);
+}
+
+function onManualIconFile(e) {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  readIconFile(f, (dataUrl) => {
+    manualIconImage = dataUrl;
+    document.getElementById('mIcon').value = '';
+    document.getElementById('mIconClear').style.display = '';
+    manUpdatePreview();
+  });
+  e.target.value = '';
+}
+function clearManualIconUpload() {
+  manualIconImage = null;
+  document.getElementById('mIconFile').value = '';
+  document.getElementById('mIconClear').style.display = 'none';
+  manUpdatePreview();
+}
+function onManualEmojiInput() {
+  if (document.getElementById('mIcon').value.trim()) {
+    manualIconImage = null;
+    document.getElementById('mIconFile').value = '';
+    document.getElementById('mIconClear').style.display = 'none';
+  }
+  manUpdatePreview();
+}
+
+function onAdvIconFile(e) {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  readIconFile(f, (dataUrl) => {
+    advIconImage = dataUrl;
+    document.getElementById('advIcon').value = '';
+    document.getElementById('advIconClear').style.display = '';
+    advUpdatePreview();
+  });
+  e.target.value = '';
+}
+function clearAdvIconUpload() {
+  advIconImage = null;
+  document.getElementById('advIconFile').value = '';
+  document.getElementById('advIconClear').style.display = 'none';
+  advUpdatePreview();
+}
+function onAdvEmojiInput() {
+  if (document.getElementById('advIcon').value.trim()) {
+    advIconImage = null;
+    document.getElementById('advIconFile').value = '';
+    document.getElementById('advIconClear').style.display = 'none';
+  }
+  advUpdatePreview();
+}
+
+function onAiIconFile(e) {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  readIconFile(f, (dataUrl) => {
+    aiIconImage = dataUrl;
+    document.getElementById('aiIconClear').style.display = '';
+    if (generatedTool) {
+      generatedTool.icon = dataUrl;
+      updatePreview(generatedTool);
+    } else {
+      setPreviewIcon(dataUrl);
+    }
+  });
+  e.target.value = '';
+}
+function clearAiIconUpload() {
+  aiIconImage = null;
+  document.getElementById('aiIconFile').value = '';
+  document.getElementById('aiIconClear').style.display = 'none';
+  if (generatedTool) {
+    generatedTool.icon = '✨';
+    updatePreview(generatedTool);
+  } else {
+    setPreviewIcon('✨');
+  }
+}
+
 // ── MODE SWITCHING ──
 function setMode(mode) {
   document.getElementById('modePicker').style.display = 'none';
@@ -746,6 +910,11 @@ async function generateWithGPT(apiKey) {
     const data = await resp.json();
     const raw = data.choices[0].message.content.trim().replace(/```json|```/g,'').trim();
     generatedTool = JSON.parse(raw);
+    aiIconImage = null;
+    const aiFile = document.getElementById('aiIconFile');
+    const aiClr = document.getElementById('aiIconClear');
+    if (aiFile) aiFile.value = '';
+    if (aiClr) aiClr.style.display = 'none';
     const priceStr = answers.price.toLowerCase();
     generatedTool.price = priceStr==='free' ? 0 : parseFloat(priceStr.match(/[\d.]+/)?.[0]||0);
     generatedTool.is_free = generatedTool.price === 0;
@@ -764,7 +933,7 @@ async function generateWithGPT(apiKey) {
 }
 
 function updatePreview(tool) {
-  document.getElementById('prevIcon').textContent = tool.icon||'✨';
+  setPreviewIcon(aiIconImage || tool.icon || '✨');
   document.getElementById('prevType').textContent = tool.type||'Prompt App';
   document.getElementById('prevName').textContent = tool.name||'Your Tool';
   document.getElementById('prevDesc').textContent = tool.description||'';
@@ -784,7 +953,7 @@ async function aiPublishTool() {
     const { data:{user} } = await sb.auth.getUser();
     const gt = generatedTool.type;
     const typeKey = gt==='Chat Bot'?'chat':gt==='Agent'?'agent':gt==='Model Wrapper'?'model':gt==='Other'?'other':'prompt';
-    await sb.from('tools').insert([{ name:generatedTool.name, description:generatedTool.description, category:generatedTool.category, icon:generatedTool.icon, type:typeKey, system_prompt:generatedTool.system_prompt, input_placeholder:generatedTool.input_placeholder, price:generatedTool.price||0, is_published:true, runs:0, creator_id:user?.id||null }]);
+    await sb.from('tools').insert([{ name:generatedTool.name, description:generatedTool.description, category:generatedTool.category, icon:aiIconImage || generatedTool.icon, type:typeKey, system_prompt:generatedTool.system_prompt, input_placeholder:generatedTool.input_placeholder, price:generatedTool.price||0, is_published:true, runs:0, creator_id:user?.id||null }]);
   } catch(e) { /* silent */ }
   document.getElementById('publishArea').classList.remove('visible');
   document.getElementById('successBanner').classList.add('visible');
@@ -821,7 +990,7 @@ function manSelectType(el,typeKey,typeName,icon){
   document.querySelectorAll('#mp1 .type-opt').forEach(o=>o.classList.remove('selected'));
   el.classList.add('selected'); manType=typeKey; manTypeName=typeName;
   document.getElementById('prevType').textContent=typeName;
-  document.getElementById('prevIcon').textContent=icon;
+  if (!manualIconImage) setPreviewIcon(icon);
 }
 
 function manSelectPrice(price,el){
@@ -837,23 +1006,23 @@ function manSelectPrice(price,el){
 function manUpdatePreview(){
   const name=document.getElementById('mName').value;
   const desc=document.getElementById('mDesc').value;
-  const icon=document.getElementById('mIcon').value;
+  const emoji=document.getElementById('mIcon').value;
   const cat=document.getElementById('mCat').value;
+  setPreviewIcon(manualIconImage || emoji || '⚡');
   if(name) document.getElementById('prevName').textContent=name;
   if(desc) document.getElementById('prevDesc').textContent=desc;
-  if(icon) document.getElementById('prevIcon').textContent=icon;
   if(cat) document.getElementById('prevCat').textContent=`Category: ${cat}`;
 }
 
 function advUpdatePreview(){
   const name=document.getElementById('advName').value;
   const desc=document.getElementById('advDesc').value;
-  const icon=document.getElementById('advIcon').value;
+  const emoji=document.getElementById('advIcon').value;
   const cat=document.getElementById('advCat').value;
   document.getElementById('prevType').textContent='Bring your own';
+  setPreviewIcon(advIconImage || emoji || '🔗');
   if(name) document.getElementById('prevName').textContent=name;
   if(desc) document.getElementById('prevDesc').textContent=desc;
-  if(icon) document.getElementById('prevIcon').textContent=icon;
   if(cat) document.getElementById('prevCat').textContent='Category: '+cat;
   const p=document.getElementById('prevPrice');
   p.textContent='Free';
@@ -879,7 +1048,7 @@ async function advPublish(){
     const { data:{user} } = await sb.auth.getUser();
     await sb.from('tools').insert([{
       name, description: fullDesc, category: cat,
-      icon: document.getElementById('advIcon').value.trim()||'🔗',
+      icon: advIconImage || document.getElementById('advIcon').value.trim()||'🔗',
       type:'other',
       system_prompt: prompt,
       input_placeholder: document.getElementById('advInputPh').value.trim()||'Describe your request (see listing for API / setup).',
@@ -899,7 +1068,7 @@ async function manPublish(){
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
     const sb=createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
     const { data:{user} } = await sb.auth.getUser();
-    await sb.from('tools').insert([{name:document.getElementById('mName').value,description:document.getElementById('mDesc').value,category:document.getElementById('mCat').value,icon:document.getElementById('mIcon').value||'⚡',type:manType,system_prompt:document.getElementById('mPrompt').value,input_placeholder:document.getElementById('mInputPlaceholder').value,price:manPrice==='free'?0:parseFloat(document.getElementById('mPriceAmt').value)||0,is_published:true,runs:0,creator_id:user?.id||null}]);
+    await sb.from('tools').insert([{name:document.getElementById('mName').value,description:document.getElementById('mDesc').value,category:document.getElementById('mCat').value,icon:manualIconImage||document.getElementById('mIcon').value||'⚡',type:manType,system_prompt:document.getElementById('mPrompt').value,input_placeholder:document.getElementById('mInputPlaceholder').value,price:manPrice==='free'?0:parseFloat(document.getElementById('mPriceAmt').value)||0,is_published:true,runs:0,creator_id:user?.id||null}]);
   }catch(e){/*silent*/}
   document.getElementById('mp5').classList.remove('active');
   document.getElementById('manSuccessScreen').classList.add('active');
