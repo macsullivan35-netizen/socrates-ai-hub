@@ -73,7 +73,7 @@
     /* PICKER CARDS */
     .picker-intro{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;text-align:center;margin-bottom:10px}
     .picker-sub{font-size:15px;color:var(--muted);text-align:center;margin-bottom:44px;max-width:440px;line-height:1.6}
-    .picker-cards{display:flex;gap:24px;width:100%;max-width:820px;flex-wrap:wrap;justify-content:center}
+    .picker-cards{display:flex;gap:24px;width:100%;max-width:1240px;flex-wrap:wrap;justify-content:center}
 
     .picker-card{
       flex:1;min-width:320px;max-width:380px;
@@ -112,7 +112,18 @@
     }
     .ai-card .card-cta{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff}
     .manual-card .card-cta{background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff}
+    .advanced-card:hover{border-color:rgba(15,118,110,.45)}
+    .advanced-card .card-top{background:linear-gradient(135deg,rgba(15,118,110,.06),rgba(6,182,212,.04))}
+    .advanced-card .card-icon-box{background:linear-gradient(135deg,rgba(15,118,110,.2),rgba(6,182,212,.1));border:1px solid rgba(15,118,110,.22)}
+    .advanced-card .perk-dot{background:rgba(15,118,110,.12);color:#0f766e}
+    .advanced-card .card-cta{background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff}
     .card-cta:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.18)}
+
+    .card-footnote{
+      font-size:12px;color:var(--muted);line-height:1.6;margin-top:6px;padding-top:14px;
+      border-top:1px dashed var(--border);
+    }
+    .card-footnote strong{color:var(--text);font-weight:700}
 
     /* ── BUILDER AREA ── */
     #builderArea{display:none;flex:1}
@@ -165,6 +176,15 @@
     .send-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(154,110,12,.3)}
     .send-btn:disabled{opacity:.4;transform:none;cursor:not-allowed}
 
+    /* ADVANCED (bring-your-own) */
+    .advanced-side{padding-right:32px;min-width:0}
+    .adv-callout{
+      background:linear-gradient(135deg,rgba(15,118,110,.08),rgba(6,182,212,.06));
+      border:1px solid rgba(15,118,110,.2);border-radius:14px;padding:16px 18px;margin-bottom:28px;
+      font-size:13px;color:var(--text);line-height:1.65;
+    }
+    .adv-callout small{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
+
     /* MANUAL MODE */
     .manual-side{padding-right:32px;min-width:0}
     .man-steps{display:flex;align-items:center;margin-bottom:36px}
@@ -186,6 +206,9 @@
     .fg input::placeholder,.fg textarea::placeholder{color:var(--muted)}
     .fg textarea{resize:vertical}
     .type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:32px}
+    .type-grid .type-opt:nth-child(5):last-child{
+      grid-column:1/-1;max-width:280px;width:100%;justify-self:center;
+    }
     .type-opt{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;text-align:center;transition:all .2s}
     .type-opt:hover{border-color:var(--purple-light)}
     .type-opt.selected{border-color:var(--gold);background:var(--gold-dim)}
@@ -236,7 +259,7 @@
 
     @media(max-width:860px){
       .builder-wrap{grid-template-columns:1fr;padding:20px}
-      .chat-side,.manual-side{padding-right:0}
+      .chat-side,.manual-side,.advanced-side{padding-right:0}
       .preview-side{position:static;margin-top:32px}
       .picker-cards{flex-direction:column;align-items:center}
       .builder-hero h1{font-size:36px}
@@ -269,7 +292,7 @@
   <div class="builder-hero">
     <div class="hero-badge"><span class="dot"></span> Early Builder Program — Now Open</div>
     <h1>Build the tools<br><span>people actually need.</span></h1>
-    <p>Socrates is where the next generation of AI tools gets made. You bring the idea — we handle the AI, the hosting, and the audience.</p>
+    <p>Socrates helps you list and share AI tools. You bring the idea — or your own model link — and early builders help shape what's next.</p>
     <div class="hero-stats">
       <div class="hero-stat">
         <div class="hs-val">80%</div>
@@ -308,6 +331,7 @@
           <div class="perk"><div class="perk-dot">✓</div>Live preview before you publish</div>
           <div class="perk"><div class="perk-dot">✓</div>Done in under 5 minutes</div>
         </div>
+        <p class="card-footnote"><strong>How it works:</strong> This step uses <strong>OpenAI (GPT-4o-mini)</strong> in your browser with <strong>your</strong> API key to turn your answers into a tool spec. Nothing is sent through Socrates servers for that generation. <strong>Claude is not used</strong> on this page (only in the separate marketplace key setup if you choose it there). <strong>No key?</strong> Use <strong>Manual</strong> or <strong>Advanced</strong> instead — you can publish without this AI interview.</p>
       </div>
       <div class="card-bottom">
         <button class="card-cta">✨ Build with AI  →</button>
@@ -331,15 +355,39 @@
           <div class="perk"><div class="perk-dot">✓</div>Real-time tool card preview</div>
           <div class="perk"><div class="perk-dot">✓</div>Precise, no hand-holding</div>
         </div>
+        <p class="card-footnote"><strong>How running works:</strong> Your listing stores the prompt you write. On the marketplace, <strong>each visitor</strong> runs the in-page assistant with <strong>their own</strong> OpenAI or Claude key — you are not charged per run by Socrates.</p>
       </div>
       <div class="card-bottom">
         <button class="card-cta">⚙️ Build Manually  →</button>
       </div>
     </div>
 
+    <!-- ADVANCED / BRING-YOUR-OWN CARD -->
+    <div class="picker-card advanced-card" onclick="setMode('advanced')">
+      <div class="card-top">
+        <div class="card-icon-row">
+          <div class="card-icon-box">🔗</div>
+          <div>
+            <div class="card-for">Best for existing models & code</div>
+            <div class="card-title">Advanced — Bring your own</div>
+          </div>
+        </div>
+        <div class="card-desc">Already have weights, a Hugging Face Space, an API, or a repo? Publish a listing with your link and clear run instructions — similar in spirit to sharing on Hugging Face, tuned for Socrates.</div>
+        <div class="card-perks">
+          <div class="perk"><div class="perk-dot">✓</div>Link HF Space, Inference API, Replicate, GitHub, etc.</div>
+          <div class="perk"><div class="perk-dot">✓</div>Paste setup notes, auth, and example requests</div>
+          <div class="perk"><div class="perk-dot">✓</div>System prompt guides users who click Run in-page</div>
+          <div class="perk"><div class="perk-dot">✓</div>Same marketplace card & discovery as other tools</div>
+        </div>
+        <p class="card-footnote"><strong>Honest scope:</strong> Socrates does not execute your custom model on our GPUs yet. This publishes your <em>listing + link + guidance</em>. True “we host your weights” is on the roadmap; until then, visitors use your endpoint (or the in-page assistant explains how).</p>
+      </div>
+      <div class="card-bottom">
+        <button type="button" class="card-cta">🔗 Advanced publish  →</button>
+      </div>
+    </div>
+
   </div>
 </div>
-
 <!-- ══ BUILDER AREA ══ -->
 <div id="builderArea">
   <div class="back-to-picker">
@@ -351,7 +399,10 @@
     <!-- AI MODE -->
     <div class="chat-side" id="aiMode" style="display:none">
       <div class="mode-heading">AI Tool Builder ✨</div>
-      <div class="mode-sub">Answer a few plain-English questions and I'll build your tool automatically.</div>
+      <div class="mode-sub">Answer a few questions — then <strong>OpenAI (GPT-4o-mini)</strong> turns your answers into a tool using <strong>your</strong> key (saved in this browser). No Claude on this screen.</div>
+      <div class="adv-callout" style="margin-bottom:20px;border-color:rgba(154,110,12,.2);background:rgba(154,110,12,.06)">
+        <strong>No API key?</strong> That’s okay — many people haven’t used one before. After the questions, we’ll ask you to paste an OpenAI key and we explain what that means. <strong>Or</strong> go back and choose <strong>Manual</strong> or <strong>Advanced</strong>: you can still publish a tool without using OpenAI for this chat.
+      </div>
       <div class="chat-window" id="chatWindow"></div>
       <div id="quickReplies" class="quick-replies"></div>
       <div class="input-area">
@@ -363,7 +414,7 @@
     <!-- MANUAL MODE -->
     <div class="manual-side" id="manualMode" style="display:none">
       <div class="mode-heading">Manual Builder ⚙️</div>
-      <div class="mode-sub">Full control — set every detail yourself.</div>
+      <div class="mode-sub">Full control — set every detail yourself. What you save here is what the marketplace uses; mobile ChatGPT-style runs use each <strong>visitor's</strong> keys.</div>
 
       <div class="man-steps" id="manSteps">
         <div class="man-step active" id="ms1"><div class="ms-circle">1</div><div class="ms-label">Type</div></div>
@@ -385,6 +436,7 @@
           <div class="type-opt" onclick="manSelectType(this,'agent','Agent','🤖')"><div class="to-icon">🤖</div><div class="to-name">Agent</div><div class="to-sub">Multi-step task</div></div>
           <div class="type-opt" onclick="manSelectType(this,'chat','Chat Bot','💬')"><div class="to-icon">💬</div><div class="to-name">Chat Bot</div><div class="to-sub">Ongoing conversation</div></div>
           <div class="type-opt" onclick="manSelectType(this,'model','Model Wrapper','🧠')"><div class="to-icon">🧠</div><div class="to-name">Model Wrapper</div><div class="to-sub">API access to a model</div></div>
+          <div class="type-opt" onclick="manSelectType(this,'other','Other','✨')"><div class="to-icon">✨</div><div class="to-name">Other</div><div class="to-sub">Something different — you define it</div></div>
         </div>
         <div class="man-nav"><span></span><button class="btn-next" onclick="manGoStep(2)">Continue →</button></div>
       </div>
@@ -469,6 +521,50 @@
       </div>
     </div>
 
+    <!-- ADVANCED MODE -->
+    <div class="advanced-side" id="advancedMode" style="display:none">
+      <div class="mode-heading">Advanced — Bring your own 🔗</div>
+      <div class="mode-sub">For Hugging Face Spaces, Inference APIs, Replicate, custom HTTPS endpoints, or repos you already shipped.</div>
+      <div class="adv-callout">
+        <strong>What you get today:</strong> A real marketplace listing, your link, and a system prompt that teaches the in-page assistant how to help people use your stack.
+        <small><strong>What we don't do yet:</strong> Run your weights on Socrates GPUs (that's roadmap). “Run” on the site still goes through OpenAI/Claude in the buyer's browser unless you expose a CORS-friendly API they can call.</small>
+      </div>
+      <div id="advancedForm">
+        <div class="fg"><label>Tool name *</label><input type="text" id="advName" placeholder="e.g. My fine-tuned sentiment model" oninput="advUpdatePreview()"/></div>
+        <div class="fg"><label>Short description *</label><textarea id="advDesc" rows="3" placeholder="What it does, input/output, who it's for..." oninput="advUpdatePreview()"></textarea></div>
+        <div class="fg">
+          <label>Category *</label>
+          <select id="advCat" onchange="advUpdatePreview()">
+            <option value="">Select a category...</option>
+            <option>Writing</option><option>Coding</option><option>Study</option>
+            <option>Business</option><option>Creative</option><option>Research</option>
+            <option>Health</option><option>Finance</option><option>Fun & Games</option>
+            <option>Automation</option><option>Translation</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fg"><label>Emoji icon</label><input type="text" id="advIcon" placeholder="🤗" maxlength="4" style="max-width:100px;font-size:22px;text-align:center" oninput="advUpdatePreview()"/></div>
+        <div class="fg"><label>Primary URL *</label><input type="url" id="advUrl" placeholder="https://huggingface.co/spaces/you/… or Inference / Replicate / docs link" oninput="advUpdatePreview()"/></div>
+        <div class="fg"><label>Setup & API notes <small style="font-weight:400;text-transform:none;color:var(--muted)">(optional)</small></label><textarea id="advNotes" rows="4" placeholder="Tokens, headers, example JSON body, rate limits, pricing... Appears in your public description."></textarea></div>
+        <div class="fg"><label>System prompt (for in-page Run) *</label><textarea id="advPrompt" rows="8" placeholder="Tell the assistant how to help: explain your endpoint, walk through a sample call, troubleshooting, etc."></textarea></div>
+        <div class="fg"><label>Input placeholder</label><input type="text" id="advInputPh" placeholder="e.g. Paste text to analyze or your request JSON..."/></div>
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:14px;color:var(--muted);margin-bottom:24px"><input type="checkbox" id="advAgree" style="margin-top:3px;accent-color:var(--gold)"/> I agree to the Content Policy and confirm I may list this model, API, or repo.</label>
+        <div class="man-nav" style="border-top:none;margin-top:0;padding-top:0">
+          <span></span>
+          <button type="button" id="advPublishBtn" onclick="advPublish()" style="padding:13px 28px;border-radius:10px;font-size:15px;font-weight:800;background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border:none;cursor:pointer">🚀 Publish listing</button>
+        </div>
+      </div>
+      <div class="success-full" id="advSuccessScreen">
+        <div style="font-size:64px;margin-bottom:20px">🎉</div>
+        <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:12px">Listing published!</div>
+        <div style="font-size:15px;color:var(--muted);margin-bottom:32px">Your bring-your-own tool is on the marketplace with your link and notes.</div>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+          <a href="marketplace.html" class="btn btn-ghost">View in Marketplace</a>
+          <a href="dashboard.html" class="btn btn-gold">Open Dashboard</a>
+          <button onclick="location.reload()" class="btn btn-ghost">Publish Another</button>
+        </div>
+      </div>
+    </div>
+
     <!-- SHARED PREVIEW PANEL -->
     <div class="preview-side">
       <div class="preview-label">Live Preview</div>
@@ -511,7 +607,13 @@ function setMode(mode) {
   document.getElementById('builderArea').style.display = 'block';
   document.getElementById('aiMode').style.display = mode === 'ai' ? '' : 'none';
   document.getElementById('manualMode').style.display = mode === 'manual' ? '' : 'none';
+  document.getElementById('advancedMode').style.display = mode === 'advanced' ? '' : 'none';
   if (mode === 'ai' && !aiStarted) startAI();
+  if (mode === 'advanced') {
+    document.getElementById('advancedForm').style.display = 'block';
+    document.getElementById('advSuccessScreen').classList.remove('active');
+    advUpdatePreview();
+  }
 }
 
 function goBack() {
@@ -607,8 +709,8 @@ async function buildTool() {
   const apiKey = localStorage.getItem('socrates_api_key');
   if (!apiKey) {
     setTimeout(() => {
-      addMsg('bot','I need your OpenAI API key to generate the tool. Paste it below:');
-      document.getElementById('chatInput').placeholder='Paste your sk-... key here';
+      addMsg('bot','Almost there! I need an OpenAI API key to generate your tool.\n\nIf you\'ve never heard of this: it is NOT your Socrates password. It\'s a secret code from OpenAI so your browser can use their AI (you usually pay them a few cents per use — not Socrates).\n\nHow to get one (about 5–10 minutes):\n1. Sign up: platform.openai.com/signup\n2. Add a little billing credit if OpenAI asks\n3. API keys → Create new secret key\n4. Copy the key (starts with sk-) → paste it below\n\nDirect link: platform.openai.com/api-keys\n\nRather not? Tap ← Change build mode and choose Manual or Advanced — you can publish without this OpenAI step.');
+      document.getElementById('chatInput').placeholder='Paste your sk-... OpenAI key here';
       document.getElementById('chatInput').setAttribute('data-awaiting-key','1');
       setSendEnabled(true);
     }, 1000);
@@ -625,7 +727,7 @@ async function generateWithGPT(apiKey) {
       body: JSON.stringify({
         model:'gpt-4o-mini', max_tokens:600,
         messages:[
-          { role:'system', content:`You are an AI tool builder for a marketplace called Socrates. Based on a user's answers, generate a complete tool spec. Return ONLY valid JSON with these keys: {"name":"Short catchy name (max 4 words)","description":"One sentence for marketplace card (max 120 chars)","category":"One of: Writing, Coding, Study, Business, Creative, Research, Health, Finance, Fun & Games, Automation, Translation, Other","icon":"Single emoji","type":"One of: Prompt App, Agent, Chat Bot","system_prompt":"Full AI system prompt (3-6 sentences, specific and practical)","input_label":"Label for the main input field","input_placeholder":"Example placeholder text"}` },
+          { role:'system', content:`You are an AI tool builder for a marketplace called Socrates. Based on a user's answers, generate a complete tool spec. Return ONLY valid JSON with these keys: {"name":"Short catchy name (max 4 words)","description":"One sentence for marketplace card (max 120 chars)","category":"One of: Writing, Coding, Study, Business, Creative, Research, Health, Finance, Fun & Games, Automation, Translation, Other","icon":"Single emoji","type":"One of: Prompt App, Agent, Chat Bot, Model Wrapper, Other","system_prompt":"Full AI system prompt (3-6 sentences, specific and practical)","input_label":"Label for the main input field","input_placeholder":"Example placeholder text"}` },
           { role:'user', content:`Build a tool based on:\n- Idea: ${answers.idea}\n- Audience: ${answers.audience}\n- Should always: ${answers.always}\n- Should never: ${answers.never}\n- Price: ${answers.price}` }
         ]
       })
@@ -662,7 +764,9 @@ async function aiPublishTool() {
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
     const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
     const { data:{user} } = await sb.auth.getUser();
-    await sb.from('tools').insert([{ name:generatedTool.name, description:generatedTool.description, category:generatedTool.category, icon:generatedTool.icon, type:generatedTool.type==='Chat Bot'?'chat':generatedTool.type==='Agent'?'agent':'prompt', system_prompt:generatedTool.system_prompt, input_placeholder:generatedTool.input_placeholder, price:generatedTool.price||0, is_published:true, runs:0, creator_id:user?.id||null }]);
+    const gt = generatedTool.type;
+    const typeKey = gt==='Chat Bot'?'chat':gt==='Agent'?'agent':gt==='Model Wrapper'?'model':gt==='Other'?'other':'prompt';
+    await sb.from('tools').insert([{ name:generatedTool.name, description:generatedTool.description, category:generatedTool.category, icon:generatedTool.icon, type:typeKey, system_prompt:generatedTool.system_prompt, input_placeholder:generatedTool.input_placeholder, price:generatedTool.price||0, is_published:true, runs:0, creator_id:user?.id||null }]);
   } catch(e) { /* silent */ }
   document.getElementById('publishArea').classList.remove('visible');
   document.getElementById('successBanner').classList.add('visible');
@@ -696,7 +800,7 @@ function manGoStep(n) {
 }
 
 function manSelectType(el,typeKey,typeName,icon){
-  document.querySelectorAll('.type-opt').forEach(o=>o.classList.remove('selected'));
+  document.querySelectorAll('#mp1 .type-opt').forEach(o=>o.classList.remove('selected'));
   el.classList.add('selected'); manType=typeKey; manTypeName=typeName;
   document.getElementById('prevType').textContent=typeName;
   document.getElementById('prevIcon').textContent=icon;
@@ -721,6 +825,52 @@ function manUpdatePreview(){
   if(desc) document.getElementById('prevDesc').textContent=desc;
   if(icon) document.getElementById('prevIcon').textContent=icon;
   if(cat) document.getElementById('prevCat').textContent=`Category: ${cat}`;
+}
+
+function advUpdatePreview(){
+  const name=document.getElementById('advName').value;
+  const desc=document.getElementById('advDesc').value;
+  const icon=document.getElementById('advIcon').value;
+  const cat=document.getElementById('advCat').value;
+  document.getElementById('prevType').textContent='Bring your own';
+  if(name) document.getElementById('prevName').textContent=name;
+  if(desc) document.getElementById('prevDesc').textContent=desc;
+  if(icon) document.getElementById('prevIcon').textContent=icon;
+  if(cat) document.getElementById('prevCat').textContent='Category: '+cat;
+  const p=document.getElementById('prevPrice');
+  p.textContent='Free';
+  p.style.color='var(--green)';
+}
+
+async function advPublish(){
+  if(!document.getElementById('advAgree').checked){alert('Please agree to the content policy.');return;}
+  const name=document.getElementById('advName').value.trim();
+  const desc=document.getElementById('advDesc').value.trim();
+  const cat=document.getElementById('advCat').value;
+  const url=document.getElementById('advUrl').value.trim();
+  const notes=document.getElementById('advNotes').value.trim();
+  const prompt=document.getElementById('advPrompt').value.trim();
+  if(!name||!desc||!cat||!url||!prompt){alert('Please complete name, description, category, primary URL, and system prompt.');return;}
+  let fullDesc=desc+'\n\n🔗 External: '+url;
+  if(notes) fullDesc+='\n\nHow to run:\n'+notes;
+  const btn=document.getElementById('advPublishBtn');
+  btn.textContent='Publishing...'; btn.disabled=true;
+  try{
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const sb=createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+    const { data:{user} } = await sb.auth.getUser();
+    await sb.from('tools').insert([{
+      name, description: fullDesc, category: cat,
+      icon: document.getElementById('advIcon').value.trim()||'🔗',
+      type:'other',
+      system_prompt: prompt,
+      input_placeholder: document.getElementById('advInputPh').value.trim()||'Describe your request (see listing for API / setup).',
+      price:0, is_published:true, runs:0, creator_id:user?.id||null
+    }]);
+  }catch(e){/* silent */}
+  document.getElementById('advancedForm').style.display='none';
+  document.getElementById('advSuccessScreen').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 async function manPublish(){

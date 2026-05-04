@@ -77,7 +77,7 @@
 
     /* SEARCH + FILTERS */
     .top-bar{display:flex;gap:12px;align-items:center;margin-bottom:28px;flex-wrap:wrap}
-    .search-wrap{flex:1;min-width:200px;position:relative}
+    form.search-wrap{flex:1;min-width:200px;position:relative;margin:0}
     .search-wrap input{
       width:100%;background:var(--surface);border:1px solid var(--border);
       border-radius:12px;padding:12px 16px 12px 44px;
@@ -167,6 +167,7 @@
     .type-model{background:rgba(251,113,133,.12);color:#f87171}
     .type-chat{background:rgba(74,222,128,.12);color:#4ade80}
     .type-tool{background:rgba(99,179,237,.12);color:#63b3ed}
+    .type-other{background:rgba(87,83,78,.10);color:#57534e}
     .tc-desc{
       font-size:13px;color:var(--muted);line-height:1.6;
       flex:1;margin-bottom:16px;
@@ -193,6 +194,15 @@
     .model-chip{padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);transition:all .2s;user-select:none}
     .model-chip:hover{border-color:var(--gold);color:var(--gold)}
     .model-chip.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+    .api-help-details{
+      font-size:12px;color:var(--muted);margin-bottom:12px;
+      background:var(--surface);border-radius:10px;padding:10px 12px;border:1px solid var(--border);
+    }
+    .api-help-details summary{cursor:pointer;font-weight:600;color:var(--gold);user-select:none}
+    .api-help-details[open] summary{margin-bottom:8px}
+    .api-help-details .api-help-inner{line-height:1.65;padding-top:10px;border-top:1px dashed var(--border)}
+    .api-help-details a{color:var(--gold)}
+    .api-help-details code{font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px}
     .modal-overlay.open{display:flex}
     .modal{
       background:var(--bg2);border:1px solid var(--border);
@@ -274,6 +284,21 @@
 
     #keyInput:focus { border-color: var(--gold) !important; outline: none; }
 
+    /* Detect Chrome/Safari autofill so we can clear mistaken email paste into search */
+    @keyframes socrates-autofill-detect {
+      to { color: inherit; }
+    }
+    #searchInput:-webkit-autofill {
+      animation-name: socrates-autofill-detect;
+      animation-duration: 0.001s;
+    }
+
+    /* Screen-reader-off honeypot: absorbs username/password autofill before real search */
+    .autofill-trap{
+      position:absolute;width:0;height:0;overflow:hidden;clip:rect(0,0,0,0);
+      opacity:0;pointer-events:none;margin:0;padding:0;border:0;
+    }
+
     @media(max-width:768px){
       .sidebar{display:none}
       .main{padding:20px 16px}
@@ -330,6 +355,7 @@
       <div class="sidebar-link" onclick="filterType('chat')"><span class="icon">💬</span>Chat Bots</div>
       <div class="sidebar-link" onclick="filterType('model')"><span class="icon">🧠</span>Models</div>
       <div class="sidebar-link" onclick="filterType('tool')"><span class="icon">🔧</span>Connectors</div>
+      <div class="sidebar-link" onclick="filterType('other')"><span class="icon">✨</span>Other</div>
     </div>
   </aside>
 
@@ -338,10 +364,20 @@
 
     <!-- SEARCH + FILTERS -->
     <div class="top-bar">
-      <div class="search-wrap">
+      <form class="search-wrap" role="search" autocomplete="off" onsubmit="event.preventDefault();return false">
+        <!-- Trick Chrome into filling these instead of the search box -->
+        <span class="autofill-trap" aria-hidden="true">
+          <label><input type="email" name="email_decoy_socrates_ff" autocomplete="username" tabindex="-1"/></label>
+          <label><input type="password" name="pw_decoy_socrates_ff" autocomplete="current-password" tabindex="-1"/></label>
+        </span>
         <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search AI tools..." oninput="doSearch(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      </div>
+        <!-- autocomplete new-password + fake role discourages email autofill in Chrome -->
+        <input type="text" inputmode="search" id="searchInput" name="socrates_tool_filter_q"
+          placeholder="Search AI tools..." autocomplete="new-password"
+          data-lpignore="true" data-1p-ignore="true" data-form-type="other"
+          autocorrect="off" autocapitalize="off" spellcheck="false"
+          oninput="doSearch(this.value)"/>
+      </form>
     </div>
 
     <!-- CATEGORY SCROLL BAR -->
@@ -364,6 +400,7 @@
         <div class="cat-pill" onclick="filterType('model')">🧠 Models</div>
         <div class="cat-pill" onclick="filterType('agent')">⚡ Agents</div>
         <div class="cat-pill" onclick="filterType('tool')">🔗 Connectors</div>
+        <div class="cat-pill" onclick="filterType('other')">✨ Other</div>
       </div>
     </div>
 
@@ -374,6 +411,7 @@
       <div class="filter-chip" onclick="setFilter(this,'chat')">💬 Chat Bot</div>
       <div class="filter-chip" onclick="setFilter(this,'model')">🧠 Model</div>
       <div class="filter-chip" onclick="setFilter(this,'tool')">🔧 Connector</div>
+      <div class="filter-chip" onclick="setFilter(this,'other')">✨ Other</div>
     </div>
 
     <div class="sort-row">
@@ -397,8 +435,17 @@
     <div style="text-align:center;margin-bottom:28px">
       <div style="font-size:48px;margin-bottom:12px">🔑</div>
       <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;margin-bottom:8px">Connect Your AI Keys</div>
-      <div style="font-size:14px;color:var(--muted);line-height:1.6">Keys are stored only in your browser — never sent anywhere except the AI provider directly.</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">Keys stay in <strong style="color:var(--text)">your browser</strong> only. They go straight to OpenAI or Anthropic when you run a tool — not through Socrates servers.</div>
     </div>
+
+    <details class="api-help-details" style="margin-bottom:18px">
+      <summary>New to API keys? What they are &amp; how to get one</summary>
+      <div class="api-help-inner">
+        <p style="margin-bottom:10px">An <strong style="color:var(--text)">API key</strong> is not your Socrates password. It’s a secret code you create at <strong>OpenAI</strong> or <strong>Anthropic</strong> so your computer can use their AI. There is usually a small pay‑as‑you‑go cost (often pennies per run) paid to <em>them</em>, not to Socrates.</p>
+        <p style="margin-bottom:10px"><strong style="color:var(--text)">OpenAI</strong> (keys start with <code>sk-</code>, not <code>sk-ant</code>): create an account → <a href="https://platform.openai.com/signup" target="_blank" rel="noopener">Sign up</a> → <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">API keys</a> → “Create new secret key” → paste here.</p>
+        <p><strong style="color:var(--text)">Claude (Anthropic)</strong> (keys start with <code>sk-ant-</code>): <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a> → API keys → create → paste here.</p>
+      </div>
+    </details>
 
     <!-- OpenAI -->
     <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:12px">
@@ -448,10 +495,18 @@
 
     <!-- Inline API key prompt — shown instead of run button when no key saved -->
     <div id="inlineKeyPrompt" style="display:none;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:16px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:8px">🔑 Add your OpenAI key to run tools</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Your key is stored only in your browser — never sent anywhere except OpenAI. Get one free at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--gold)">platform.openai.com/api-keys</a></div>
-      <div style="display:flex;gap:8px">
-        <input type="password" id="inlineKeyInput" placeholder="sk-..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+      <div id="inlineKeyTitle" style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:6px">🔑 Add a key to run this tool</div>
+      <div id="inlineKeyLead" style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5"></div>
+      <details class="api-help-details" style="background:rgba(0,0,0,.15);border-color:rgba(201,168,76,.25)">
+        <summary>I don’t have a key / I don’t know what this is</summary>
+        <div class="api-help-inner">
+          <p style="margin-bottom:10px">That’s normal. A key is <strong style="color:var(--text)">not</strong> your Socrates login — it’s a code from <strong>OpenAI</strong> or <strong>Anthropic</strong> so your browser can talk to their AI. You create it on their site (about 5–10 minutes), then paste it here. It’s saved only on <em>your</em> device.</p>
+          <p style="margin-bottom:10px"><strong style="color:var(--text)">OpenAI</strong> (<code>sk-…</code>): <a href="https://platform.openai.com/signup" target="_blank" rel="noopener">Sign up</a> → <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">API keys</a> → create key.</p>
+          <p><strong style="color:var(--text)">Claude</strong> (<code>sk-ant-…</code>): <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a> → API keys.</p>
+        </div>
+      </details>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="password" id="inlineKeyInput" placeholder="sk-..." style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
         <button onclick="saveInlineKey()" style="padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;cursor:pointer;white-space:nowrap">Save & Run</button>
       </div>
     </div>
@@ -581,13 +636,28 @@ const TOOLS = [
   },
 ];
 
+window.__socratesAllTools = TOOLS;
+
 let currentTools = [...TOOLS];
 let activeFilter = 'all';
 let activeType = 'all';
 let searchQuery = '';
 let currentTool = null;
 
+function toolTypeDisplay(type) {
+  const map = {
+    prompt: { typeName: 'Prompt App', typeClass: 'type-prompt', bg: 'rgba(201,168,76,.15)' },
+    agent: { typeName: 'Agent', typeClass: 'type-agent', bg: 'rgba(124,58,237,.15)' },
+    chat: { typeName: 'Chat Agent', typeClass: 'type-chat', bg: 'rgba(74,222,128,.15)' },
+    model: { typeName: 'Fine-Tuned Model', typeClass: 'type-model', bg: 'rgba(251,113,133,.15)' },
+    tool: { typeName: 'Connector', typeClass: 'type-tool', bg: 'rgba(99,179,237,.15)' },
+    other: { typeName: 'Other', typeClass: 'type-other', bg: 'rgba(87,83,78,.12)' },
+  };
+  return map[type] || map.other;
+}
+
 function renderTools(tools) {
+  currentTools = tools;
   const grid = document.getElementById('toolGrid');
   document.getElementById('resultCount').textContent = tools.length;
   if (tools.length === 0) {
@@ -618,7 +688,7 @@ function renderTools(tools) {
 }
 
 function applyFilters() {
-  let tools = [...TOOLS];
+  let tools = [...(window.__socratesAllTools || TOOLS)];
   if (activeFilter === 'trending') tools = tools.filter(t => t.trending);
   else if (activeFilter === 'free') tools = tools.filter(t => t.price === 'free');
   else if (activeFilter !== 'all' && activeFilter !== 'new') tools = tools.filter(t => t.cat === activeFilter);
@@ -683,7 +753,7 @@ function doSort(val) {
 }
 
 function openTool(id) {
-  currentTool = TOOLS.find(t => t.id === id);
+  currentTool = currentTools.find(t => t.id === id) || TOOLS.find(t => t.id === id);
   if (!currentTool) return;
   document.getElementById('modalIcon').textContent = currentTool.icon;
   document.getElementById('modalIcon').style.background = currentTool.bg;
@@ -728,6 +798,20 @@ let selectedModel = 'gpt';
 function getKey() { return localStorage.getItem('socrates_api_key'); }
 function getClaudeKey() { return localStorage.getItem('socrates_claude_key'); }
 
+function syncInlineKeyCopy() {
+  const isC = selectedModel === 'claude';
+  const title = document.getElementById('inlineKeyTitle');
+  const lead = document.getElementById('inlineKeyLead');
+  if (!title || !lead) return;
+  if (isC) {
+    title.textContent = '🔑 Add your Claude (Anthropic) key to run';
+    lead.innerHTML = 'Create a key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener" style="color:var(--gold)">console.anthropic.com</a> → API keys. It should start with <code style="font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px">sk-ant-</code>. Saved only in this browser.';
+  } else {
+    title.textContent = '🔑 Add your OpenAI key to run';
+    lead.innerHTML = 'Create a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:var(--gold)">platform.openai.com/api-keys</a>. It should start with <code style="font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px">sk-</code> (not sk-ant). Saved only in this browser.';
+  }
+}
+
 function selectModel(model) {
   selectedModel = model;
   document.querySelectorAll('.model-chip').forEach(c => c.classList.remove('active'));
@@ -739,6 +823,7 @@ function selectModel(model) {
   if (!hasKey) {
     const inp = document.getElementById('inlineKeyInput');
     inp.placeholder = model === 'gpt' ? 'Paste your sk-... OpenAI key' : 'Paste your sk-ant-... Claude key';
+    syncInlineKeyCopy();
   }
 }
 
@@ -813,6 +898,7 @@ async function runTool() {
   if (!apiKey) {
     const inp = document.getElementById('inlineKeyInput');
     inp.placeholder = selectedModel === 'claude' ? 'Paste your sk-ant-... Claude key' : 'Paste your sk-... OpenAI key';
+    syncInlineKeyCopy();
     document.getElementById('inlineKeyPrompt').style.display = 'block';
     document.getElementById('runBtn').style.display = 'none';
     return;
@@ -936,12 +1022,52 @@ function thumbUp() {
   btn.style.borderColor = '#4ade80';
 }
 
-// Clear any browser-autofilled value in the search box before rendering
+// Stop email/credential autofill from landing in the marketplace search box
 const _si = document.getElementById('searchInput');
-if (_si) _si.value = '';
-searchQuery = '';
+let _searchUserInteracted = false;
+const EMAIL_LIKE = /^[^\s@]+@[^\s@]+\.[^\s@]+/;
+function _isLikelyAutofillEmail(v) {
+  const t = (v || '').trim();
+  if (!t) return false;
+  if (EMAIL_LIKE.test(t)) return true;
+  // Chrome sometimes omits TLD briefly; still clear obvious local-part@ patterns when long enough
+  if (t.includes('@') && t.length > 6 && !/\s/.test(t)) return true;
+  return false;
+}
+if (_si) {
+  _si.value = '';
+  searchQuery = '';
+  const markSearchUse = () => { _searchUserInteracted = true; };
+  _si.addEventListener('keydown', markSearchUse, { once: true });
+  _si.addEventListener('paste', markSearchUse, { once: true });
+  // Autofill often fires `input` without keydown; don't mark interacted for that — clear instead.
+  _si.addEventListener('input', () => {
+    if (!_searchUserInteracted && _isLikelyAutofillEmail(_si.value)) {
+      _si.value = '';
+      searchQuery = '';
+      doSearch('');
+    }
+  });
+  function zapBadSearchValue() {
+    if (_searchUserInteracted || !_si) return;
+    if (_isLikelyAutofillEmail(_si.value)) {
+      _si.value = '';
+      searchQuery = '';
+      doSearch('');
+    }
+  }
+  _si.addEventListener('animationstart', (e) => {
+    if (e.animationName === 'socrates-autofill-detect') zapBadSearchValue();
+  });
+  const afterFocus = () => { setTimeout(zapBadSearchValue, 0); setTimeout(zapBadSearchValue, 100); setTimeout(zapBadSearchValue, 300); };
+  _si.addEventListener('focus', afterFocus);
+  _si.addEventListener('change', zapBadSearchValue);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') zapBadSearchValue(); });
+  requestAnimationFrame(zapBadSearchValue);
+  [50, 150, 400, 1000, 2500, 4000, 8000].forEach(ms => setTimeout(zapBadSearchValue, ms));
+}
 
-renderTools(TOOLS);
+applyFilters();
 updateKeyBtn();
 
 // Supabase real tool loading — silently skipped if it fails
@@ -953,17 +1079,22 @@ updateKeyBtn();
     const sb = createClient(SUPA_URL, SUPA_KEY);
     const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
-      const mapped = realTools.map(t => ({
-        id: t.id, name: t.name,
-        creator: t.profiles?.display_name || t.profiles?.username || 'Builder',
-        cat: t.category, type: t.type, desc: t.description,
-        icon: t.icon, tags: t.tags || [],
-        price: t.price > 0 ? `$${t.price}/run` : 'free',
-        runs: t.runs || '', author: t.profiles?.username || 'Builder',
-        sys: t.system_prompt, real: true,
-        fields: [{ label: 'Your input', id: 'userinput', type: 'textarea', placeholder: t.input_placeholder || 'Describe what you want...' }]
-      }));
-      renderTools([...mapped, ...TOOLS]);
+      const mapped = realTools.map(t => {
+        const d = toolTypeDisplay(t.type);
+        return {
+          id: t.id, name: t.name,
+          creator: t.profiles?.display_name || t.profiles?.username || 'Builder',
+          cat: t.category, type: t.type, desc: t.description,
+          icon: t.icon, tags: t.tags || [],
+          typeName: d.typeName, typeClass: d.typeClass, bg: d.bg,
+          price: t.price > 0 ? `$${t.price}/run` : 'free',
+          runs: t.runs || '', author: t.profiles?.username || 'Builder',
+          sys: t.system_prompt, real: true,
+          fields: [{ label: 'Your input', id: 'userinput', type: 'textarea', placeholder: t.input_placeholder || 'Describe what you want...' }]
+        };
+      });
+      window.__socratesAllTools = [...mapped, ...TOOLS];
+      applyFilters();
     }
   } catch(e) { /* silently fall back to demo tools only */ }
 })();

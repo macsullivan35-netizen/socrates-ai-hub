@@ -81,7 +81,12 @@
     <!-- OPENAI KEY -->
     <div class="card">
       <h3>🤖 OpenAI API Key</h3>
-      <p>Add your OpenAI key to run AI tools. It's stored securely in your account and never shared. Get a free key at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--gold)">platform.openai.com</a>.</p>
+      <p>Your key lets AI features talk to OpenAI. On the website it’s often stored in your <em>browser</em> (see Marketplace); this field is for notes if we sync to your account later.</p>
+      <details style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--bg)">
+        <summary style="cursor:pointer;font-weight:700;color:var(--gold);list-style-position:outside">I don’t know what an API key is</summary>
+        <p style="margin-top:12px;margin-bottom:10px">It’s <strong style="color:var(--text)">not</strong> your Socrates login. It’s a code you create at OpenAI (and/or Anthropic for Claude) so software can call their AI. You’ll sign up on their site, maybe add a few dollars of credit, then create a key that starts with <code style="font-size:12px;background:var(--surface);padding:2px 6px;border-radius:4px">sk-</code>.</p>
+        <p style="margin:0"><a href="https://platform.openai.com/signup" target="_blank" rel="noopener" style="color:var(--gold)">OpenAI signup</a> · <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:var(--gold)">API keys</a> · <a href="https://console.anthropic.com/" target="_blank" rel="noopener" style="color:var(--gold)">Claude console</a></p>
+      </details>
       <label>API Key</label>
       <div class="key-row">
         <input type="password" id="openaiKey" placeholder="sk-..."/>
