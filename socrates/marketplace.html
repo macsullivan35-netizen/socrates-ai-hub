@@ -4,6 +4,10 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Marketplace — Socrates</title>
+  <script>
+    /* Payments: deploy /api on Vercel, set env (see repo). If the site is only on GitHub Pages, set your Vercel origin here (no trailing slash). */
+    window.SOCRATES_API_ORIGIN = '';
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -497,6 +501,13 @@
 
     <div id="modalFields"></div>
 
+    <div id="paidUnlockRow" style="display:none;background:rgba(154,110,12,.1);border:1px solid rgba(154,110,12,.35);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:6px">Paid tool</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px">Pay <strong id="paidUnlockAmt" style="color:var(--text)">—</strong> to unlock runs for this tool on this browser. You still use your own OpenAI or Claude key to execute the model — this payment goes to the builder (80%) and the platform (20%).</p>
+      <button type="button" class="btn-run" id="payUnlockBtn" onclick="startToolCheckout()" style="width:100%;margin-bottom:8px">Pay &amp; unlock →</button>
+      <p id="payUnlockHint" style="font-size:11px;color:var(--muted);margin:0;line-height:1.45">Requires the Vercel API and Stripe Connect. If checkout doesn’t open, set <code style="font-size:10px">SOCRATES_API_ORIGIN</code> in this page’s &lt;head&gt;.</p>
+    </div>
+
     <!-- Model selector -->
     <div id="modelSelector" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
       <div style="font-size:12px;font-weight:600;color:var(--muted);width:100%;margin-bottom:4px">AI Model</div>
@@ -647,6 +658,30 @@ const TOOLS = [
   },
 ];
 
+/* After Stripe Checkout, unlock tool in this browser (session verified server-side). */
+(function stripeCheckoutReturn() {
+  const run = async () => {
+    const p = new URLSearchParams(location.search);
+    if (p.get('checkout') !== 'success' || !p.get('session_id')) return;
+    const base = (window.SOCRATES_API_ORIGIN != null && String(window.SOCRATES_API_ORIGIN).trim() !== '')
+      ? String(window.SOCRATES_API_ORIGIN).replace(/\/$/, '')
+      : '';
+    const verifyUrl = (base || '') + '/api/verify-checkout-session?session_id=' + encodeURIComponent(p.get('session_id'));
+    if (!base && (location.hostname === 'github.io' || location.hostname.endsWith('.github.io'))) return;
+    try {
+      const r = await fetch(verifyUrl);
+      const j = await r.json();
+      if (j.ok && j.toolId) {
+        const u = JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}');
+        u[String(j.toolId)] = p.get('session_id');
+        localStorage.setItem('socrates_unlocked_tools', JSON.stringify(u));
+      }
+    } catch (e) { console.warn(e); }
+    history.replaceState({}, '', location.pathname + location.hash);
+  };
+  run();
+})();
+
 window.__socratesAllTools = TOOLS;
 
 let currentTools = [...TOOLS];
@@ -654,6 +689,74 @@ let activeFilter = 'all';
 let activeType = 'all';
 let searchQuery = '';
 let currentTool = null;
+
+function socratesApiOrigin() {
+  if (window.SOCRATES_API_ORIGIN != null && String(window.SOCRATES_API_ORIGIN).trim() !== '') {
+    return String(window.SOCRATES_API_ORIGIN).replace(/\/$/, '');
+  }
+  return '';
+}
+
+function isGithubPages() {
+  return location.hostname === 'github.io' || location.hostname.endsWith('.github.io');
+}
+
+function apiUrl(path) {
+  const base = socratesApiOrigin();
+  return (base || '') + path;
+}
+function unlockedToolsMap() {
+  try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
+}
+function hasPaidToolAccess(toolId) {
+  return !!unlockedToolsMap()[String(toolId)];
+}
+function updateModalPaidGate() {
+  const payRow = document.getElementById('paidUnlockRow');
+  const runBtn = document.getElementById('runBtn');
+  const modelSel = document.getElementById('modelSelector');
+  const inlineKey = document.getElementById('inlineKeyPrompt');
+  if (!currentTool || !payRow || !runBtn || !modelSel || !inlineKey) return;
+  const paid = !!currentTool.paid;
+  const unlocked = !paid || hasPaidToolAccess(currentTool.id);
+  const amtEl = document.getElementById('paidUnlockAmt');
+  if (amtEl) amtEl.textContent = currentTool.price || '—';
+  payRow.style.display = paid && !unlocked ? 'block' : 'none';
+  modelSel.style.display = paid && !unlocked ? 'none' : '';
+  if (paid && !unlocked) {
+    inlineKey.style.display = 'none';
+    runBtn.style.display = 'none';
+    return;
+  }
+  const hasKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
+  inlineKey.style.display = hasKey ? 'none' : 'block';
+  runBtn.style.display = hasKey ? '' : 'none';
+  if (!hasKey) syncInlineKeyCopy();
+}
+
+window.startToolCheckout = async function startToolCheckout() {
+  if (!currentTool || !currentTool.paid) return;
+  if (isGithubPages() && !socratesApiOrigin()) {
+    alert('On GitHub Pages, set window.SOCRATES_API_ORIGIN in marketplace.html to your Vercel project URL (where /api is deployed).');
+    return;
+  }
+  const btn = document.getElementById('payUnlockBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Redirecting…'; }
+  try {
+    const r = await fetch(apiUrl('/api/create-checkout-session'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toolId: String(currentTool.id) }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.message || j.error || 'Checkout failed');
+    if (j.url) window.location.href = j.url;
+    else throw new Error('No checkout URL');
+  } catch (e) {
+    alert(e.message || 'Could not start checkout');
+    if (btn) { btn.disabled = false; btn.textContent = 'Pay & unlock →'; }
+  }
+};
 
 function toolTypeDisplay(type) {
   const map = {
@@ -696,7 +799,7 @@ function renderTools(tools) {
     return;
   }
   grid.innerHTML = tools.map(t => `
-    <div class="tool-card" onclick="openTool(${t.id})">
+    <div class="tool-card" onclick='openTool(${JSON.stringify(String(t.id))})'>
       <div class="tc-header">
         ${toolIconCellHtml(t.icon, t.bg)}
         <div class="tc-meta">
@@ -784,7 +887,9 @@ function doSort(val) {
 }
 
 function openTool(id) {
-  currentTool = currentTools.find(t => t.id === id) || TOOLS.find(t => t.id === id);
+  const idStr = String(id);
+  const pool = window.__socratesAllTools || TOOLS;
+  currentTool = currentTools.find(t => String(t.id) === idStr) || pool.find(t => String(t.id) === idStr);
   if (!currentTool) return;
   const mic = document.getElementById('modalIcon');
   mic.style.background = currentTool.bg;
@@ -821,9 +926,8 @@ function openTool(id) {
   document.getElementById('outputContent').textContent = '';
   document.getElementById('runBtn').disabled = false;
   document.getElementById('runBtn').textContent = '▶ Run Tool';
-  document.getElementById('runBtn').style.display = '';
-  document.getElementById('inlineKeyPrompt').style.display = 'none';
   document.getElementById('modalOverlay').classList.add('open');
+  updateModalPaidGate();
 }
 
 function closeModal() {
@@ -866,6 +970,7 @@ function selectModel(model) {
     inp.placeholder = model === 'gpt' ? 'Paste your sk-... OpenAI key' : 'Paste your sk-ant-... Claude key';
     syncInlineKeyCopy();
   }
+  updateModalPaidGate();
 }
 
 function openKeyModal() {
@@ -935,6 +1040,10 @@ function saveInlineKey() {
 }
 
 async function runTool() {
+  if (currentTool && currentTool.paid && !hasPaidToolAccess(currentTool.id)) {
+    updateModalPaidGate();
+    return;
+  }
   const apiKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
   if (!apiKey) {
     const inp = document.getElementById('inlineKeyInput');
@@ -1120,15 +1229,17 @@ updateKeyBtn();
     const sb = createClient(SUPA_URL, SUPA_KEY);
     const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
-      const mapped = realTools.map(t => {
+        const mapped = realTools.map(t => {
         const d = toolTypeDisplay(t.type);
+        const priceNum = Number(t.price) || 0;
         return {
           id: t.id, name: t.name,
           creator: t.profiles?.display_name || t.profiles?.username || 'Builder',
           cat: t.category, type: t.type, desc: t.description,
           icon: t.icon, tags: t.tags || [],
           typeName: d.typeName, typeClass: d.typeClass, bg: d.bg,
-          price: t.price > 0 ? `$${t.price}/run` : 'free',
+          paid: priceNum > 0,
+          price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
           sys: t.system_prompt, real: true,
           fields: [{ label: 'Your input', id: 'userinput', type: 'textarea', placeholder: t.input_placeholder || 'Describe what you want...' }]

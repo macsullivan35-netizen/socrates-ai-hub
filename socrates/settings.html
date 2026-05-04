@@ -4,6 +4,9 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Settings — Socrates</title>
+  <script>
+    window.SOCRATES_API_ORIGIN = '';
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -98,6 +101,16 @@
       </div>
     </div>
 
+    <!-- STRIPE PAYOUTS -->
+    <div class="card">
+      <h3>💳 Payouts (Stripe Connect)</h3>
+      <p id="payoutStatus" style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px">Connect Stripe to receive <strong style="color:var(--text)">80%</strong> of paid tool sales on the marketplace. Socrates keeps <strong style="color:var(--text)">20%</strong> (set on the server).</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <button type="button" class="btn btn-gold" onclick="startStripeConnect()">Connect Stripe</button>
+        <button type="button" class="btn btn-ghost" onclick="refreshPayoutStatus()">Refresh status</button>
+      </div>
+    </div>
+
     <!-- ACCOUNT -->
     <div class="card">
       <h3>📧 Account</h3>
@@ -113,6 +126,61 @@
   import './js/auth-ui.js';
 
   let currentUser = null;
+
+  function payoutsApiBase() {
+    if (window.SOCRATES_API_ORIGIN != null && String(window.SOCRATES_API_ORIGIN).trim() !== '') {
+      return String(window.SOCRATES_API_ORIGIN).replace(/\/$/, '');
+    }
+    return '';
+  }
+
+  function payoutsIsGithubPages() {
+    return location.hostname === 'github.io' || location.hostname.endsWith('.github.io');
+  }
+
+  window.startStripeConnect = async function startStripeConnect() {
+    const base = payoutsApiBase();
+    if (payoutsIsGithubPages() && !base) {
+      alert('On GitHub Pages, set window.SOCRATES_API_ORIGIN in settings.html to your Vercel URL (same repo’s /api deployment).');
+      return;
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { openAuthModal('login'); return; }
+    const r = await fetch((base || '') + '/api/stripe-connect-start', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!j.url) { alert(j.message || j.error || 'Could not start Stripe Connect'); return; }
+    window.location.href = j.url;
+  };
+
+  window.refreshPayoutStatus = async function refreshPayoutStatus() {
+    const el = document.getElementById('payoutStatus');
+    const base = payoutsApiBase();
+    if (!el) return;
+    if (payoutsIsGithubPages() && !base) {
+      el.textContent = 'Deploy /api on Vercel and set SOCRATES_API_ORIGIN in this page’s <head> to that URL (GitHub Pages cannot run the payment API).';
+      return;
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { el.textContent = 'Sign in to view payout status.'; return; }
+    el.textContent = 'Checking Stripe…';
+    try {
+      const r = await fetch((base || '') + '/api/stripe-connect-status', { headers: { Authorization: 'Bearer ' + session.access_token } });
+      const j = await r.json();
+      if (j.charges_enabled) {
+        el.innerHTML = '✅ <strong>Ready to sell.</strong> Paid tools you publish can accept checkout; funds route to your Stripe account minus the platform fee.';
+      } else if (j.connected) {
+        el.innerHTML = '⏳ Finish Stripe onboarding (open <strong>Connect Stripe</strong> again if needed).';
+      } else {
+        el.innerHTML = 'Not connected. Use <strong>Connect Stripe</strong> to receive payouts.';
+      }
+    } catch {
+      el.textContent = 'Could not reach the API. Deploy /api on Vercel and check env vars (STRIPE_SECRET_KEY, SUPABASE_SERVICE_ROLE_KEY, PUBLIC_SITE_URL).';
+    }
+  };
 
   async function loadSettings() {
     const user = await getUser();
@@ -131,6 +199,15 @@
       if (profile.openai_key) {
         document.getElementById('openaiKey').value = profile.openai_key;
       }
+    }
+
+    const qp = new URLSearchParams(location.search);
+    if (qp.get('stripe') === 'return' || qp.get('stripe') === 'refresh') {
+      history.replaceState({}, '', location.pathname);
+      await refreshPayoutStatus();
+      showToast('Stripe status refreshed');
+    } else {
+      await refreshPayoutStatus();
     }
   }
 

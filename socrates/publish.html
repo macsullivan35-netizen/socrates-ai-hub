@@ -546,7 +546,8 @@
       <div class="success-full" id="manSuccessScreen">
         <div style="font-size:64px;margin-bottom:20px">🎉</div>
         <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:12px">Tool Published!</div>
-        <div style="font-size:15px;color:var(--muted);margin-bottom:32px">Your tool is live on the Socrates Marketplace.</div>
+        <div style="font-size:15px;color:var(--muted);margin-bottom:12px">Your tool is live on the Socrates Marketplace.</div>
+        <p id="manPayoutNote" style="display:none;font-size:13px;color:var(--gold);max-width:440px;margin:0 auto 24px;line-height:1.55">You set a price — open <a href="settings.html" style="color:var(--gold);font-weight:700">Settings → Payouts</a> and connect Stripe so buyers can pay you (80% to you, 20% platform fee).</p>
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
           <a href="marketplace.html" class="btn btn-ghost">View in Marketplace</a>
           <a href="dashboard.html" class="btn btn-gold">Open Dashboard</a>
@@ -640,6 +641,7 @@
         <div class="s-icon">🎉</div>
         <h3>Tool Published!</h3>
         <p>Your tool is now live on the marketplace.</p>
+        <p id="aiPayoutNote" style="display:none;font-size:13px;color:var(--gold);max-width:400px;margin:12px auto 0;line-height:1.5">You set a price — connect Stripe under <a href="settings.html" style="color:var(--gold);font-weight:700">Settings → Payouts</a> so checkout works.</p>
         <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap">
           <a href="marketplace.html" class="btn btn-ghost" style="font-size:13px">View in Marketplace</a>
           <button onclick="location.reload()" class="btn btn-gold" style="font-size:13px">Build Another</button>
@@ -964,6 +966,8 @@ async function aiPublishTool() {
   } catch(e) { /* silent */ }
   document.getElementById('publishArea').classList.remove('visible');
   document.getElementById('successBanner').classList.add('visible');
+  const paidNote = document.getElementById('aiPayoutNote');
+  if (paidNote) paidNote.style.display = (generatedTool.price || 0) > 0 ? 'block' : 'none';
   addMsg('bot','🎉 Your tool is live! Head to the Marketplace to see it.');
 }
 
@@ -1079,6 +1083,9 @@ async function manPublish(){
   }catch(e){/*silent*/}
   document.getElementById('mp5').classList.remove('active');
   document.getElementById('manSuccessScreen').classList.add('active');
+  const manPaid = manPrice !== 'free' && (parseFloat(document.getElementById('mPriceAmt').value) || 0) > 0;
+  const mn = document.getElementById('manPayoutNote');
+  if (mn) mn.style.display = manPaid ? 'block' : 'none';
   document.getElementById('manSteps').style.display='none';
   window.scrollTo({top:0,behavior:'smooth'});
 }
