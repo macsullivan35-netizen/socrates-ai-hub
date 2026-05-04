@@ -862,7 +862,7 @@ async function runTool() {
     }
 
     const body = isClaude
-      ? JSON.stringify({ model: 'claude-3-5-haiku-20241022', max_tokens: 1200, system: currentTool.sys || 'You are a helpful AI assistant.', messages: [{ role: 'user', content: userMessage || 'Please demonstrate what this tool can do with a sample output.' }] })
+      ? JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 1200, system: currentTool.sys || 'You are a helpful AI assistant.', messages: [{ role: 'user', content: userMessage || 'Please demonstrate what this tool can do with a sample output.' }] })
       : JSON.stringify({ model: 'gpt-4o-mini', stream: true, max_tokens: 1200, messages: [{ role: 'system', content: currentTool.sys || 'You are a helpful AI assistant.' }, { role: 'user', content: userMessage || 'Please demonstrate what this tool can do with a sample output.' }] });
 
     const resp = await fetch(endpoint, { method: 'POST', headers, body });
