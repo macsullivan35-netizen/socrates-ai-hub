@@ -704,7 +704,6 @@ function sendMessage() {
 }
 
 async function buildTool() {
-  botSay("Perfect! Give me a moment — building your tool now... ✨");
   setSendEnabled(false);
   const apiKey = localStorage.getItem('socrates_api_key');
   if (!apiKey) {
@@ -713,9 +712,20 @@ async function buildTool() {
       document.getElementById('chatInput').placeholder='Paste your sk-... OpenAI key here';
       document.getElementById('chatInput').setAttribute('data-awaiting-key','1');
       setSendEnabled(true);
-    }, 1000);
+    }, 400);
     return;
   }
+  // Show the “building” line only after the typing animation, *before* calling OpenAI — avoids error appearing above a late “Perfect!” message
+  await new Promise((resolve) => {
+    isTyping = true;
+    showTyping();
+    setTimeout(() => {
+      removeTyping();
+      addMsg('bot', 'Perfect! Give me a moment — building your tool now... ✨');
+      isTyping = false;
+      resolve();
+    }, 900);
+  });
   await generateWithGPT(apiKey);
 }
 
@@ -732,7 +742,7 @@ async function generateWithGPT(apiKey) {
         ]
       })
     });
-    if (!resp.ok) { const err=await resp.json(); addMsg('bot',`API error: ${err.error?.message||'Check your key.'}`); return; }
+    if (!resp.ok) { const err=await resp.json(); addMsg('bot',`API error: ${err.error?.message||'Check your key.'}`); setSendEnabled(true); return; }
     const data = await resp.json();
     const raw = data.choices[0].message.content.trim().replace(/```json|```/g,'').trim();
     generatedTool = JSON.parse(raw);
@@ -742,7 +752,15 @@ async function generateWithGPT(apiKey) {
     updatePreview(generatedTool);
     addMsg('bot',`Done! I built **${generatedTool.name}** 🎉\n\nCheck the preview on the right. When you're happy, hit Publish to make it live.`);
     document.getElementById('publishArea').classList.add('visible');
-  } catch(e) { addMsg('bot',`Something went wrong: ${e.message}`); }
+    setSendEnabled(true);
+  } catch(e) {
+    let hint = e.message || 'Unknown error';
+    if (hint === 'Failed to fetch' || (e && e.name === 'TypeError')) {
+      hint = 'Could not reach OpenAI from your browser (Failed to fetch). Often: weak Wi‑Fi, VPN, ad blocker, parental / school filters, or firewall. Try another network, pause blockers, or confirm api.openai.com isn’t blocked.';
+    }
+    addMsg('bot',`Something went wrong: ${hint}`);
+    setSendEnabled(true);
+  }
 }
 
 function updatePreview(tool) {
