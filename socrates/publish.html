@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Publish a Tool — Socrates</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plaimage.pngplay:wght@700;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -265,6 +265,45 @@
     .btn-publish:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(109,40,217,.3)}
     .btn-publish:disabled{opacity:.5;transform:none;cursor:not-allowed}
 
+    .customize-panel{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:16px;
+      margin-bottom:18px;
+      overflow:hidden;
+    }
+    .customize-toggle{
+      width:100%;
+      padding:12px 16px;
+      background:var(--bg2);
+      border:none;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+      text-align:left;
+      font-family:'Inter',sans-serif;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .customize-toggle:hover{background:var(--bg3)}
+    .customize-toggle .chev{font-size:10px;opacity:.55;font-weight:800}
+    .customize-body{display:none;padding:16px 18px 18px;border-top:1px solid var(--border)}
+    .customize-panel.open .customize-body{display:block}
+    .extra-field-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px 12px;
+      margin-top:6px;
+    }
+    .extra-field-grid .span-2{grid-column:1/-1}
+    @media(max-width:500px){
+      .extra-field-grid{grid-template-columns:1fr}
+    }
+    .sub-label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;text-transform:none;letter-spacing:0}
+
     /* SUCCESS */
     .success-banner{background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(154,110,12,.08));border:1px solid rgba(22,163,74,.25);border-radius:14px;padding:24px;text-align:center;display:none}
     .success-banner.visible{display:block}
@@ -523,6 +562,7 @@
             <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Category</div><div id="rev-cat" style="font-weight:600">—</div></div>
             <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Type</div><div id="rev-type" style="font-weight:600">—</div></div>
             <div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Price</div><div id="rev-price" style="font-weight:600;color:var(--green)">Free</div></div>
+            <div style="grid-column:1/-1"><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Tags</div><div id="rev-tags" style="font-weight:600">—</div></div>
           </div>
         </div>
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:14px;color:var(--muted);margin-bottom:28px"><input type="checkbox" id="manAgree" style="margin-top:3px;accent-color:var(--gold)"/> I agree to the Socrates Content Policy and confirm this is my original work.</label>
@@ -612,6 +652,48 @@
         </div>
       </div>
 
+      <div class="customize-panel" id="listingCustomize">
+        <button type="button" class="customize-toggle" id="listingCustomizeBtn" aria-expanded="false">
+          <span>⚙ Customize listing</span>
+          <span class="chev" id="listingCustomizeChev">▼</span>
+        </button>
+        <div class="customize-body" id="listingCustomizeBody">
+          <p class="fg-hint" style="margin:-4px 0 14px">Tags, an extra link, optional extra Run-modal fields, and sample output. <strong style="font-weight:700;color:var(--text)">Run the SQL</strong> in <code style="font-size:11px;background:var(--bg2);padding:2px 6px;border-radius:4px">supabase/add_publish_columns_tools.sql</code> if publishing fails.</p>
+          <div class="fg" style="margin-bottom:14px">
+            <label>Discoverability tags</label>
+            <input type="text" id="listingTags" placeholder="legal, rewriting, polish — comma separated" autocomplete="off"/>
+            <p class="fg-hint">Up to 20 short tags; helps future search and your dashboard.</p>
+          </div>
+          <div class="fg" style="margin-bottom:14px">
+            <label>Learn-more link <span style="text-transform:none;font-weight:600;color:var(--muted)">(optional)</span></label>
+            <input type="url" id="listingMoreUrl" placeholder="https://docs or landing page…" autocomplete="off"/>
+            <p class="fg-hint">Appended to your public description as a “More” link.</p>
+          </div>
+          <div class="fg" style="margin-bottom:14px">
+            <label>Sample output <span style="text-transform:none;font-weight:600;color:var(--muted)">(optional)</span></label>
+            <textarea id="listingSampleOut" rows="3" placeholder="Example of great output — also use Prompt step (manual) if you prefer."></textarea>
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label>Extra Run fields <span style="text-transform:none;font-weight:600;color:var(--muted)">(optional)</span></label>
+            <p class="fg-hint">Buyers see these in the Run modal after the main input (tone, format, audience, etc.).</p>
+            <div class="extra-field-grid">
+              <div><span class="sub-label">Field 2 label</span><input type="text" id="cxField2Label" placeholder="e.g. Tone" autocomplete="off"/></div>
+              <div><span class="sub-label">Placeholder</span><input type="text" id="cxField2Ph" placeholder="e.g. Professional" autocomplete="off"/></div>
+              <div class="span-2"><span class="sub-label">Field 2 type</span>
+                <select id="cxField2Type"><option value="text">Short text</option><option value="textarea">Paragraph</option></select>
+              </div>
+            </div>
+            <div class="extra-field-grid" style="margin-top:14px">
+              <div><span class="sub-label">Field 3 label</span><input type="text" id="cxField3Label" placeholder="Optional third field" autocomplete="off"/></div>
+              <div><span class="sub-label">Placeholder</span><input type="text" id="cxField3Ph" placeholder="" autocomplete="off"/></div>
+              <div class="span-2"><span class="sub-label">Field 3 type</span>
+                <select id="cxField3Type"><option value="text">Short text</option><option value="textarea">Paragraph</option></select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="publish-area" id="publishArea">
         <h3>🚀 Ready to publish?</h3>
         <p>Your tool is built. Hit publish and it goes live on the Socrates Marketplace immediately.</p>
@@ -647,6 +729,70 @@ const MAX_ICON_FILE_BYTES = 220 * 1024;
 let manualIconImage = null;
 let advIconImage = null;
 let aiIconImage = null;
+
+(function initListingCustomizeToggle() {
+  const panel = document.getElementById('listingCustomize');
+  const btn = document.getElementById('listingCustomizeBtn');
+  const chev = document.getElementById('listingCustomizeChev');
+  if (!panel || !btn) return;
+  btn.addEventListener('click', () => {
+    panel.classList.toggle('open');
+    const open = panel.classList.contains('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (chev) chev.textContent = open ? '▲' : '▼';
+  });
+})();
+
+function parseListingTags() {
+  const raw = document.getElementById('listingTags')?.value || '';
+  return raw.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean).slice(0, 20);
+}
+function appendMoreUrl(desc, url) {
+  const u = (url || '').trim();
+  if (!u) return (desc || '').trim();
+  const d = (desc || '').trim();
+  return d + (d ? '\n\n' : '') + '🔗 More: ' + u;
+}
+function getListingMoreUrl() {
+  return (document.getElementById('listingMoreUrl')?.value || '').trim();
+}
+function getSampleOutputForPublish() {
+  const m = (document.getElementById('mSample')?.value || '').trim();
+  if (m) return m;
+  return (document.getElementById('listingSampleOut')?.value || '').trim();
+}
+function getCxExtras() {
+  const out = [];
+  const l2 = document.getElementById('cxField2Label')?.value?.trim();
+  if (l2) {
+    const typ = document.getElementById('cxField2Type')?.value || 'text';
+    out.push({
+      id: 'userinput2',
+      label: l2,
+      type: typ === 'textarea' ? 'textarea' : 'text',
+      placeholder: (document.getElementById('cxField2Ph')?.value || '').trim()
+    });
+  }
+  const l3 = document.getElementById('cxField3Label')?.value?.trim();
+  if (l3) {
+    const typ = document.getElementById('cxField3Type')?.value || 'text';
+    out.push({
+      id: 'userinput3',
+      label: l3,
+      type: typ === 'textarea' ? 'textarea' : 'text',
+      placeholder: (document.getElementById('cxField3Ph')?.value || '').trim()
+    });
+  }
+  return out;
+}
+function buildInputSchemaForPublish(primaryLabel, primaryPlaceholder) {
+  const lab = (primaryLabel || '').trim() || 'Your input';
+  const ph = (primaryPlaceholder || '').trim();
+  return [
+    { id: 'userinput', label: lab, type: 'textarea', placeholder: ph },
+    ...getCxExtras()
+  ];
+}
 
 function isImageIconString(s) {
   return s && typeof s === 'string' && (s.startsWith('data:image') || /^https?:\/\//i.test(s));
@@ -951,7 +1097,28 @@ async function aiPublishTool() {
     const { data:{user} } = await sb.auth.getUser();
     const gt = generatedTool.type;
     const typeKey = gt==='Chat Bot'?'chat':gt==='Agent'?'agent':gt==='Model Wrapper'?'model':gt==='Other'?'other':'prompt';
-    await sb.from('tools').insert([{ name:generatedTool.name, description:generatedTool.description, category:generatedTool.category, icon:aiIconImage || generatedTool.icon, type:typeKey, system_prompt:generatedTool.system_prompt, input_placeholder:generatedTool.input_placeholder, price:generatedTool.price||0, is_published:true, runs:0, creator_id:user?.id||null }]);
+    const primaryLabel = generatedTool.input_label || 'Your input';
+    const primaryPh = generatedTool.input_placeholder || '';
+    const descPub = appendMoreUrl(generatedTool.description, getListingMoreUrl());
+    const tags = parseListingTags();
+    const input_schema = buildInputSchemaForPublish(primaryLabel, primaryPh);
+    const samp = getSampleOutputForPublish();
+    await sb.from('tools').insert([{
+      name: generatedTool.name,
+      description: descPub,
+      category: generatedTool.category,
+      icon: aiIconImage || generatedTool.icon,
+      type: typeKey,
+      system_prompt: generatedTool.system_prompt,
+      input_placeholder: primaryPh,
+      price: generatedTool.price||0,
+      is_published: true,
+      runs: 0,
+      creator_id: user?.id||null,
+      tags,
+      input_schema,
+      ...(samp ? { sample_output: samp } : {})
+    }]);
   } catch(e) { /* silent */ }
   document.getElementById('publishArea').classList.remove('visible');
   document.getElementById('successBanner').classList.add('visible');
@@ -982,6 +1149,9 @@ function manGoStep(n) {
     const rp=document.getElementById('rev-price');
     if(manPrice==='free'){rp.textContent='Free';rp.style.color='var(--green)';}
     else{const amt=document.getElementById('mPriceAmt').value;rp.textContent=`$${amt}${manPrice==='monthly'?'/mo':'/run'}`;rp.style.color='var(--gold)';}
+    const tg = parseListingTags();
+    const rtx = document.getElementById('rev-tags');
+    if (rtx) rtx.textContent = tg.length ? tg.join(', ') : '—';
   }
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -1038,8 +1208,11 @@ async function advPublish(){
   const notes=document.getElementById('advNotes').value.trim();
   const prompt=document.getElementById('advPrompt').value.trim();
   if(!name||!desc||!cat||!url||!prompt){alert('Please complete name, description, category, primary URL, and system prompt.');return;}
-  let fullDesc=desc+'\n\n🔗 External: '+url;
-  if(notes) fullDesc+='\n\nHow to run:\n'+notes;
+  let fullDesc=appendMoreUrl(desc+'\n\n🔗 External: '+url+(notes?'\n\nHow to run:\n'+notes:''), getListingMoreUrl());
+  const advPh=document.getElementById('advInputPh').value.trim()||'Describe your request (see listing for API / setup).';
+  const tags = parseListingTags();
+  const input_schema = buildInputSchemaForPublish('Your input', advPh);
+  const samp = getSampleOutputForPublish();
   const btn=document.getElementById('advPublishBtn');
   btn.textContent='Publishing...'; btn.disabled=true;
   try{
@@ -1051,8 +1224,11 @@ async function advPublish(){
       icon: advIconImage || document.getElementById('advIcon').value.trim()||'🔗',
       type:'other',
       system_prompt: prompt,
-      input_placeholder: document.getElementById('advInputPh').value.trim()||'Describe your request (see listing for API / setup).',
-      price:0, is_published:true, runs:0, creator_id:user?.id||null
+      input_placeholder: advPh,
+      price:0, is_published:true, runs:0, creator_id:user?.id||null,
+      tags,
+      input_schema,
+      ...(samp ? { sample_output: samp } : {})
     }]);
   }catch(e){/* silent */}
   document.getElementById('advancedForm').style.display='none';
@@ -1068,7 +1244,28 @@ async function manPublish(){
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
     const sb=createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
     const { data:{user} } = await sb.auth.getUser();
-    await sb.from('tools').insert([{name:document.getElementById('mName').value,description:document.getElementById('mDesc').value,category:document.getElementById('mCat').value,icon:manualIconImage||document.getElementById('mIcon').value||'⚡',type:manType,system_prompt:document.getElementById('mPrompt').value,input_placeholder:document.getElementById('mInputPlaceholder').value,price:manPrice==='free'?0:parseFloat(document.getElementById('mPriceAmt').value)||0,is_published:true,runs:0,creator_id:user?.id||null}]);
+    const primaryLabel = document.getElementById('mInputLabel').value.trim() || 'Your input';
+    const primaryPh = document.getElementById('mInputPlaceholder').value.trim() || '';
+    const descPub = appendMoreUrl(document.getElementById('mDesc').value, getListingMoreUrl());
+    const tags = parseListingTags();
+    const input_schema = buildInputSchemaForPublish(primaryLabel, primaryPh);
+    const samp = getSampleOutputForPublish();
+    await sb.from('tools').insert([{
+      name: document.getElementById('mName').value,
+      description: descPub,
+      category: document.getElementById('mCat').value,
+      icon: manualIconImage||document.getElementById('mIcon').value||'⚡',
+      type: manType,
+      system_prompt: document.getElementById('mPrompt').value,
+      input_placeholder: primaryPh,
+      price: manPrice==='free'?0:parseFloat(document.getElementById('mPriceAmt').value)||0,
+      is_published: true,
+      runs: 0,
+      creator_id: user?.id||null,
+      tags,
+      input_schema,
+      ...(samp ? { sample_output: samp } : {})
+    }]);
   }catch(e){/*silent*/}
   document.getElementById('mp5').classList.remove('active');
   document.getElementById('manSuccessScreen').classList.add('active');

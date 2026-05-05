@@ -1209,6 +1209,25 @@ if (_si) {
 applyFilters();
 updateKeyBtn();
 
+function toolFieldsFromSupabaseRow(t) {
+  const ph = t.input_placeholder || 'Describe what you want...';
+  let sch = t.input_schema;
+  if (sch != null && typeof sch === 'string') {
+    try { sch = JSON.parse(sch); } catch (_) { sch = null; }
+  }
+  if (Array.isArray(sch) && sch.length > 0) {
+    return sch.map((f, i) => {
+      const idRaw = f.id != null ? String(f.id) : `field_${i}`;
+      const idSafe = idRaw.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '') || `field_${i}`;
+      const typ = f.type === 'textarea' ? 'textarea' : (f.type === 'select' ? 'select' : 'text');
+      const row = { label: f.label || `Input ${i + 1}`, id: idSafe, type: typ, placeholder: f.placeholder != null ? String(f.placeholder) : '' };
+      if (typ === 'select' && Array.isArray(f.options)) row.options = f.options.map(String);
+      return row;
+    });
+  }
+  return [{ label: 'Your input', id: 'userinput', type: 'textarea', placeholder: ph }];
+}
+
 // Supabase real tool loading — silently skipped if it fails
 (async () => {
   try {
@@ -1231,7 +1250,7 @@ updateKeyBtn();
           price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
           sys: t.system_prompt, real: true,
-          fields: [{ label: 'Your input', id: 'userinput', type: 'textarea', placeholder: t.input_placeholder || 'Describe what you want...' }]
+          fields: toolFieldsFromSupabaseRow(t)
         };
       });
       window.__socratesAllTools = [...mapped, ...TOOLS];
