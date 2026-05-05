@@ -249,6 +249,13 @@
     }
     .btn-run:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.35)}
     .btn-run:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .btn-download{
+      flex:0 1 auto;padding:14px 18px;border-radius:12px;font-size:14px;font-weight:700;
+      background:var(--surface);color:var(--text);border:2px solid var(--border);
+      cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;white-space:nowrap;
+    }
+    .btn-download:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-download:disabled{opacity:.45;cursor:not-allowed;border-color:var(--border);color:var(--muted)}
     .output-box{
       background:var(--bg3);border:1px solid var(--border);
       border-radius:12px;padding:20px;margin-top:20px;
@@ -492,7 +499,7 @@
 
     <div id="paidUnlockRow" style="display:none;background:rgba(154,110,12,.1);border:1px solid rgba(154,110,12,.35);border-radius:12px;padding:16px;margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:6px">Paid tool</div>
-      <p style="font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px">Pay <strong id="paidUnlockAmt" style="color:var(--text)">—</strong> to unlock runs for this tool on this browser. Runs use Socrates-hosted AI when your deploy sets <code style="font-size:11px">OPENAI_API_KEY</code> on the API; otherwise you can add your own key below. Payment goes to the builder (80%) and the platform (20%).</p>
+      <p style="font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px">Pay <strong id="paidUnlockAmt" style="color:var(--text)">—</strong> to unlock runs <strong style="color:var(--text)">and downloads</strong> for this tool on this browser. Runs use Socrates-hosted AI when your deploy sets <code style="font-size:11px">OPENAI_API_KEY</code> on the API; otherwise you can add your own key below. Payment goes to the builder (80%) and the platform (20%).</p>
       <button type="button" class="btn-run" id="payUnlockBtn" onclick="startToolCheckout()" style="width:100%;margin-bottom:8px">Pay &amp; unlock →</button>
       <p id="payUnlockHint" style="font-size:11px;color:var(--muted);margin:0;line-height:1.45">Requires the Vercel API and Stripe Connect. If checkout doesn’t open, set <code style="font-size:10px">SOCRATES_API_ORIGIN</code> in this page’s &lt;head&gt;.</p>
     </div>
@@ -525,7 +532,9 @@
 
     <div class="modal-actions">
       <button class="btn-run" id="runBtn" onclick="runTool()">▶ Run Tool</button>
+      <button type="button" class="btn-download" id="downloadToolBtn" onclick="downloadCurrentToolPack()" title="Save this tool as a JSON pack">⬇ Download</button>
     </div>
+    <p id="downloadToolHint" style="display:none;font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45">Free tools download instantly. Paid tools unlock the same download after you complete payment below.</p>
 
     <div class="output-box" id="outputBox">
       <div class="output-label">Output</div>
@@ -719,6 +728,10 @@ function updateModalPaidGate() {
   if (amtEl) amtEl.textContent = currentTool.price || '—';
   payRow.style.display = paid && !unlocked ? 'block' : 'none';
   modelSel.style.display = paid && !unlocked ? 'none' : '';
+  const dth = document.getElementById('downloadToolHint');
+  if (dth) dth.style.display = paid && !unlocked ? 'block' : 'none';
+  const hh = document.getElementById('hostedRunHint');
+  if (hh) hh.style.display = (!paid || unlocked) && useHostedRun() ? 'block' : 'none';
   if (paid && !unlocked) {
     inlineKey.style.display = 'none';
     runBtn.style.display = 'none';
@@ -733,6 +746,59 @@ function updateModalPaidGate() {
   inlineKey.style.display = hasKey ? 'none' : 'block';
   runBtn.style.display = hasKey ? '' : 'none';
   if (!hasKey) syncInlineKeyCopy();
+}
+
+function slugifyExportName(name) {
+  const s = String(name || 'tool').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase();
+  return s || 'tool';
+}
+
+/** Export tool definition as JSON. Free: immediate. Paid: same unlock as Run (per-browser after checkout). */
+function downloadCurrentToolPack() {
+  if (!currentTool) return;
+  if (currentTool.paid && !hasPaidToolAccess(currentTool.id)) {
+    const row = document.getElementById('paidUnlockRow');
+    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    alert('This tool is paid. Complete checkout below to unlock downloads and runs for this browser.');
+    return;
+  }
+  let iconExport = currentTool.icon;
+  if (typeof iconExport === 'string' && iconExport.startsWith('data:image') && iconExport.length > 12000) {
+    iconExport = '[Large image icon omitted — see tool on the marketplace]';
+  }
+  const listingPath = 'marketplace.html';
+  const pack = {
+    format: 'socrates-tool-pack',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    tool: {
+      id: currentTool.id,
+      name: currentTool.name,
+      description: currentTool.desc || '',
+      category: currentTool.cat || '',
+      type: currentTool.type || '',
+      typeName: currentTool.typeName || '',
+      author: currentTool.author || '',
+      icon: iconExport,
+      system_prompt: currentTool.sys || '',
+      input_fields: currentTool.fields || [],
+      priceLabel: currentTool.price || 'free',
+    },
+    hints: {
+      usage: 'Use system_prompt as the system message in ChatGPT, Claude, or any LLM app. input_fields describes the Run form.',
+      web: `Open ${listingPath} on the Socrates site to run this tool in the browser.`,
+      desktop: 'For optional desktop bundles and installs, see the Download page on the same site.',
+    },
+  };
+  const blob = new Blob([JSON.stringify(pack, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `socrates-tool-${slugifyExportName(currentTool.name)}-${String(currentTool.id)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 window.startToolCheckout = async function startToolCheckout() {
@@ -929,8 +995,6 @@ function openTool(id) {
   document.getElementById('runBtn').textContent = '▶ Run Tool';
   document.getElementById('modalOverlay').classList.add('open');
   updateModalPaidGate();
-  const hh = document.getElementById('hostedRunHint');
-  if (hh) hh.style.display = useHostedRun() ? 'block' : 'none';
 }
 
 function closeModal() {
