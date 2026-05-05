@@ -439,7 +439,7 @@
     <div style="text-align:center;margin-bottom:28px">
       <div style="font-size:48px;margin-bottom:12px">🔑</div>
       <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;margin-bottom:8px">Connect Your AI Keys</div>
-      <div style="font-size:14px;color:var(--muted);line-height:1.6">Keys stay in <strong style="color:var(--text)">your browser</strong> only. They go straight to OpenAI or Anthropic when you run a tool — not through Socrates servers.</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">Optional: bring your own OpenAI or Anthropic key for runs from <em>your</em> account. If this site uses Socrates-hosted AI (<code style="font-size:11px">OPENAI_API_KEY</code> on the server), you usually don’t need this. Keys stay in <strong style="color:var(--text)">your browser</strong> only when you use them.</div>
     </div>
 
     <details class="api-help-details" style="margin-bottom:18px">
@@ -492,7 +492,7 @@
 
     <div id="paidUnlockRow" style="display:none;background:rgba(154,110,12,.1);border:1px solid rgba(154,110,12,.35);border-radius:12px;padding:16px;margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:6px">Paid tool</div>
-      <p style="font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px">Pay <strong id="paidUnlockAmt" style="color:var(--text)">—</strong> to unlock runs for this tool on this browser. You still use your own OpenAI or Claude key to execute the model — this payment goes to the builder (80%) and the platform (20%).</p>
+      <p style="font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px">Pay <strong id="paidUnlockAmt" style="color:var(--text)">—</strong> to unlock runs for this tool on this browser. Runs use Socrates-hosted AI when your deploy sets <code style="font-size:11px">OPENAI_API_KEY</code> on the API; otherwise you can add your own key below. Payment goes to the builder (80%) and the platform (20%).</p>
       <button type="button" class="btn-run" id="payUnlockBtn" onclick="startToolCheckout()" style="width:100%;margin-bottom:8px">Pay &amp; unlock →</button>
       <p id="payUnlockHint" style="font-size:11px;color:var(--muted);margin:0;line-height:1.45">Requires the Vercel API and Stripe Connect. If checkout doesn’t open, set <code style="font-size:10px">SOCRATES_API_ORIGIN</code> in this page’s &lt;head&gt;.</p>
     </div>
@@ -503,10 +503,11 @@
       <div class="model-chip active" id="chip-gpt" onclick="selectModel('gpt')">⚡ GPT-4o</div>
       <div class="model-chip" id="chip-claude" onclick="selectModel('claude')">🏛️ Claude</div>
     </div>
+    <p id="hostedRunHint" style="display:none;font-size:11px;color:var(--muted);margin:-8px 0 14px;line-height:1.45">Hosted mode: no personal API key required — runs go through Socrates on the server.</p>
 
-    <!-- Inline API key prompt — shown instead of run button when no key saved -->
+    <!-- Inline API key prompt — only when hosted API unavailable and no saved key -->
     <div id="inlineKeyPrompt" style="display:none;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:16px;margin-bottom:16px">
-      <div id="inlineKeyTitle" style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:6px">🔑 Add a key to run this tool</div>
+      <div id="inlineKeyTitle" style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:6px">🔑 Add your key to run (optional if Socrates AI is on)</div>
       <div id="inlineKeyLead" style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5"></div>
       <details class="api-help-details" style="background:rgba(0,0,0,.15);border-color:rgba(201,168,76,.25)">
         <summary>I don’t have a key / I don’t know what this is</summary>
@@ -685,6 +686,10 @@ function socratesApiOrigin() {
   }
   return '';
 }
+/** When set, runs use /api/run-tool on the Vercel backend (no visitor API key). */
+function useHostedRun() {
+  return !!socratesApiOrigin();
+}
 
 function isGithubPages() {
   return location.hostname === 'github.io' || location.hostname.endsWith('.github.io');
@@ -715,6 +720,11 @@ function updateModalPaidGate() {
   if (paid && !unlocked) {
     inlineKey.style.display = 'none';
     runBtn.style.display = 'none';
+    return;
+  }
+  if (useHostedRun()) {
+    inlineKey.style.display = 'none';
+    runBtn.style.display = '';
     return;
   }
   const hasKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
@@ -917,6 +927,8 @@ function openTool(id) {
   document.getElementById('runBtn').textContent = '▶ Run Tool';
   document.getElementById('modalOverlay').classList.add('open');
   updateModalPaidGate();
+  const hh = document.getElementById('hostedRunHint');
+  if (hh) hh.style.display = useHostedRun() ? 'block' : 'none';
 }
 
 function closeModal() {
@@ -938,11 +950,11 @@ function syncInlineKeyCopy() {
   const lead = document.getElementById('inlineKeyLead');
   if (!title || !lead) return;
   if (isC) {
-    title.textContent = '🔑 Add your Claude (Anthropic) key to run';
-    lead.innerHTML = 'Create a key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener" style="color:var(--gold)">console.anthropic.com</a> → API keys. It should start with <code style="font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px">sk-ant-</code>. Saved only in this browser.';
+    title.textContent = '🔑 Add your Claude (Anthropic) key to run here';
+    lead.innerHTML = 'If Socrates-hosted AI isn’t set up on this site, paste your own key. Create one at <a href="https://console.anthropic.com/" target="_blank" rel="noopener" style="color:var(--gold)">console.anthropic.com</a> → API keys (<code style="font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px">sk-ant-</code>). Stored only in this browser.';
   } else {
-    title.textContent = '🔑 Add your OpenAI key to run';
-    lead.innerHTML = 'Create a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:var(--gold)">platform.openai.com/api-keys</a>. It should start with <code style="font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px">sk-</code> (not sk-ant). Saved only in this browser.';
+    title.textContent = '🔑 Add your OpenAI key to run here';
+    lead.innerHTML = 'If Socrates-hosted AI isn’t set up on this site, paste your own key. Create one at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:var(--gold)">platform.openai.com/api-keys</a> (<code style="font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px">sk-</code>, not sk-ant). Stored only in this browser.';
   }
 }
 
@@ -950,14 +962,15 @@ function selectModel(model) {
   selectedModel = model;
   document.querySelectorAll('.model-chip').forEach(c => c.classList.remove('active'));
   document.getElementById('chip-' + model).classList.add('active');
-  // if selected model has no key, show inline prompt
-  const hasKey = model === 'gpt' ? getKey() : getClaudeKey();
-  document.getElementById('inlineKeyPrompt').style.display = hasKey ? 'none' : 'block';
-  document.getElementById('runBtn').style.display = hasKey ? '' : 'none';
-  if (!hasKey) {
-    const inp = document.getElementById('inlineKeyInput');
-    inp.placeholder = model === 'gpt' ? 'Paste your sk-... OpenAI key' : 'Paste your sk-ant-... Claude key';
-    syncInlineKeyCopy();
+  if (!useHostedRun()) {
+    const hasKey = model === 'gpt' ? getKey() : getClaudeKey();
+    document.getElementById('inlineKeyPrompt').style.display = hasKey ? 'none' : 'block';
+    document.getElementById('runBtn').style.display = hasKey ? '' : 'none';
+    if (!hasKey) {
+      const inp = document.getElementById('inlineKeyInput');
+      inp.placeholder = model === 'gpt' ? 'Paste your sk-... OpenAI key' : 'Paste your sk-ant-... Claude key';
+      syncInlineKeyCopy();
+    }
   }
   updateModalPaidGate();
 }
@@ -997,6 +1010,20 @@ function saveKey() {
 function updateKeyBtn() {
   const btn = document.getElementById('keyBtn');
   const hasAny = getKey() || getClaudeKey();
+  if (useHostedRun()) {
+    document.getElementById('chip-claude').style.opacity = '1';
+    if (hasAny) {
+      const models = [getKey() ? 'OpenAI' : null, getClaudeKey() ? 'Claude' : null].filter(Boolean).join(' + ');
+      btn.textContent = `✅ Your keys: ${models}`;
+      btn.style.borderColor = 'rgba(74,222,128,.4)';
+      btn.style.color = '#4ade80';
+    } else {
+      btn.textContent = 'Optional: own API keys';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }
+    return;
+  }
   if (hasAny) {
     const models = [getKey() ? 'GPT-4' : null, getClaudeKey() ? 'Claude' : null].filter(Boolean).join(' + ');
     btn.textContent = `✅ ${models}`;
@@ -1007,7 +1034,6 @@ function updateKeyBtn() {
     btn.style.borderColor = '';
     btn.style.color = '';
   }
-  // show/hide Claude chip based on key availability
   document.getElementById('chip-claude').style.opacity = getClaudeKey() ? '1' : '0.5';
 }
 
@@ -1028,48 +1054,19 @@ function saveInlineKey() {
   runTool();
 }
 
-async function runTool() {
-  if (currentTool && currentTool.paid && !hasPaidToolAccess(currentTool.id)) {
-    updateModalPaidGate();
-    return;
-  }
+async function runToolWithOwnKey(userMessage) {
   const apiKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
-  if (!apiKey) {
-    const inp = document.getElementById('inlineKeyInput');
-    inp.placeholder = selectedModel === 'claude' ? 'Paste your sk-ant-... Claude key' : 'Paste your sk-... OpenAI key';
-    syncInlineKeyCopy();
-    document.getElementById('inlineKeyPrompt').style.display = 'block';
-    document.getElementById('runBtn').style.display = 'none';
-    return;
-  }
-  document.getElementById('inlineKeyPrompt').style.display = 'none';
-  document.getElementById('runBtn').style.display = '';
+  if (!apiKey) return;
 
   const btn = document.getElementById('runBtn');
   const output = document.getElementById('outputBox');
   const content = document.getElementById('outputContent');
 
-  // Build user message from filled fields
-  const userParts = currentTool.fields.map(f => {
-    const el = document.getElementById(f.id);
-    const val = el ? el.value.trim() : '';
-    return val ? `${f.label}: ${val}` : '';
-  }).filter(Boolean);
-
-  if (userParts.length === 0 || !currentTool.fields.every(f => {
-    const el = document.getElementById(f.id);
-    return el && el.value.trim();
-  })) {
-    // still run even if some fields empty — just use what we have
-  }
-
-  const userMessage = userParts.join('\n');
-
   btn.disabled = true;
   btn.innerHTML = 'Running <span class="loading-dots"><span></span><span></span><span></span></span>';
   output.classList.add('visible');
   content.textContent = '';
-  content.innerHTML = '<span style="color:var(--muted);font-size:13px">Connecting to AI...</span>';
+  content.innerHTML = '<span style="color:var(--muted);font-size:13px">Connecting to AI with your key…</span>';
 
   try {
     const isClaude = selectedModel === 'claude';
@@ -1093,7 +1090,7 @@ async function runTool() {
     const resp = await fetch(endpoint, { method: 'POST', headers, body });
 
     if (!resp.ok) {
-      const err = await resp.json();
+      const err = await resp.json().catch(() => ({}));
       content.textContent = `Error: ${err.error?.message || 'API request failed. Check your API key.'}`;
       btn.disabled = false;
       btn.textContent = '▶ Try Again';
@@ -1103,12 +1100,10 @@ async function runTool() {
     content.textContent = '';
 
     if (isClaude) {
-      // Claude returns a regular JSON response (not streaming)
       const data = await resp.json();
       const text = data.content?.[0]?.text || '';
       content.textContent = text;
     } else {
-      // OpenAI streams
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -1133,12 +1128,104 @@ async function runTool() {
 
     btn.disabled = false;
     btn.textContent = '▶ Run Again';
-
   } catch (e) {
     content.textContent = `Network error: ${e.message}. Make sure you have an internet connection.`;
     btn.disabled = false;
     btn.textContent = '▶ Try Again';
   }
+}
+
+async function runTool() {
+  if (currentTool && currentTool.paid && !hasPaidToolAccess(currentTool.id)) {
+    updateModalPaidGate();
+    return;
+  }
+
+  const btn = document.getElementById('runBtn');
+  const output = document.getElementById('outputBox');
+  const content = document.getElementById('outputContent');
+
+  const userParts = currentTool.fields.map(f => {
+    const el = document.getElementById(f.id);
+    const val = el ? el.value.trim() : '';
+    return val ? `${f.label}: ${val}` : '';
+  }).filter(Boolean);
+
+  const userMessage = userParts.join('\n');
+
+  if (useHostedRun()) {
+    document.getElementById('inlineKeyPrompt').style.display = 'none';
+    btn.style.display = '';
+    btn.disabled = true;
+    btn.innerHTML = 'Running <span class="loading-dots"><span></span><span></span><span></span></span>';
+    output.classList.add('visible');
+    content.textContent = '';
+    content.innerHTML = '<span style="color:var(--muted);font-size:13px">Running with Socrates AI…</span>';
+    try {
+      const r = await fetch(apiUrl('/api/run-tool'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toolId: String(currentTool.id),
+          userMessage,
+          model: selectedModel,
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && typeof j.text === 'string') {
+        content.textContent = j.text;
+        btn.disabled = false;
+        btn.textContent = '▶ Run Again';
+        return;
+      }
+
+      const hostedMissing =
+        r.status === 503 &&
+        (j.error === 'hosted_run_unavailable' ||
+          (selectedModel === 'gpt' && j.error === 'openai_unavailable') ||
+          (selectedModel === 'claude' && j.error === 'claude_unavailable'));
+
+      if (hostedMissing) {
+        content.innerHTML = '<span style="color:var(--muted);font-size:13px">Hosted AI isn’t configured on the server (add OPENAI_API_KEY / ANTHROPIC_API_KEY on Vercel). You can still run with your own key below.</span>';
+        const hasKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
+        if (hasKey) {
+          content.innerHTML = '<span style="color:var(--muted);font-size:13px">Running with your key…</span>';
+          await runToolWithOwnKey(userMessage);
+        } else {
+          btn.disabled = false;
+          btn.textContent = '▶ Run Tool';
+          document.getElementById('inlineKeyPrompt').style.display = 'block';
+          btn.style.display = 'none';
+          syncInlineKeyCopy();
+        }
+        return;
+      }
+
+      content.textContent = j.message || j.error || `Something went wrong (${r.status}).`;
+      btn.disabled = false;
+      btn.textContent = '▶ Try Again';
+      return;
+    } catch (e) {
+      content.textContent = `Network error: ${e.message}`;
+      btn.disabled = false;
+      btn.textContent = '▶ Try Again';
+      return;
+    }
+  }
+
+  const apiKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
+  if (!apiKey) {
+    const inp = document.getElementById('inlineKeyInput');
+    inp.placeholder = selectedModel === 'claude' ? 'Paste your sk-ant-... Claude key' : 'Paste your sk-... OpenAI key';
+    syncInlineKeyCopy();
+    document.getElementById('inlineKeyPrompt').style.display = 'block';
+    document.getElementById('runBtn').style.display = 'none';
+    return;
+  }
+  document.getElementById('inlineKeyPrompt').style.display = 'none';
+  document.getElementById('runBtn').style.display = '';
+
+  await runToolWithOwnKey(userMessage);
 }
 
 function copyOutput() {
