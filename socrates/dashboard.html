@@ -20,28 +20,36 @@
     .loading-pulse{animation:pulse 1.5s ease-in-out infinite;color:var(--muted)}
 
     nav{
-      display:flex;align-items:center;justify-content:space-between;
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+      flex-wrap:wrap;
       padding:14px 28px;background:rgba(249,248,245,0.97);
       border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
       backdrop-filter:blur(20px);
     }
-    .nav-logo{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:12px}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:12px;flex-shrink:0}
     .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:9px;display:block;flex-shrink:0;object-fit:contain}
-    .nav-right{display:flex;gap:10px;align-items:center}
+    .nav-links{display:flex;align-items:center;justify-content:center;gap:28px;flex:1;min-width:0}
+    .nav-links a{
+      color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;
+      transition:color .2s;white-space:nowrap;
+    }
+    .nav-links a:hover{color:var(--text)}
+    .nav-cta{display:flex;gap:10px;align-items:center;flex-shrink:0}
+    .nav-links a.nav-link-current{color:var(--gold);font-weight:700}
     .btn{padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
     .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
     .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
     .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a}
     .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(201,168,76,.3)}
 
-    /* LAYOUT */
-    .layout{display:flex;min-height:calc(100vh - 53px)}
+    /* LAYOUT — main area below global nav */
+    .layout{display:flex;min-height:calc(100vh - 62px)}
 
     /* SIDEBAR */
     .sidebar{
       width:220px;flex-shrink:0;padding:24px 16px;
       border-right:1px solid var(--border);background:var(--bg2);
-      position:sticky;top:53px;height:calc(100vh - 53px);overflow-y:auto;
+      position:sticky;top:62px;height:calc(100vh - 62px);overflow-y:auto;
     }
     .sidebar-section{margin-bottom:24px}
     .sidebar-section h4{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
@@ -170,7 +178,12 @@
     .e-item .ei-val{font-size:20px;font-weight:800;color:var(--text)}
     .e-item .ei-label{font-size:11px;color:var(--muted);margin-top:2px}
 
+    @media(max-width:1100px){
+      .nav-links{gap:14px}
+      .nav-links a{font-size:13px}
+    }
     @media(max-width:900px){
+      .nav-links{display:none}
       .stats-row{grid-template-columns:repeat(2,1fr)}
       .chart-grid{grid-template-columns:1fr}
       .bottom-grid{grid-template-columns:1fr}
@@ -189,10 +202,17 @@
     <img src="images/socrates-mark.png" alt="" class="nav-logo-img" width="42" height="42" decoding="async"/>
     Socrates
   </a>
-  <div class="nav-right">
-    <a href="marketplace.html" class="btn btn-ghost">Marketplace</a>
-    <a href="download.html" class="btn btn-ghost">⬇ Download</a>
-    <a href="publish.html" class="btn btn-gold">+ Publish Tool</a>
+  <div class="nav-links">
+    <a href="marketplace.html">Explore</a>
+    <a href="publish.html">Builders</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="download.html">Download</a>
+    <a href="spec.html">Docs</a>
+    <a href="dashboard.html" class="nav-link-current">Dashboard</a>
+  </div>
+  <div class="nav-cta">
+    <a href="marketplace.html" class="btn btn-ghost">Browse AI</a>
+    <a href="publish.html" class="btn btn-gold">Start Building</a>
   </div>
 </nav>
 
@@ -215,7 +235,7 @@
     </div>
     <div class="sidebar-section">
       <h4>Account</h4>
-      <div class="sidebar-link"><span class="icon">⚙️</span>Settings</div>
+      <a href="settings.html" class="sidebar-link" style="text-decoration:none;color:inherit"><span class="icon">⚙️</span>Settings</a>
       <div class="sidebar-link"><span class="icon">🛡️</span>Verified Builder</div>
       <div class="sidebar-link"><span class="icon">📖</span>API Access</div>
     </div>
