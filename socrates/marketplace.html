@@ -688,7 +688,9 @@ function socratesApiOrigin() {
 }
 /** When set, runs use /api/run-tool on the Vercel backend (no visitor API key). */
 function useHostedRun() {
-  return !!socratesApiOrigin();
+  if (socratesApiOrigin()) return true;
+  if (isGithubPages()) return false;
+  return true;
 }
 
 function isGithubPages() {
@@ -1171,7 +1173,7 @@ async function runTool() {
           model: selectedModel,
         }),
       });
-      const j = await r.json().catch(() => ({}));
+      let j = await r.json().catch(() => ({}));
       if (r.ok && typeof j.text === 'string') {
         content.textContent = j.text;
         btn.disabled = false;
@@ -1185,8 +1187,8 @@ async function runTool() {
           (selectedModel === 'gpt' && j.error === 'openai_unavailable') ||
           (selectedModel === 'claude' && j.error === 'claude_unavailable'));
 
-      if (hostedMissing) {
-        content.innerHTML = '<span style="color:var(--muted);font-size:13px">Hosted AI isn’t configured on the server (add OPENAI_API_KEY / ANTHROPIC_API_KEY on Vercel). You can still run with your own key below.</span>';
+      if (hostedMissing || r.status === 404 || r.status === 405) {
+        content.innerHTML = '<span style="color:var(--muted);font-size:13px">Hosted AI isn’t available here (configure /api/run-tool and OPENAI_API_KEY on the server, or use your own key below).</span>';
         const hasKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
         if (hasKey) {
           content.innerHTML = '<span style="color:var(--muted);font-size:13px">Running with your key…</span>';
