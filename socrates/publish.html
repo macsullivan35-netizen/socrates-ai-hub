@@ -19,7 +19,7 @@
     /* NAV */
     nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(249,248,245,.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
     .nav-logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:8px}
-    .nav-logo svg{width:28px;height:28px}
+    .nav-logo .nav-logo-img{width:28px;height:28px;border-radius:6px;display:block;flex-shrink:0;object-fit:contain}
     .btn{padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
     .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
     .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
@@ -290,18 +290,7 @@
 
 <nav>
   <a href="index.html" class="nav-logo">
-    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <g fill="none" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10.5 26.65H21.5"/>
-        <path d="M16 26.45V13.8"/>
-        <path d="M16 13.8V5.35"/>
-        <path d="M13.9 5.35H18.1"/>
-        <path d="M16 13.8C13.4 11.2 9.2 8.75 6 8.45"/>
-        <path d="M4.15 8.45H7.85"/>
-        <path d="M16 13.8C18.6 11.2 22.8 8.75 26 8.45"/>
-        <path d="M24.15 8.45H27.85"/>
-      </g>
-    </svg>
+    <img src="images/socrates-mark.png" alt="" class="nav-logo-img" width="32" height="32" decoding="async"/>
     Socrates
   </a>
   <div style="display:flex;gap:12px">
