@@ -4,29 +4,62 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Publish a Tool — Socrates</title>
+  <script>
+    window.SOCRATES_API_ORIGIN = '';
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.1);
-      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.08);
-      --green:#16a34a;--red:#dc2626;
-      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
-      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:14px;
+      --gold:#c2410c;--gold-light:#ea580c;--gold-dim:rgba(194,65,12,.16);
+      --purple:#818cf8;--purple-light:#a5b4fc;--purple-dim:rgba(129,140,248,.12);
+      --green:#34d399;--red:#f87171;
+      --bg:#080b12;--bg2:#0c111a;--bg3:#121a26;--surface:#151d2e;
+      --border:rgba(248,250,252,.1);--text:#f1f5f9;--muted:#94a3b8;--radius:14px;
     }
+    html{color-scheme:dark}
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
 
     /* NAV */
-    nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(249,248,245,.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+    nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 32px;background:rgba(8,11,18,.93);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
     .nav-logo{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:12px}
-    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:9px;display:block;flex-shrink:0;object-fit:contain}
-    .btn{padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
+    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:0;display:block;flex-shrink:0;object-fit:contain}
+    .nav-links{display:flex;align-items:center;justify-content:center;gap:28px;flex:1;min-width:0}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;white-space:nowrap;transition:color .2s}
+    .nav-links a:hover{color:var(--text)}
+    .nav-links a.nav-link-current{color:var(--gold);font-weight:700}
+    .nav-right{display:flex;gap:12px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+    .nav-right .btn-gold{color:#fff;font-weight:600}
+    .nav-right .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.35)}
+    .btn{padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:all .2s;font-family:'Inter',sans-serif}
     .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
     .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
     .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;font-weight:700}
     .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(154,110,12,.3)}
     .btn-purple{background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff;font-weight:700}
     .btn-purple:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(109,40,217,.3)}
+
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.75);
+      z-index:2000;display:none;align-items:center;justify-content:center;
+      backdrop-filter:blur(8px);padding:20px;
+    }
+    .modal-overlay.open{display:flex}
+    #keyOverlay{z-index:2100}
+    .key-modal{
+      background:var(--bg2);border:1px solid var(--border);
+      border-radius:20px;width:100%;max-width:520px;
+      max-height:90vh;overflow-y:auto;padding:36px;position:relative;
+    }
+    .api-help-details{
+      font-size:12px;color:var(--muted);margin-bottom:12px;
+      background:var(--surface);border-radius:10px;padding:10px 12px;border:1px solid var(--border);
+    }
+    .api-help-details summary{cursor:pointer;font-weight:600;color:var(--gold);user-select:none}
+    .api-help-details[open] summary{margin-bottom:8px}
+    .api-help-details .api-help-inner{line-height:1.65;padding-top:10px;border-top:1px dashed var(--border)}
+    .api-help-details a{color:var(--gold)}
+    .api-help-details code{font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px}
 
     /* ── MODE PICKER ── */
     #modePicker{
@@ -81,7 +114,7 @@
       padding:0;cursor:pointer;transition:all .25s;text-align:left;
       position:relative;overflow:hidden;
     }
-    .picker-card:hover{transform:translateY(-5px);box-shadow:0 20px 60px rgba(20,20,40,.14)}
+    .picker-card:hover{transform:translateY(-5px);box-shadow:0 20px 56px rgba(0,0,0,.52)}
     .picker-card.ai-card:hover{border-color:rgba(154,110,12,.5)}
     .picker-card.manual-card:hover{border-color:rgba(109,40,217,.4)}
 
@@ -250,6 +283,12 @@
     .tool-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:20px}
     .tc-icon-wrap{width:50px;height:50px;border-radius:14px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px}
     .tc-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--gold-dim);color:var(--gold);margin-bottom:10px}
+    .tc-listing-badge{
+      display:inline-block;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+      padding:3px 9px;border-radius:100px;margin-bottom:8px;width:fit-content;
+      border:1px solid rgba(201,168,76,.35);background:rgba(201,168,76,.12);color:var(--gold);
+    }
+    .tc-subtitle{font-size:12px;color:var(--muted);line-height:1.45;margin:-2px 0 8px;font-weight:500}
     .tc-name{font-size:16px;font-weight:800;margin-bottom:8px;color:var(--text)}
     .tc-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;min-height:38px}
     .tc-cat{font-size:12px;color:var(--muted);margin-bottom:12px}
@@ -332,12 +371,60 @@
     <img src="images/socrates-mark.png" alt="" class="nav-logo-img" width="42" height="42" decoding="async"/>
     Socrates
   </a>
-  <div style="display:flex;gap:12px">
-    <a href="marketplace.html" class="btn btn-ghost">Browse</a>
-    <a href="download.html" class="btn btn-ghost">⬇ Download</a>
+  <div class="nav-links">
+    <a href="marketplace.html">Explore</a>
+    <a href="publish.html" class="nav-link-current">Builders</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="download.html">Download</a>
+    <a href="spec.html">Docs</a>
+    <a href="dashboard.html">Dashboard</a>
+  </div>
+  <div class="nav-right">
+    <button type="button" id="keyBtn" onclick="openKeyModal()" class="btn btn-ghost" style="font-size:12px">🔑 Add API Key</button>
     <a href="dashboard.html" class="btn btn-ghost">My Dashboard</a>
+    <a href="publish.html" class="btn btn-gold">+ Publish Tool</a>
   </div>
 </nav>
+
+<div class="modal-overlay" id="keyOverlay">
+  <div class="key-modal">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:48px;margin-bottom:12px">🔑</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;margin-bottom:8px">Connect Your AI Keys</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">Optional: bring your own OpenAI or Anthropic key for runs from <em>your</em> account. If this site uses Socrates-hosted AI (<code style="font-size:11px">OPENAI_API_KEY</code> on the server), you usually don’t need this. Keys stay in <strong style="color:var(--text)">your browser</strong> only when you use them.</div>
+    </div>
+
+    <details class="api-help-details" style="margin-bottom:18px">
+      <summary>New to API keys? What they are &amp; how to get one</summary>
+      <div class="api-help-inner">
+        <p style="margin-bottom:10px">An <strong style="color:var(--text)">API key</strong> is not your Socrates password. It’s a secret code you create at <strong>OpenAI</strong> or <strong>Anthropic</strong> so your computer can use their AI.</p>
+        <p style="margin-bottom:10px"><strong style="color:var(--text)">OpenAI</strong> (<code>sk-</code>, not <code>sk-ant</code>): <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">API keys</a>.</p>
+        <p><strong style="color:var(--text)">Claude</strong> (<code>sk-ant-</code>): <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>.</p>
+      </div>
+    </details>
+
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:32px;height:32px;background:#10a37f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">⚡</div>
+        <div><div style="font-size:14px;font-weight:700">OpenAI (GPT-4)</div><div style="font-size:11px;color:var(--muted)">platform.openai.com/api-keys</div></div>
+        <div id="openaiStatus" style="margin-left:auto;font-size:12px;color:var(--muted)">Not connected</div>
+      </div>
+      <input type="password" id="keyInput" placeholder="sk-..." autocomplete="off" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:32px;height:32px;background:#c17f45;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🏛️</div>
+        <div><div style="font-size:14px;font-weight:700">Claude (Anthropic)</div><div style="font-size:11px;color:var(--muted)">console.anthropic.com</div></div>
+        <div id="claudeStatus" style="margin-left:auto;font-size:12px;color:var(--muted)">Not connected</div>
+      </div>
+      <input type="password" id="claudeKeyInput" placeholder="sk-ant-..." autocomplete="off" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+    </div>
+
+    <button type="button" onclick="saveNavApiKeys()" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;border:none;cursor:pointer;font-family:'Inter',sans-serif">Save Keys</button>
+    <button type="button" onclick="closeKeyModal()" style="width:100%;padding:10px;border-radius:12px;font-size:13px;font-weight:600;background:transparent;color:var(--muted);border:none;cursor:pointer;margin-top:8px;font-family:'Inter',sans-serif">Cancel</button>
+  </div>
+</div>
 
 <!-- ══ MODE PICKER ══ -->
 <div id="modePicker">
@@ -385,7 +472,7 @@
           <div class="perk"><div class="perk-dot">✓</div>Live preview before you publish</div>
           <div class="perk"><div class="perk-dot">✓</div>Done in under 5 minutes</div>
         </div>
-        <p class="card-footnote"><strong>How it works:</strong> This step uses <strong>OpenAI (GPT-4o-mini)</strong> in your browser with <strong>your</strong> API key to turn your answers into a tool spec. Nothing is sent through Socrates servers for that generation. <strong>Claude is not used</strong> on this page (only in the separate marketplace key setup if you choose it there). <strong>No key?</strong> Use <strong>Manual</strong> or <strong>Advanced</strong> instead — you can publish without this AI interview.</p>
+        <p class="card-footnote"><strong>How it works:</strong> This step uses <strong>OpenAI (GPT-4o-mini)</strong> to turn your answers into a tool spec. If your site is configured with <strong>SOCRATES_API_ORIGIN</strong> pointing at a deployment that has <strong>OPENAI_API_KEY</strong>, generation runs <strong>on the server</strong> (nothing blocked by the browser). Otherwise it calls OpenAI <strong>from your browser</strong> with <strong>your</strong> API key. <strong>Claude is not used</strong> on this page. <strong>No key / “Failed to fetch”?</strong> Use <strong>Manual</strong> or <strong>Advanced</strong>, serve the site over <strong>https://</strong> (not as a downloaded <code style="font-size:11px">file://</code> page), or try disabling extensions that block api.openai.com.</p>
       </div>
       <div class="card-bottom">
         <button class="card-cta">✨ Build with AI  →</button>
@@ -453,7 +540,7 @@
     <!-- AI MODE -->
     <div class="chat-side" id="aiMode" style="display:none">
       <div class="mode-heading">AI Tool Builder ✨</div>
-      <div class="mode-sub">Answer a few questions — then <strong>OpenAI (GPT-4o-mini)</strong> turns your answers into a tool using <strong>your</strong> key (saved in this browser). No Claude on this screen.</div>
+      <div class="mode-sub">Answer a few questions — then GPT-4o-mini turns them into a tool (via server if SOCRATES_API_ORIGIN + API keys are set; otherwise from your browser with your key).</div>
       <div class="adv-callout" style="margin-bottom:20px;border-color:rgba(154,110,12,.2);background:rgba(154,110,12,.06)">
         <strong>No API key?</strong> That’s okay — many people haven’t used one before. After the questions, we’ll ask you to paste an OpenAI key and we explain what that means. <strong>Or</strong> go back and choose <strong>Manual</strong> or <strong>Advanced</strong>: you can still publish a tool without using OpenAI for this chat.
       </div>
@@ -590,7 +677,7 @@
       <div class="mode-heading">Advanced — Bring your own 🔗</div>
       <div class="mode-sub">For Hugging Face Spaces, Inference APIs, Replicate, custom HTTPS endpoints, or repos you already shipped.</div>
       <div class="adv-callout">
-        <strong>What you get today:</strong> A real marketplace listing, your link, and a system prompt that teaches the in-page assistant how to help people use your stack.
+        <strong>What you get today:</strong> A real marketplace listing, your link, and a system prompt that teaches the in-page assistant how to help people use your stack. Open <strong>Customize listing</strong> on the right to set a badge, subtitle, and brand accent so your real product doesn’t look like every generic duplicate.
         <small><strong>What we don't do yet:</strong> Run your weights on Socrates GPUs (that's roadmap). “Run” on the site still goes through OpenAI/Claude in the buyer's browser unless you expose a CORS-friendly API they can call.</small>
       </div>
       <div id="advancedForm">
@@ -642,8 +729,10 @@
       <div class="preview-label">Live Preview</div>
       <div class="tool-card">
         <div class="tc-icon-wrap" id="prevIcon">✨</div>
+        <span class="tc-listing-badge" id="prevListingBadge" style="display:none"></span>
         <span class="tc-badge" id="prevType">Prompt App</span>
         <div class="tc-name" id="prevName">Your tool name</div>
+        <div class="tc-subtitle" id="prevSubtitle" style="display:none"></div>
         <div class="tc-desc" id="prevDesc">Your description will appear here...</div>
         <div class="tc-cat" id="prevCat">Category: —</div>
         <div class="tc-footer">
@@ -658,7 +747,24 @@
           <span class="chev" id="listingCustomizeChev">▼</span>
         </button>
         <div class="customize-body" id="listingCustomizeBody">
-          <p class="fg-hint" style="margin:-4px 0 14px">Tags, an extra link, optional extra Run-modal fields, and sample output. <strong style="font-weight:700;color:var(--text)">Run the SQL</strong> in <code style="font-size:11px;background:var(--bg2);padding:2px 6px;border-radius:4px">supabase/add_publish_columns_tools.sql</code> if publishing fails.</p>
+          <p class="fg-hint" style="margin:-4px 0 14px">Stand out: badge, subtitle, optional brand accent, tags, link, Run fields, sample output. <strong style="font-weight:700;color:var(--text)">Run the SQL</strong> in <code style="font-size:11px;background:var(--bg2);padding:2px 6px;border-radius:4px">supabase/add_publish_columns_tools.sql</code> if publishing fails (adds <code style="font-size:11px">listing_extras</code>).</p>
+          <div class="fg" style="margin-bottom:14px">
+            <label>Listing badge <span style="text-transform:none;font-weight:600;color:var(--muted)">(optional)</span></label>
+            <input type="text" id="listingBadge" maxlength="48" placeholder="e.g. Official v3 · Same product as on Product Hunt" autocomplete="off"/>
+            <p class="fg-hint">Makes your card distinct when the name or emoji looks like another listing.</p>
+          </div>
+          <div class="fg" style="margin-bottom:14px">
+            <label>Subtitle under title <span style="text-transform:none;font-weight:600;color:var(--muted)">(optional)</span></label>
+            <input type="text" id="listingSubtitle" maxlength="80" placeholder="One line: premium edition / team workspaces / your real app URL story" autocomplete="off"/>
+          </div>
+          <div class="fg" style="margin-bottom:14px">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600">
+              <input type="checkbox" id="listingAccentOn" style="accent-color:var(--gold)"/> Custom accent color (card border + icon backdrop)
+            </label>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px">
+              <input type="color" id="listingAccent" value="#7c3aed" style="width:48px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;background:var(--surface)"/>
+            </div>
+          </div>
           <div class="fg" style="margin-bottom:14px">
             <label>Discoverability tags</label>
             <input type="text" id="listingTags" placeholder="legal, rewriting, polish — comma separated" autocomplete="off"/>
@@ -724,6 +830,14 @@
 </div><!-- /builderArea -->
 
 <script>
+/** Same-origin or Vercel API base — when set + server has OPENAI_API_KEY, interview runs via /api/publish-generate (no browser→OpenAI). */
+function socratesPublishApiOrigin() {
+  if (window.SOCRATES_API_ORIGIN != null && String(window.SOCRATES_API_ORIGIN).trim() !== '') {
+    return String(window.SOCRATES_API_ORIGIN).replace(/\/$/, '');
+  }
+  return '';
+}
+
 // ── Tool icon: emoji or uploaded image (stored as data URL in `icon` column) ──
 const MAX_ICON_FILE_BYTES = 220 * 1024;
 let manualIconImage = null;
@@ -741,11 +855,90 @@ let aiIconImage = null;
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (chev) chev.textContent = open ? '▲' : '▼';
   });
+  ['listingBadge','listingSubtitle','listingAccent'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', syncListingExtrasPreview);
+  });
+  const accentOn = document.getElementById('listingAccentOn');
+  if (accentOn) accentOn.addEventListener('change', syncListingExtrasPreview);
 })();
 
 function parseListingTags() {
   const raw = document.getElementById('listingTags')?.value || '';
   return raw.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean).slice(0, 20);
+}
+
+function getListingExtrasForPublish() {
+  const subtitle = (document.getElementById('listingSubtitle')?.value || '').trim().slice(0, 80);
+  const badge = (document.getElementById('listingBadge')?.value || '').trim().slice(0, 48);
+  const o = {};
+  if (subtitle) o.subtitle = subtitle;
+  if (badge) o.badge = badge;
+  if (document.getElementById('listingAccentOn')?.checked) {
+    const accent = (document.getElementById('listingAccent')?.value || '').trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(accent)) o.accent = accent.toLowerCase();
+  }
+  return Object.keys(o).length ? o : null;
+}
+
+function syncListingExtrasPreview() {
+  const ex = getListingExtrasForPublish() || {};
+  const b = document.getElementById('prevListingBadge');
+  const s = document.getElementById('prevSubtitle');
+  const card = document.querySelector('.preview-side .tool-card');
+  if (b) {
+    if (ex.badge) {
+      b.style.display = 'inline-block';
+      b.textContent = ex.badge;
+      if (ex.accent) {
+        const a = ex.accent;
+        const m = /^#([0-9a-f]{6})$/i.exec(a);
+        const rgba = m ? `rgba(${parseInt(m[1].slice(0,2),16)},${parseInt(m[1].slice(2,4),16)},${parseInt(m[1].slice(4,6),16)},0.14)` : '';
+        b.style.borderColor = a;
+        b.style.color = a;
+        b.style.background = rgba || 'rgba(201,168,76,.12)';
+      } else {
+        b.style.borderColor = '';
+        b.style.color = '';
+        b.style.background = '';
+      }
+    } else {
+      b.style.display = 'none';
+      b.textContent = '';
+    }
+  }
+  if (s) {
+    if (ex.subtitle) {
+      s.style.display = 'block';
+      s.textContent = ex.subtitle;
+    } else {
+      s.style.display = 'none';
+      s.textContent = '';
+    }
+  }
+  if (card) {
+    if (ex.accent) {
+      const m = /^#([0-9a-f]{6})$/i.exec(ex.accent);
+      if (m) {
+        const r = parseInt(m[1].slice(0, 2), 16), g = parseInt(m[1].slice(2, 4), 16), bl = parseInt(m[1].slice(4, 6), 16);
+        card.setAttribute('style', `border-color:${ex.accent};box-shadow:inset 0 0 0 1px rgba(${r},${g},${bl},0.28)`);
+      } else card.removeAttribute('style');
+    } else {
+      card.removeAttribute('style');
+    }
+  }
+  const prevIcon = document.getElementById('prevIcon');
+  if (prevIcon) {
+    if (ex.accent) {
+      const m = /^#([0-9a-f]{6})$/i.exec(ex.accent);
+      if (m) {
+        const r = parseInt(m[1].slice(0, 2), 16), g = parseInt(m[1].slice(2, 4), 16), bl = parseInt(m[1].slice(4, 6), 16);
+        prevIcon.style.background = `rgba(${r},${g},${bl},0.2)`;
+      }
+    } else {
+      prevIcon.style.background = '';
+    }
+  }
 }
 function appendMoreUrl(desc, url) {
   const u = (url || '').trim();
@@ -814,6 +1007,7 @@ function setPreviewIcon(icon) {
     el.classList.remove('prev-has-img');
     el.textContent = v;
   }
+  syncListingExtrasPreview();
 }
 
 function readIconFile(file, onOk) {
@@ -1014,16 +1208,7 @@ function sendMessage() {
 async function buildTool() {
   setSendEnabled(false);
   const apiKey = localStorage.getItem('socrates_api_key');
-  if (!apiKey) {
-    setTimeout(() => {
-      addMsg('bot','Almost there! I need an OpenAI API key to generate your tool.\n\nIf you\'ve never heard of this: it is NOT your Socrates password. It\'s a secret code from OpenAI so your browser can use their AI (you usually pay them a few cents per use — not Socrates).\n\nHow to get one (about 5–10 minutes):\n1. Sign up: platform.openai.com/signup\n2. Add a little billing credit if OpenAI asks\n3. API keys → Create new secret key\n4. Copy the key (starts with sk-) → paste it below\n\nDirect link: platform.openai.com/api-keys\n\nRather not? Tap ← Change build mode and choose Manual or Advanced — you can publish without this OpenAI step.');
-      document.getElementById('chatInput').placeholder='Paste your sk-... OpenAI key here';
-      document.getElementById('chatInput').setAttribute('data-awaiting-key','1');
-      setSendEnabled(true);
-    }, 400);
-    return;
-  }
-  // Show the “building” line only after the typing animation, *before* calling OpenAI — avoids error appearing above a late “Perfect!” message
+  const origin = socratesPublishApiOrigin();
   await new Promise((resolve) => {
     isTyping = true;
     showTyping();
@@ -1034,7 +1219,60 @@ async function buildTool() {
       resolve();
     }, 900);
   });
+
+  const pgPayload = JSON.stringify({
+    idea: answers.idea,
+    audience: answers.audience,
+    always: answers.always,
+    never: answers.never,
+    price: answers.price,
+  });
+
+  /** Same-origin deploy (e.g. Vercel with /api routes) works without SOCRATES_API_ORIGIN */
+  const tryUrls = [];
+  if (typeof location !== 'undefined' && (location.protocol === 'https:' || location.protocol === 'http:'))
+    tryUrls.push('/api/publish-generate');
+  if (origin) tryUrls.push(origin + '/api/publish-generate');
+
+  try {
+    for (const url of tryUrls) {
+      try {
+        const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: pgPayload });
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data.spec) {
+          applyGeneratedSpecFromInterview(data.spec);
+          return;
+        }
+      } catch (_) { /* try next url */ }
+    }
+  } catch (_) { /* Fall back to browser + key below */ }
+
+  if (!apiKey) {
+    setTimeout(() => {
+      addMsg('bot','Almost there! I need an OpenAI API key to generate your tool.\n\nIf you\'ve never heard of this: it is NOT your Socrates password. It\'s a secret code from OpenAI so your browser can use their AI (you usually pay them a few cents per use — not Socrates).\n\nHow to get one (about 5–10 minutes):\n1. Sign up: platform.openai.com/signup\n2. Add a little billing credit if OpenAI asks\n3. API keys → Create new secret key\n4. Copy the key (starts with sk-) → paste it below\n\nDirect link: platform.openai.com/api-keys\n\nRather not? Tap ← Change build mode and choose Manual or Advanced — you can publish without this OpenAI step.');
+      document.getElementById('chatInput').placeholder='Paste your sk-... OpenAI key here';
+      document.getElementById('chatInput').setAttribute('data-awaiting-key','1');
+      setSendEnabled(true);
+    }, 400);
+    return;
+  }
   await generateWithGPT(apiKey);
+}
+
+function applyGeneratedSpecFromInterview(parsed) {
+  generatedTool = parsed;
+  aiIconImage = null;
+  const aiFile = document.getElementById('aiIconFile');
+  const aiClr = document.getElementById('aiIconClear');
+  if (aiFile) aiFile.value = '';
+  if (aiClr) aiClr.style.display = 'none';
+  const priceStr = answers.price.toLowerCase();
+  generatedTool.price = priceStr === 'free' ? 0 : parseFloat(priceStr.match(/[\d.]+/)?.[0] || 0);
+  generatedTool.is_free = generatedTool.price === 0;
+  updatePreview(generatedTool);
+  addMsg('bot', `Done! I built **${generatedTool.name}** 🎉\n\nCheck the preview on the right. When you're happy, hit Publish to make it live.`);
+  document.getElementById('publishArea').classList.add('visible');
+  setSendEnabled(true);
 }
 
 async function generateWithGPT(apiKey) {
@@ -1053,25 +1291,21 @@ async function generateWithGPT(apiKey) {
     if (!resp.ok) { const err=await resp.json(); addMsg('bot',`API error: ${err.error?.message||'Check your key.'}`); setSendEnabled(true); return; }
     const data = await resp.json();
     const raw = data.choices[0].message.content.trim().replace(/```json|```/g,'').trim();
-    generatedTool = JSON.parse(raw);
-    aiIconImage = null;
-    const aiFile = document.getElementById('aiIconFile');
-    const aiClr = document.getElementById('aiIconClear');
-    if (aiFile) aiFile.value = '';
-    if (aiClr) aiClr.style.display = 'none';
-    const priceStr = answers.price.toLowerCase();
-    generatedTool.price = priceStr==='free' ? 0 : parseFloat(priceStr.match(/[\d.]+/)?.[0]||0);
-    generatedTool.is_free = generatedTool.price === 0;
-    updatePreview(generatedTool);
-    addMsg('bot',`Done! I built **${generatedTool.name}** 🎉\n\nCheck the preview on the right. When you're happy, hit Publish to make it live.`);
-    document.getElementById('publishArea').classList.add('visible');
-    setSendEnabled(true);
+    applyGeneratedSpecFromInterview(JSON.parse(raw));
   } catch(e) {
     let hint = e.message || 'Unknown error';
     if (hint === 'Failed to fetch' || (e && e.name === 'TypeError')) {
-      hint = 'Could not reach OpenAI from your browser (Failed to fetch). Often: weak Wi‑Fi, VPN, ad blocker, parental / school filters, or firewall. Try another network, pause blockers, or confirm api.openai.com isn’t blocked.';
+      hint = [
+        'This is usually not “bad Wi‑Fi” and you don’t need a VPN.',
+        '',
+        'Browsers often block or fail requests to api.openai.com — especially if you opened this page as a local file (address starts with file://), if an extension (ad/privacy blocker) is interfering, or if your work/school/carrier blocks AI API domains.',
+        '',
+        'Try: pause blockers for this site · open Socrates via a normal https:// URL (not double‑clicking the HTML file) · Manual or Advanced build mode.',
+        '',
+        'If you deploy this project’s API with OPENAI_API_KEY on Vercel and set SOCRATES_API_ORIGIN to that deployment, generation can run on the server and skip browser calls entirely.'
+      ].join('\n');
     }
-    addMsg('bot',`Something went wrong: ${hint}`);
+    addMsg('bot',`Something went wrong:\n\n${hint}`);
     setSendEnabled(true);
   }
 }
@@ -1085,6 +1319,7 @@ function updatePreview(tool) {
   const p = document.getElementById('prevPrice');
   p.textContent = tool.is_free ? 'Free' : `$${tool.price}/mo`;
   p.style.color = tool.is_free ? 'var(--green)' : 'var(--gold)';
+  syncListingExtrasPreview();
 }
 
 async function aiPublishTool() {
@@ -1103,6 +1338,7 @@ async function aiPublishTool() {
     const tags = parseListingTags();
     const input_schema = buildInputSchemaForPublish(primaryLabel, primaryPh);
     const samp = getSampleOutputForPublish();
+    const listing_extras = getListingExtrasForPublish();
     await sb.from('tools').insert([{
       name: generatedTool.name,
       description: descPub,
@@ -1117,7 +1353,8 @@ async function aiPublishTool() {
       creator_id: user?.id||null,
       tags,
       input_schema,
-      ...(samp ? { sample_output: samp } : {})
+      ...(samp ? { sample_output: samp } : {}),
+      ...(listing_extras ? { listing_extras } : {})
     }]);
   } catch(e) { /* silent */ }
   document.getElementById('publishArea').classList.remove('visible');
@@ -1182,6 +1419,7 @@ function manUpdatePreview(){
   if(name) document.getElementById('prevName').textContent=name;
   if(desc) document.getElementById('prevDesc').textContent=desc;
   if(cat) document.getElementById('prevCat').textContent=`Category: ${cat}`;
+  syncListingExtrasPreview();
 }
 
 function advUpdatePreview(){
@@ -1197,6 +1435,7 @@ function advUpdatePreview(){
   const p=document.getElementById('prevPrice');
   p.textContent='Free';
   p.style.color='var(--green)';
+  syncListingExtrasPreview();
 }
 
 async function advPublish(){
@@ -1213,6 +1452,7 @@ async function advPublish(){
   const tags = parseListingTags();
   const input_schema = buildInputSchemaForPublish('Your input', advPh);
   const samp = getSampleOutputForPublish();
+  const listing_extras = getListingExtrasForPublish();
   const btn=document.getElementById('advPublishBtn');
   btn.textContent='Publishing...'; btn.disabled=true;
   try{
@@ -1228,7 +1468,8 @@ async function advPublish(){
       price:0, is_published:true, runs:0, creator_id:user?.id||null,
       tags,
       input_schema,
-      ...(samp ? { sample_output: samp } : {})
+      ...(samp ? { sample_output: samp } : {}),
+      ...(listing_extras ? { listing_extras } : {})
     }]);
   }catch(e){/* silent */}
   document.getElementById('advancedForm').style.display='none';
@@ -1250,6 +1491,7 @@ async function manPublish(){
     const tags = parseListingTags();
     const input_schema = buildInputSchemaForPublish(primaryLabel, primaryPh);
     const samp = getSampleOutputForPublish();
+    const listing_extras = getListingExtrasForPublish();
     await sb.from('tools').insert([{
       name: document.getElementById('mName').value,
       description: descPub,
@@ -1264,7 +1506,8 @@ async function manPublish(){
       creator_id: user?.id||null,
       tags,
       input_schema,
-      ...(samp ? { sample_output: samp } : {})
+      ...(samp ? { sample_output: samp } : {}),
+      ...(listing_extras ? { listing_extras } : {})
     }]);
   }catch(e){/*silent*/}
   document.getElementById('mp5').classList.remove('active');
@@ -1275,6 +1518,79 @@ async function manPublish(){
   document.getElementById('manSteps').style.display='none';
   window.scrollTo({top:0,behavior:'smooth'});
 }
+</script>
+<script>
+(function(){
+  function socratesApiOrigin() {
+    if (window.SOCRATES_API_ORIGIN != null && String(window.SOCRATES_API_ORIGIN).trim() !== '') {
+      return String(window.SOCRATES_API_ORIGIN).replace(/\/$/, '');
+    }
+    return '';
+  }
+  function useHostedRun() {
+    if (socratesApiOrigin()) return true;
+    if (location.hostname === 'github.io' || location.hostname.endsWith('.github.io')) return false;
+    return true;
+  }
+  function getNavKey(){ return localStorage.getItem('socrates_api_key'); }
+  function getNavClaudeKey(){ return localStorage.getItem('socrates_claude_key'); }
+  function updateKeyBtn() {
+    const btn = document.getElementById('keyBtn');
+    if (!btn) return;
+    const chipClaude = document.getElementById('chip-claude');
+    const hasAny = getNavKey() || getNavClaudeKey();
+    if (useHostedRun()) {
+      if (chipClaude) chipClaude.style.opacity = '1';
+      if (hasAny) {
+        const models = [getNavKey() ? 'OpenAI' : null, getNavClaudeKey() ? 'Claude' : null].filter(Boolean).join(' + ');
+        btn.textContent = '✅ Your keys: ' + models;
+        btn.style.borderColor = 'rgba(74,222,128,.4)';
+        btn.style.color = '#4ade80';
+      } else {
+        btn.textContent = 'Optional: own API keys';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }
+      return;
+    }
+    if (hasAny) {
+      const models = [getNavKey() ? 'GPT-4' : null, getNavClaudeKey() ? 'Claude' : null].filter(Boolean).join(' + ');
+      btn.textContent = '✅ ' + models;
+      btn.style.borderColor = 'rgba(74,222,128,.4)';
+      btn.style.color = '#4ade80';
+    } else {
+      btn.textContent = '🔑 Add API Key';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }
+    if (chipClaude) chipClaude.style.opacity = getNavClaudeKey() ? '1' : '0.5';
+  }
+  window.openKeyModal = function openKeyModal() {
+    const oKey = getNavKey();
+    const cKey = getNavClaudeKey();
+    const ki = document.getElementById('keyInput');
+    const ci = document.getElementById('claudeKeyInput');
+    const os = document.getElementById('openaiStatus');
+    const cs = document.getElementById('claudeStatus');
+    if (oKey && ki) { ki.value = oKey; if (os){ os.textContent = '✅ Connected'; os.style.color = '#4ade80'; } }
+    if (cKey && ci) { ci.value = cKey; if (cs){ cs.textContent = '✅ Connected'; cs.style.color = '#4ade80'; } }
+    const overlay = document.getElementById('keyOverlay');
+    if (overlay) overlay.classList.add('open');
+  };
+  window.closeKeyModal = function closeKeyModal() {
+    const overlay = document.getElementById('keyOverlay');
+    if (overlay) overlay.classList.remove('open');
+  };
+  window.saveNavApiKeys = function saveNavApiKeys() {
+    const oKey = document.getElementById('keyInput').value.trim();
+    const cKey = document.getElementById('claudeKeyInput').value.trim();
+    if (oKey && oKey.startsWith('sk-') && !oKey.startsWith('sk-ant-')) localStorage.setItem('socrates_api_key', oKey);
+    if (cKey && cKey.startsWith('sk-ant-')) localStorage.setItem('socrates_claude_key', cKey);
+    updateKeyBtn();
+    closeKeyModal();
+  };
+  document.addEventListener('DOMContentLoaded', updateKeyBtn);
+})();
 </script>
 <script type="module" src="js/auth-ui.js"></script>
 </body>

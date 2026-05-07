@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Legal — Socrates</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#c2410c;--gold-dim:rgba(194,65,12,.14);
+      --purple:#818cf8;--purple-light:#a5b4fc;
+      --bg:#080b12;--bg2:#0c111a;--surface:#151d2e;--border:rgba(248,250,252,.1);--text:#f1f5f9;--muted:#94a3b8;--radius:14px;
+    }
+    html{scroll-behavior:smooth;color-scheme:dark}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 28px;background:rgba(8,11,18,.93);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;backdrop-filter:blur(12px)}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:10px}
+    .nav-logo .nav-logo-img{width:40px;height:40px;border-radius:0;display:block;object-fit:contain}
+    .nav-links{display:flex;align-items:center;justify-content:center;gap:26px;flex:1;min-width:0}
+    .nav-links a{color:var(--muted);font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap}
+    .nav-links a:hover{color:var(--text)}
+    .nav-cta{display:flex;gap:10px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+    .btn{padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;cursor:pointer;border:none;font-family:inherit}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;font-weight:700}
+    .legal-wrap{max-width:720px;margin:0 auto;padding:48px 24px 80px}
+    .legal-wrap h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;margin-bottom:8px}
+    .legal-wrap .lead{color:var(--muted);font-size:15px;line-height:1.6;margin-bottom:40px}
+    .legal-section{border-top:1px solid var(--border);padding:36px 0}
+    .legal-section h2{font-size:20px;font-weight:800;margin-bottom:14px;scroll-margin-top:88px}
+    .legal-section p{font-size:14px;color:var(--muted);line-height:1.75;margin-bottom:12px}
+    .legal-section p:last-child{margin-bottom:0}
+    @media(max-width:700px){.nav-cta .btn-gold{display:none}}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img src="images/socrates-mark.png" alt="" class="nav-logo-img" width="40" height="40" decoding="async"/>
+    Socrates
+  </a>
+  <div class="nav-links">
+    <a href="marketplace.html">Explore</a>
+    <a href="publish.html">Builders</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="download.html">Download</a>
+    <a href="spec.html">Docs</a>
+    <a href="dashboard.html">Dashboard</a>
+  </div>
+  <div class="nav-cta">
+    <a href="marketplace.html" class="btn btn-ghost">Browse AI</a>
+    <a href="publish.html" class="btn btn-gold">Start Building</a>
+  </div>
+</nav>
+
+<article class="legal-wrap">
+  <h1>Legal</h1>
+  <p class="lead">Summaries for visitors and builders. This is not personalized legal advice; confirm details with counsel for your situation.</p>
+
+  <section class="legal-section" id="terms">
+    <h2>Terms of Service</h2>
+    <p>By using Socrates websites, apps, or APIs you agree to follow our acceptable use rules, respect intellectual property, and comply with applicable laws. Builders grant us the license needed to host, display, and run tools users choose; users agree not to misuse the platform or attempt to circumvent billing or safety controls.</p>
+  </section>
+
+  <section class="legal-section" id="privacy">
+    <h2>Privacy</h2>
+    <p>We collect account, usage, and payment-related data as needed to operate the marketplace, prevent abuse, and pay builders. Third-party processors (for example authentication and payments) handle some data under their own policies. You can request access or deletion where regulations apply by contacting us through support channels listed on the site.</p>
+  </section>
+
+  <section class="legal-section" id="content-policy">
+    <h2>Content Policy</h2>
+    <p>Published tools must avoid illegal activity, credible threats, non-consensual intimate imagery, instructions for serious wrongdoing, and similar harmful categories. We may remove or restrict content, suspend accounts, or require changes when policy or safety reviews warrant it.</p>
+  </section>
+
+  <section class="legal-section" id="safety">
+    <h2>Safety</h2>
+    <p>We combine automated signals and human review for high-risk categories. Reports from users and builders help us act quickly. If you see content that may violate policy or put someone at risk, use in-product reporting or contact support with links and context.</p>
+  </section>
+</article>
+</body>
+</html>

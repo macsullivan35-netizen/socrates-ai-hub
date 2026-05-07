@@ -4,31 +4,64 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Technical Spec — Socrates Platform</title>
+  <script>
+    window.SOCRATES_API_ORIGIN = '';
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --gold:#9a6e0c;--gold-dim:rgba(154,110,12,.12);
-      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.09);
-      --green:#16a34a;--red:#dc2626;
-      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
-      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:12px;
+      --gold:#c2410c;--gold-dim:rgba(194,65,12,.14);
+      --purple:#818cf8;--purple-light:#a5b4fc;--purple-dim:rgba(129,140,248,.12);
+      --green:#34d399;--red:#f87171;
+      --bg:#080b12;--bg2:#0c111a;--bg3:#121a26;--surface:#151d2e;
+      --border:rgba(248,250,252,.1);--text:#f1f5f9;--muted:#94a3b8;--radius:12px;
     }
-    html{scroll-behavior:smooth}
+    html{scroll-behavior:smooth;color-scheme:dark}
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
 
     /* NAV */
     nav{
       position:fixed;top:0;left:0;right:0;z-index:100;
-      display:flex;align-items:center;justify-content:space-between;
-      padding:14px 32px;background:rgba(249,248,245,0.97);
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+      padding:16px 32px;background:rgba(8,11,18,.93);
       border-bottom:1px solid var(--border);backdrop-filter:blur(20px);
     }
     .nav-logo{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:12px}
-    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:9px;display:block;flex-shrink:0;object-fit:contain}
-    .btn{padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:0;display:block;flex-shrink:0;object-fit:contain}
+    .nav-links{display:flex;align-items:center;justify-content:center;gap:28px;flex:1;min-width:0}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;white-space:nowrap;transition:color .2s}
+    .nav-links a:hover{color:var(--text)}
+    .nav-links a.nav-link-current{color:var(--gold);font-weight:700}
+    .nav-right{display:flex;gap:12px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+    .btn{padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:all .2s;font-family:'Inter',sans-serif}
     .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
     .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff}
+    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(194,65,12,.35)}
+
+    /* API key modal (aligned with marketplace.html) */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.75);
+      z-index:1000;display:none;align-items:center;justify-content:center;
+      backdrop-filter:blur(8px);padding:20px;
+    }
+    .modal-overlay.open{display:flex}
+    #keyOverlay{z-index:2000}
+    .key-modal{
+      background:var(--bg2);border:1px solid var(--border);
+      border-radius:20px;width:100%;max-width:520px;
+      max-height:90vh;overflow-y:auto;padding:36px;position:relative;
+    }
+    .api-help-details{
+      font-size:12px;color:var(--muted);margin-bottom:12px;
+      background:var(--surface);border-radius:10px;padding:10px 12px;border:1px solid var(--border);
+    }
+    .api-help-details summary{cursor:pointer;font-weight:600;color:var(--gold);user-select:none}
+    .api-help-details[open] summary{margin-bottom:8px}
+    .api-help-details .api-help-inner{line-height:1.65;padding-top:10px;border-top:1px dashed var(--border)}
+    .api-help-details a{color:var(--gold)}
+    .api-help-details code{font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px}
 
     /* SIDEBAR TOC */
     .toc{
@@ -127,7 +160,7 @@
     }
     .phase-num{
       width:40px;height:40px;border-radius:50%;
-      background:var(--gold-dim);border:1px solid rgba(201,168,76,.3);
+      background:var(--gold-dim);border:1px solid rgba(234,88,12,.35);
       display:flex;align-items:center;justify-content:center;
       font-family:'Playfair Display',serif;font-size:18px;font-weight:900;
       color:var(--gold);flex-shrink:0;
@@ -138,9 +171,9 @@
 
     /* HERO SECTION */
     .spec-hero{
-      background:var(--bg2);border:1px solid var(--border);border-radius:20px;
       padding:40px;margin-bottom:48px;
-      background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(124,58,237,.06));
+      border:1px solid var(--border);border-radius:20px;
+      background:linear-gradient(135deg,rgba(194,65,12,.12),rgba(129,140,248,.1));
     }
     .spec-hero h1{font-family:'Playfair Display',serif;font-size:42px;font-weight:900;margin-bottom:12px}
     .spec-hero .sh-meta{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:20px}
@@ -159,12 +192,61 @@
     <img src="images/socrates-mark.png" alt="" class="nav-logo-img" width="42" height="42" decoding="async"/>
     Socrates
   </a>
-  <div style="display:flex;gap:12px">
-    <a href="marketplace.html" class="btn btn-ghost">Marketplace</a>
-    <a href="download.html" class="btn btn-ghost">⬇ Download</a>
-    <a href="dashboard.html" class="btn btn-ghost">Dashboard</a>
+  <div class="nav-links">
+    <a href="marketplace.html">Explore</a>
+    <a href="publish.html">Builders</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="download.html">Download</a>
+    <a href="spec.html" class="nav-link-current">Docs</a>
+    <a href="dashboard.html">Dashboard</a>
+  </div>
+  <div class="nav-right">
+    <button type="button" id="keyBtn" onclick="openKeyModal()" class="btn btn-ghost" style="font-size:12px">🔑 Add API Key</button>
+    <a href="dashboard.html" class="btn btn-ghost">My Dashboard</a>
+    <a href="publish.html" class="btn btn-gold">+ Publish Tool</a>
   </div>
 </nav>
+
+<!-- API key modal (same flow as marketplace) -->
+<div class="modal-overlay" id="keyOverlay">
+  <div class="key-modal">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:48px;margin-bottom:12px">🔑</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;margin-bottom:8px">Connect Your AI Keys</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">Optional: bring your own OpenAI or Anthropic key for runs from <em>your</em> account. If this site uses Socrates-hosted AI (<code style="font-size:11px">OPENAI_API_KEY</code> on the server), you usually don’t need this. Keys stay in <strong style="color:var(--text)">your browser</strong> only when you use them.</div>
+    </div>
+
+    <details class="api-help-details" style="margin-bottom:18px">
+      <summary>New to API keys? What they are &amp; how to get one</summary>
+      <div class="api-help-inner">
+        <p style="margin-bottom:10px">An <strong style="color:var(--text)">API key</strong> is not your Socrates password. It’s a secret code you create at <strong>OpenAI</strong> or <strong>Anthropic</strong> so your computer can use their AI. There is usually a small pay‑as‑you‑go cost (often pennies per run) paid to <em>them</em>, not to Socrates.</p>
+        <p style="margin-bottom:10px"><strong style="color:var(--text)">OpenAI</strong> (keys start with <code>sk-</code>, not <code>sk-ant</code>): create an account → <a href="https://platform.openai.com/signup" target="_blank" rel="noopener">Sign up</a> → <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">API keys</a> → “Create new secret key” → paste here.</p>
+        <p><strong style="color:var(--text)">Claude (Anthropic)</strong> (keys start with <code>sk-ant-</code>): <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a> → API keys → create → paste here.</p>
+      </div>
+    </details>
+
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:32px;height:32px;background:#10a37f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">⚡</div>
+        <div><div style="font-size:14px;font-weight:700">OpenAI (GPT-4)</div><div style="font-size:11px;color:var(--muted)">platform.openai.com/api-keys · ~$0.01/run</div></div>
+        <div id="openaiStatus" style="margin-left:auto;font-size:12px;color:var(--muted)">Not connected</div>
+      </div>
+      <input type="password" id="keyInput" placeholder="sk-..." autocomplete="off" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:32px;height:32px;background:#c17f45;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🏛️</div>
+        <div><div style="font-size:14px;font-weight:700">Claude (Anthropic)</div><div style="font-size:11px;color:var(--muted)">console.anthropic.com · ~$0.01/run</div></div>
+        <div id="claudeStatus" style="margin-left:auto;font-size:12px;color:var(--muted)">Not connected</div>
+      </div>
+      <input type="password" id="claudeKeyInput" placeholder="sk-ant-..." autocomplete="off" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+    </div>
+
+    <button type="button" onclick="saveKey()" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;border:none;cursor:pointer;font-family:'Inter',sans-serif">Save Keys</button>
+    <button type="button" onclick="closeKeyModal()" style="width:100%;padding:10px;border-radius:12px;font-size:13px;font-weight:600;background:transparent;color:var(--muted);border:none;cursor:pointer;margin-top:8px;font-family:'Inter',sans-serif">Cancel</button>
+  </div>
+</div>
 
 <!-- TOC -->
 <nav class="toc">
@@ -453,6 +535,9 @@
       <strong>Execution Flow</strong>
       1. Validate inputs against tool's input_schema → 2. Check user's subscription/credit balance → 3. Render system prompt with input interpolation → 4. Route to configured model (with fallback) → 5. Stream response → 6. Write run record → 7. Trigger analytics event → 8. Charge if pay-per-run
     </div>
+
+    <h3 id="sdk">SDK &amp; CLI</h3>
+    <p>TypeScript/JavaScript SDK and a CLI for publishing tools and pulling run history are planned to wrap these REST endpoints with auth refresh and typed models. Track progress in the <a href="#roadmap">roadmap</a> (Phase 4).</p>
   </div>
 
   <!-- 5. PAGES & FLOWS -->
@@ -702,6 +787,84 @@
 </div><!-- /content -->
 
 <script>
+// API key button (shared localStorage keys with marketplace.html)
+function socratesApiOrigin() {
+  if (window.SOCRATES_API_ORIGIN != null && String(window.SOCRATES_API_ORIGIN).trim() !== '') {
+    return String(window.SOCRATES_API_ORIGIN).replace(/\/$/, '');
+  }
+  return '';
+}
+function useHostedRun() {
+  if (socratesApiOrigin()) return true;
+  if (location.hostname === 'github.io' || location.hostname.endsWith('.github.io')) return false;
+  return true;
+}
+function getKey() { return localStorage.getItem('socrates_api_key'); }
+function getClaudeKey() { return localStorage.getItem('socrates_claude_key'); }
+function updateKeyBtn() {
+  const btn = document.getElementById('keyBtn');
+  if (!btn) return;
+  const chipClaude = document.getElementById('chip-claude');
+  const hasAny = getKey() || getClaudeKey();
+  if (useHostedRun()) {
+    if (chipClaude) chipClaude.style.opacity = '1';
+    if (hasAny) {
+      const models = [getKey() ? 'OpenAI' : null, getClaudeKey() ? 'Claude' : null].filter(Boolean).join(' + ');
+      btn.textContent = `✅ Your keys: ${models}`;
+      btn.style.borderColor = 'rgba(74,222,128,.4)';
+      btn.style.color = '#4ade80';
+    } else {
+      btn.textContent = 'Optional: own API keys';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }
+    return;
+  }
+  if (hasAny) {
+    const models = [getKey() ? 'GPT-4' : null, getClaudeKey() ? 'Claude' : null].filter(Boolean).join(' + ');
+    btn.textContent = `✅ ${models}`;
+    btn.style.borderColor = 'rgba(74,222,128,.4)';
+    btn.style.color = '#4ade80';
+  } else {
+    btn.textContent = '🔑 Add API Key';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  }
+  if (chipClaude) chipClaude.style.opacity = getClaudeKey() ? '1' : '0.5';
+}
+function openKeyModal() {
+  const oKey = getKey();
+  const cKey = getClaudeKey();
+  const os = document.getElementById('openaiStatus');
+  const cs = document.getElementById('claudeStatus');
+  if (oKey) {
+    document.getElementById('keyInput').value = oKey;
+    if (os) { os.textContent = '✅ Connected'; os.style.color = '#4ade80'; }
+  }
+  if (cKey) {
+    document.getElementById('claudeKeyInput').value = cKey;
+    if (cs) { cs.textContent = '✅ Connected'; cs.style.color = '#4ade80'; }
+  }
+  document.getElementById('keyOverlay').classList.add('open');
+}
+function closeKeyModal() {
+  document.getElementById('keyOverlay').classList.remove('open');
+}
+function saveKey() {
+  const oKey = document.getElementById('keyInput').value.trim();
+  const cKey = document.getElementById('claudeKeyInput').value.trim();
+  if (oKey && oKey.startsWith('sk-') && !oKey.startsWith('sk-ant-')) {
+    localStorage.setItem('socrates_api_key', oKey);
+  }
+  if (cKey && cKey.startsWith('sk-ant-')) {
+    localStorage.setItem('socrates_claude_key', cKey);
+  }
+  updateKeyBtn();
+  closeKeyModal();
+}
+
+document.addEventListener('DOMContentLoaded', updateKeyBtn);
+
 // Active TOC tracking
 const sections = document.querySelectorAll('.spec-section[id], h3[id]');
 const links = document.querySelectorAll('.toc a');

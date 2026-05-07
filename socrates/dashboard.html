@@ -4,17 +4,21 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Builder Dashboard — Socrates</title>
+  <script>
+    window.SOCRATES_API_ORIGIN = '';
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
   <!-- Chart.js removed — charts replaced with real empty states -->
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.12);
-      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.09);
-      --green:#16a34a;--green-dim:rgba(22,163,74,.1);--red:#dc2626;
-      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
-      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:14px;
+      --gold:#c2410c;--gold-light:#ea580c;--gold-dim:rgba(194,65,12,.14);
+      --purple:#818cf8;--purple-light:#a5b4fc;--purple-dim:rgba(129,140,248,.14);
+      --green:#34d399;--green-dim:rgba(52,211,153,.14);--red:#f87171;
+      --bg:#080b12;--bg2:#0c111a;--bg3:#121a26;--surface:#151d2e;
+      --border:rgba(248,250,252,.1);--text:#f1f5f9;--muted:#94a3b8;--radius:14px;
     }
+    html{color-scheme:dark}
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
     .loading-pulse{animation:pulse 1.5s ease-in-out infinite;color:var(--muted)}
@@ -22,25 +26,47 @@
     nav{
       display:flex;align-items:center;justify-content:space-between;gap:16px;
       flex-wrap:wrap;
-      padding:14px 28px;background:rgba(249,248,245,0.97);
+      padding:16px 32px;background:rgba(8,11,18,.93);
       border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
       backdrop-filter:blur(20px);
     }
     .nav-logo{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:12px;flex-shrink:0}
-    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:9px;display:block;flex-shrink:0;object-fit:contain}
+    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:0;display:block;flex-shrink:0;object-fit:contain}
     .nav-links{display:flex;align-items:center;justify-content:center;gap:28px;flex:1;min-width:0}
     .nav-links a{
       color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;
       transition:color .2s;white-space:nowrap;
     }
     .nav-links a:hover{color:var(--text)}
-    .nav-cta{display:flex;gap:10px;align-items:center;flex-shrink:0}
     .nav-links a.nav-link-current{color:var(--gold);font-weight:700}
-    .btn{padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+    .nav-right{display:flex;gap:12px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+    .btn{padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:all .2s;font-family:'Inter',sans-serif}
     .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
     .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
-    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff}
     .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(201,168,76,.3)}
+
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.75);
+      z-index:2000;display:none;align-items:center;justify-content:center;
+      backdrop-filter:blur(8px);padding:20px;
+    }
+    .modal-overlay.open{display:flex}
+    #keyOverlay{z-index:2100}
+    .key-modal{
+      background:var(--bg2);border:1px solid var(--border);
+      border-radius:20px;width:100%;max-width:520px;
+      max-height:90vh;overflow-y:auto;padding:36px;position:relative;
+    }
+    .api-help-details{
+      font-size:12px;color:var(--muted);margin-bottom:12px;
+      background:var(--surface);border-radius:10px;padding:10px 12px;border:1px solid var(--border);
+    }
+    .api-help-details summary{cursor:pointer;font-weight:600;color:var(--gold);user-select:none}
+    .api-help-details[open] summary{margin-bottom:8px}
+    .api-help-details .api-help-inner{line-height:1.65;padding-top:10px;border-top:1px dashed var(--border)}
+    .api-help-details a{color:var(--gold)}
+    .api-help-details code{font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px}
 
     /* LAYOUT — main area below global nav */
     .layout{display:flex;min-height:calc(100vh - 62px)}
@@ -65,10 +91,13 @@
       width:40px;height:40px;border-radius:50%;
       background:linear-gradient(135deg,var(--gold),var(--purple));
       display:flex;align-items:center;justify-content:center;
-      font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:12px;
+      font-size:16px;font-weight:800;color:#fff;margin-bottom:12px;
     }
     .user-name{font-size:14px;font-weight:700}
     .user-handle{font-size:12px;color:var(--muted)}
+    a.sidebar-link{color:inherit;text-decoration:none}
+    a.sidebar-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:10px}
+    .dash-scroll-target{scroll-margin-top:96px}
 
     /* MAIN */
     .main{flex:1;padding:28px 32px;overflow-y:auto}
@@ -85,7 +114,7 @@
       cursor:pointer;border:none;background:transparent;color:var(--muted);
       transition:all .2s;font-family:'Inter',sans-serif;
     }
-    .dr-btn.active{background:var(--gold);color:#0a0a0a}
+    .dr-btn.active{background:var(--gold);color:#fff}
     .dr-btn:hover:not(.active){color:var(--text)}
 
     /* STATS ROW */
@@ -183,7 +212,6 @@
       .nav-links a{font-size:13px}
     }
     @media(max-width:900px){
-      .nav-links{display:none}
       .stats-row{grid-template-columns:repeat(2,1fr)}
       .chart-grid{grid-template-columns:1fr}
       .bottom-grid{grid-template-columns:1fr}
@@ -210,11 +238,47 @@
     <a href="spec.html">Docs</a>
     <a href="dashboard.html" class="nav-link-current">Dashboard</a>
   </div>
-  <div class="nav-cta">
-    <a href="marketplace.html" class="btn btn-ghost">Browse AI</a>
-    <a href="publish.html" class="btn btn-gold">Start Building</a>
+  <div class="nav-right">
+    <button type="button" id="keyBtn" onclick="openKeyModal()" class="btn btn-ghost" style="font-size:12px">🔑 Add API Key</button>
+    <a href="dashboard.html" class="btn btn-ghost">My Dashboard</a>
+    <a href="publish.html" class="btn btn-gold">+ Publish Tool</a>
   </div>
 </nav>
+
+<div class="modal-overlay" id="keyOverlay">
+  <div class="key-modal">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:48px;margin-bottom:12px">🔑</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;margin-bottom:8px">Connect Your AI Keys</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">Optional: bring your own OpenAI or Anthropic key for runs from <em>your</em> account.</div>
+    </div>
+    <details class="api-help-details" style="margin-bottom:18px">
+      <summary>New to API keys?</summary>
+      <div class="api-help-inner">
+        <p style="margin-bottom:8px"><strong style="color:var(--text)">OpenAI</strong>: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a></p>
+        <p><strong style="color:var(--text)">Claude</strong>: <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a></p>
+      </div>
+    </details>
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:32px;height:32px;background:#10a37f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">⚡</div>
+        <div><div style="font-size:14px;font-weight:700">OpenAI (GPT-4)</div></div>
+        <div id="openaiStatus" style="margin-left:auto;font-size:12px;color:var(--muted)">Not connected</div>
+      </div>
+      <input type="password" id="keyInput" placeholder="sk-..." autocomplete="off" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+    </div>
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:32px;height:32px;background:#c17f45;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🏛️</div>
+        <div><div style="font-size:14px;font-weight:700">Claude (Anthropic)</div></div>
+        <div id="claudeStatus" style="margin-left:auto;font-size:12px;color:var(--muted)">Not connected</div>
+      </div>
+      <input type="password" id="claudeKeyInput" placeholder="sk-ant-..." autocomplete="off" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
+    </div>
+    <button type="button" onclick="saveDashNavKeys()" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;border:none;cursor:pointer;font-family:'Inter',sans-serif">Save Keys</button>
+    <button type="button" onclick="closeKeyModal()" style="width:100%;padding:10px;border-radius:12px;font-size:13px;font-weight:600;background:transparent;color:var(--muted);border:none;cursor:pointer;margin-top:8px;font-family:'Inter',sans-serif">Cancel</button>
+  </div>
+</div>
 
 <div class="layout">
 
@@ -227,42 +291,72 @@
     </div>
     <div class="sidebar-section">
       <h4>Builder</h4>
-      <div class="sidebar-link active"><span class="icon">📊</span>Overview</div>
-      <div class="sidebar-link"><span class="icon">🛠️</span>My Tools</div>
-      <div class="sidebar-link"><span class="icon">💰</span>Earnings</div>
-      <div class="sidebar-link"><span class="icon">📈</span>Analytics</div>
-      <div class="sidebar-link"><span class="icon">👥</span>Audience</div>
+      <a href="#overview" class="sidebar-link active" data-dash="overview"><span class="icon">📊</span>Overview</a>
+      <a href="#my-tools" class="sidebar-link" data-dash="my-tools"><span class="icon">🛠️</span>My Tools</a>
+      <a href="#earnings" class="sidebar-link" data-dash="earnings"><span class="icon">💰</span>Earnings</a>
+      <a href="#analytics" class="sidebar-link" data-dash="analytics"><span class="icon">📈</span>Analytics</a>
+      <a href="#audience" class="sidebar-link" data-dash="audience"><span class="icon">👥</span>Audience</a>
     </div>
     <div class="sidebar-section">
       <h4>Account</h4>
-      <a href="settings.html" class="sidebar-link" style="text-decoration:none;color:inherit"><span class="icon">⚙️</span>Settings</a>
-      <div class="sidebar-link"><span class="icon">🛡️</span>Verified Builder</div>
-      <div class="sidebar-link"><span class="icon">📖</span>API Access</div>
+      <a href="settings.html" class="sidebar-link"><span class="icon">⚙️</span>Settings</a>
+      <a href="about.html#verified-builders" class="sidebar-link"><span class="icon">🛡️</span>Verified Builder</a>
+      <a href="spec.html#api" class="sidebar-link"><span class="icon">📖</span>API Access</a>
     </div>
   </aside>
 
   <!-- MAIN -->
   <main class="main">
 
-    <!-- HEADER -->
-    <div class="dash-header">
-      <div>
-        <h1>Builder Dashboard</h1>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px">Welcome back, <span id="welcomeName">there</span>. Here's how your tools are performing.</div>
-      </div>
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <div class="date-range">
-          <button class="dr-btn" onclick="setRange(this,'7d')">7d</button>
-          <button class="dr-btn active" onclick="setRange(this,'30d')">30d</button>
-          <button class="dr-btn" onclick="setRange(this,'90d')">90d</button>
-          <button class="dr-btn" onclick="setRange(this,'1y')">1y</button>
+    <!-- HEADER + TOP KPIs -->
+    <div id="overview" class="dash-scroll-target">
+      <div class="dash-header">
+        <div>
+          <h1>Builder Dashboard</h1>
+          <div style="font-size:13px;color:var(--muted);margin-top:4px">Welcome back, <span id="welcomeName">there</span>. Here's how your tools are performing.</div>
         </div>
-        <a href="publish.html" class="btn btn-gold">+ New Tool</a>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div class="date-range">
+            <button class="dr-btn" onclick="setRange(this,'7d')">7d</button>
+            <button class="dr-btn active" onclick="setRange(this,'30d')">30d</button>
+            <button class="dr-btn" onclick="setRange(this,'90d')">90d</button>
+            <button class="dr-btn" onclick="setRange(this,'1y')">1y</button>
+          </div>
+          <a href="publish.html" class="btn btn-gold">+ New Tool</a>
+        </div>
+      </div>
+
+    <!-- STATS ROW -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="sc-label">Total Sales</div>
+          <div class="sc-val gold" id="statSales">—</div>
+          <div class="sc-change up" id="statSalesSub">Loading from Stripe…</div>
+          <div class="sc-sub">Completed purchases</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-label">Total Customers</div>
+          <div class="sc-val purple" id="statCustomers">—</div>
+          <div class="sc-change up" id="statCustomersSub">Loading from Stripe…</div>
+          <div class="sc-sub">Unique buyers</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-label">Total Revenue</div>
+          <div class="sc-val green" id="statRevenue">—</div>
+          <div class="sc-change up">All time · USD</div>
+          <div class="sc-sub">From Stripe</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-label">Stripe Mode</div>
+          <div class="sc-val gold" id="statMode">—</div>
+          <div class="sc-change" id="statModeSub">—</div>
+          <div class="sc-sub">Current environment</div>
+        </div>
       </div>
     </div>
 
     <!-- EARNINGS HIGHLIGHT -->
-    <div class="earnings-summary">
+    <div class="earnings-summary dash-scroll-target" id="earnings">
       <div class="earnings-main">
         <div class="e-label">Total Revenue (All Time)</div>
         <div class="e-val" id="totalRevenue"><span class="loading-pulse">Loading…</span></div>
@@ -275,35 +369,8 @@
       </div>
     </div>
 
-    <!-- STATS ROW -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="sc-label">Total Sales</div>
-        <div class="sc-val gold" id="statSales">—</div>
-        <div class="sc-change up" id="statSalesSub">Loading from Stripe…</div>
-        <div class="sc-sub">Completed purchases</div>
-      </div>
-      <div class="stat-card">
-        <div class="sc-label">Total Customers</div>
-        <div class="sc-val purple" id="statCustomers">—</div>
-        <div class="sc-change up" id="statCustomersSub">Loading from Stripe…</div>
-        <div class="sc-sub">Unique buyers</div>
-      </div>
-      <div class="stat-card">
-        <div class="sc-label">Total Revenue</div>
-        <div class="sc-val green" id="statRevenue">—</div>
-        <div class="sc-change up">All time · USD</div>
-        <div class="sc-sub">From Stripe</div>
-      </div>
-      <div class="stat-card">
-        <div class="sc-label">Stripe Mode</div>
-        <div class="sc-val gold" id="statMode">—</div>
-        <div class="sc-change" id="statModeSub">—</div>
-        <div class="sc-sub">Current environment</div>
-      </div>
-    </div>
-
     <!-- CHARTS -->
+    <div id="analytics" class="dash-scroll-target">
     <div class="chart-grid">
       <div class="chart-card">
         <h3>Runs Over Time</h3>
@@ -349,8 +416,54 @@
       </div>
     </div>
 
+    <!-- BOTTOM GRID -->
+    <div class="bottom-grid">
+      <!-- AI INSIGHTS -->
+      <div class="bottom-card">
+        <h3>🧠 AI Insights</h3>
+        <div class="insight-row">
+          <div class="insight-icon" style="background:var(--green-dim)">📈</div>
+          <div>
+            <div class="insight-title">Essay Master Pro is trending</div>
+            <div class="insight-desc">Run volume is up 42% this week. Users who stay more than 3 sessions convert to paid at 18%. Consider adding a premium tier.</div>
+          </div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-icon" style="background:rgba(251,191,36,.1)">⚠️</div>
+          <div>
+            <div class="insight-title">Retention dipped slightly</div>
+            <div class="insight-desc">Resume Optimizer has a 54% drop-off after the first run. Users who get a second output stay 4x longer. Add a "Refine my resume" follow-up prompt to boost this.</div>
+          </div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-icon" style="background:var(--purple-dim)">💡</div>
+          <div>
+            <div class="insight-title">Opportunity: LinkedIn Bio tool</div>
+            <div class="insight-desc">1,240 users searched for "LinkedIn bio" this week and didn't find a great tool. Your writing style could fill this gap — similar tools earn $900+/mo.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY FEED — real Stripe transactions -->
+      <div class="bottom-card">
+        <h3>💳 Recent Transactions</h3>
+        <div id="activityFeed">
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--muted)"></div>
+            <div><div class="activity-text loading-pulse">Loading transactions from Stripe…</div></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;text-align:center">
+          <a href="https://dashboard.stripe.com" target="_blank" class="btn btn-ghost" style="font-size:12px">
+            Open Full Stripe Dashboard ↗
+          </a>
+        </div>
+      </div>
+    </div>
+    </div>
+
     <!-- TOOLS TABLE -->
-    <div class="tools-section">
+    <div class="tools-section dash-scroll-target" id="my-tools">
       <h3>My Tools</h3>
       <div class="ch-sub">Performance overview for all published tools</div>
       <table>
@@ -462,53 +575,8 @@
       </table>
     </div>
 
-    <!-- BOTTOM GRID -->
-    <div class="bottom-grid">
-      <!-- AI INSIGHTS -->
-      <div class="bottom-card">
-        <h3>🧠 AI Insights</h3>
-        <div class="insight-row">
-          <div class="insight-icon" style="background:var(--green-dim)">📈</div>
-          <div>
-            <div class="insight-title">Essay Master Pro is trending</div>
-            <div class="insight-desc">Run volume is up 42% this week. Users who stay more than 3 sessions convert to paid at 18%. Consider adding a premium tier.</div>
-          </div>
-        </div>
-        <div class="insight-row">
-          <div class="insight-icon" style="background:rgba(251,191,36,.1)">⚠️</div>
-          <div>
-            <div class="insight-title">Retention dipped slightly</div>
-            <div class="insight-desc">Resume Optimizer has a 54% drop-off after the first run. Users who get a second output stay 4x longer. Add a "Refine my resume" follow-up prompt to boost this.</div>
-          </div>
-        </div>
-        <div class="insight-row">
-          <div class="insight-icon" style="background:var(--purple-dim)">💡</div>
-          <div>
-            <div class="insight-title">Opportunity: LinkedIn Bio tool</div>
-            <div class="insight-desc">1,240 users searched for "LinkedIn bio" this week and didn't find a great tool. Your writing style could fill this gap — similar tools earn $900+/mo.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ACTIVITY FEED — real Stripe transactions -->
-      <div class="bottom-card">
-        <h3>💳 Recent Transactions</h3>
-        <div id="activityFeed">
-          <div class="activity-item">
-            <div class="activity-dot" style="background:var(--muted)"></div>
-            <div><div class="activity-text loading-pulse">Loading transactions from Stripe…</div></div>
-          </div>
-        </div>
-        <div style="margin-top:16px;text-align:center">
-          <a href="https://dashboard.stripe.com" target="_blank" class="btn btn-ghost" style="font-size:12px">
-            Open Full Stripe Dashboard ↗
-          </a>
-        </div>
-      </div>
-    </div>
-
     <!-- AUDIENCE -->
-    <div class="chart-card" style="margin-bottom:24px">
+    <div class="chart-card dash-scroll-target" id="audience" style="margin-bottom:24px">
       <h3>Audience Breakdown</h3>
       <div class="ch-sub">Who is using your tools</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:4px">
@@ -563,6 +631,33 @@ function setRange(btn, range) {
   document.querySelectorAll('.dr-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
+
+(function initDashSidebar() {
+  const ids = ['overview','my-tools','earnings','analytics','audience'];
+  function syncActive() {
+    let raw = (location.hash || '#overview').replace(/^#/,'');
+    if (!ids.includes(raw)) raw = 'overview';
+    document.querySelectorAll('a.sidebar-link[data-dash]').forEach(a => {
+      a.classList.toggle('active', a.getAttribute('data-dash') === raw);
+    });
+  }
+  function scrollToHash() {
+    let raw = (location.hash || '').replace(/^#/,'');
+    if (!raw || !ids.includes(raw)) return;
+    const el = document.getElementById(raw);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', () => { syncActive(); scrollToHash(); });
+  document.querySelectorAll('a.sidebar-link[data-dash]').forEach(a => {
+    a.addEventListener('click', () => {
+      setTimeout(() => syncActive(), 0);
+    });
+  });
+  syncActive();
+  if (location.hash && ids.includes(location.hash.replace(/^#/,''))) {
+    requestAnimationFrame(() => scrollToHash());
+  }
+})();
 
 // ── REAL STRIPE DATA ──
 // Calls /api/stats (serverless function on Vercel) which talks to Stripe server-side
@@ -697,6 +792,71 @@ async function loadRealDashboard() {
 }
 
 loadRealDashboard();
+</script>
+<script>
+(function(){
+  function socratesApiOrigin() {
+    if (window.SOCRATES_API_ORIGIN != null && String(window.SOCRATES_API_ORIGIN).trim() !== '') {
+      return String(window.SOCRATES_API_ORIGIN).replace(/\/$/, '');
+    }
+    return '';
+  }
+  function useHostedRun() {
+    if (socratesApiOrigin()) return true;
+    if (location.hostname === 'github.io' || location.hostname.endsWith('.github.io')) return false;
+    return true;
+  }
+  function gk(){ return localStorage.getItem('socrates_api_key'); }
+  function gck(){ return localStorage.getItem('socrates_claude_key'); }
+  function updateKeyBtnNav() {
+    const btn = document.getElementById('keyBtn');
+    if (!btn) return;
+    const chipClaude = document.getElementById('chip-claude');
+    const hasAny = gk() || gck();
+    if (useHostedRun()) {
+      if (chipClaude) chipClaude.style.opacity = '1';
+      if (hasAny) {
+        btn.textContent = '✅ Your keys: ' + [gk() ? 'OpenAI' : null, gck() ? 'Claude' : null].filter(Boolean).join(' + ');
+        btn.style.borderColor = 'rgba(74,222,128,.4)';
+        btn.style.color = '#4ade80';
+      } else {
+        btn.textContent = 'Optional: own API keys';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }
+      return;
+    }
+    if (hasAny) {
+      btn.textContent = '✅ ' + [gk() ? 'GPT-4' : null, gck() ? 'Claude' : null].filter(Boolean).join(' + ');
+      btn.style.borderColor = 'rgba(74,222,128,.4)';
+      btn.style.color = '#4ade80';
+    } else {
+      btn.textContent = '🔑 Add API Key';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }
+    if (chipClaude) chipClaude.style.opacity = gck() ? '1' : '0.5';
+  }
+  window.openKeyModal = function(){
+    var oKey = gk(); var cKey = gck();
+    var ki = document.getElementById('keyInput'); var ci = document.getElementById('claudeKeyInput');
+    var os = document.getElementById('openaiStatus'); var cs = document.getElementById('claudeStatus');
+    if (oKey && ki) { ki.value = oKey; if (os){ os.textContent = '✅ Connected'; os.style.color = '#4ade80'; } }
+    if (cKey && ci) { ci.value = cKey; if (cs){ cs.textContent = '✅ Connected'; cs.style.color = '#4ade80'; } }
+    var ov = document.getElementById('keyOverlay'); if (ov) ov.classList.add('open');
+  };
+  window.closeKeyModal = function(){
+    var ov = document.getElementById('keyOverlay'); if (ov) ov.classList.remove('open');
+  };
+  window.saveDashNavKeys = function(){
+    var oKey = document.getElementById('keyInput').value.trim();
+    var cKey = document.getElementById('claudeKeyInput').value.trim();
+    if (oKey && oKey.startsWith('sk-') && !oKey.startsWith('sk-ant-')) localStorage.setItem('socrates_api_key', oKey);
+    if (cKey && cKey.startsWith('sk-ant-')) localStorage.setItem('socrates_claude_key', cKey);
+    updateKeyBtnNav(); closeKeyModal();
+  };
+  document.addEventListener('DOMContentLoaded', updateKeyBtnNav);
+})();
 </script>
 <script type="module" src="js/auth-ui.js"></script>
 </body>

@@ -8,55 +8,26 @@
     /* Payments: deploy /api on Vercel, set env (see repo). If the site is only on GitHub Pages, set your Vercel origin here (no trailing slash). */
     window.SOCRATES_API_ORIGIN = '';
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/platform.css"/>
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.12);
-      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.09);
-      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
-      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:14px;
-    }
-    html{scroll-behavior:smooth}
-    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-
-    /* NAV */
-    nav{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:16px 32px;background:rgba(249,248,245,0.97);
-      border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
-      backdrop-filter:blur(20px);
-    }
-    .nav-logo{
-      font-family:'Playfair Display',serif;font-size:28px;font-weight:700;
-      color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:12px;
-    }
-    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:9px;display:block;flex-shrink:0;object-fit:contain}
-    .nav-right{display:flex;gap:12px;align-items:center}
-    .btn{
-      padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;
-      cursor:pointer;border:none;text-decoration:none;display:inline-flex;
-      align-items:center;gap:7px;transition:all .2s;
-    }
-    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
-    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
-    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a}
-    .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.35)}
+    body{min-height:100vh}
 
     /* LAYOUT */
-    .layout{display:flex;min-height:calc(100vh - 57px)}
+    .layout{display:flex;min-height:calc(100vh - var(--nav-h))}
 
     /* SIDEBAR */
     .sidebar{
-      width:240px;flex-shrink:0;padding:28px 20px;
-      border-right:1px solid var(--border);
-      background:var(--bg2);overflow-y:auto;
-      position:sticky;top:57px;height:calc(100vh - 57px);
+      width:258px;flex-shrink:0;padding:28px 18px;
+      border-right:1px solid var(--border-strong);
+      background:linear-gradient(180deg,var(--surface) 0%,var(--bg2) 100%);
+      overflow-y:auto;
+      position:sticky;top:var(--nav-h);height:calc(100vh - var(--nav-h));
     }
     .sidebar-section{margin-bottom:28px}
     .sidebar-section h4{
-      font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-      color:var(--muted);margin-bottom:12px;
+      font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--muted2);margin-bottom:12px;
     }
     .sidebar-link{
       display:flex;align-items:center;justify-content:space-between;
@@ -64,31 +35,55 @@
       font-size:14px;font-weight:500;color:var(--muted);
       transition:all .2s;border:1px solid transparent;user-select:none;
     }
-    .sidebar-link:hover{background:var(--surface);color:var(--text)}
+    .sidebar-link:hover{background:rgba(255,255,255,.06);color:var(--text);border-color:rgba(248,250,252,.1)}
     .sidebar-link.active{
-      background:var(--gold-dim);border-color:rgba(201,168,76,.2);
+      background:rgba(194,65,12,.12);
+      border-color:rgba(234,88,12,.35);
       color:var(--gold);font-weight:600;
+      box-shadow:var(--shadow-inset-top);
     }
-    .sidebar-link .icon{margin-right:8px}
+    .sidebar-link-text{display:flex;align-items:center;flex:1;min-width:0}
+    .sidebar-link .icon{margin-right:8px;flex-shrink:0}
     .sidebar-link .cnt{
-      font-size:11px;background:var(--surface);
-      padding:2px 7px;border-radius:100px;color:var(--muted);
+      flex-shrink:0;margin-left:8px;font-variant-numeric:tabular-nums;
+      font-size:11px;font-weight:600;
+      background:rgba(248,250,252,.08);border:1px solid rgba(248,250,252,.1);
+      padding:2px 8px;border-radius:100px;color:var(--muted);
     }
-    .sidebar-link.active .cnt{background:rgba(201,168,76,.2);color:var(--gold)}
+    .sidebar-link.active .cnt{background:rgba(154,52,18,.11);border-color:rgba(154,52,18,.18);color:var(--gold)}
 
     /* MAIN */
-    .main{flex:1;padding:28px 32px;overflow-y:auto}
+    .main{flex:1;padding:28px clamp(16px,3vw,40px);overflow-y:auto;max-width:1280px}
+
+    .mp-page-head{
+      margin-bottom:28px;padding:clamp(22px,3.2vw,28px);
+      border-radius:var(--radius-lg);
+      border:1px solid var(--border-strong);
+      background:var(--surface);
+      box-shadow:var(--shadow-card);
+    }
+    .mp-kicker{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);margin-bottom:10px}
+    .mp-title{
+      font-family:var(--font-sans);
+      font-size:clamp(1.45rem,2.4vw,1.75rem);font-weight:700;
+      color:var(--text);letter-spacing:-.035em;line-height:1.2;
+    }
+    .mp-lead{margin-top:12px;font-size:15px;color:var(--text-secondary);max-width:40rem;line-height:1.65;font-weight:400}
 
     /* SEARCH + FILTERS */
     .top-bar{display:flex;gap:12px;align-items:center;margin-bottom:28px;flex-wrap:wrap}
     form.search-wrap{flex:1;min-width:200px;position:relative;margin:0}
     .search-wrap input{
-      width:100%;background:var(--surface);border:1px solid var(--border);
-      border-radius:12px;padding:12px 16px 12px 44px;
-      font-size:14px;color:var(--text);outline:none;font-family:'Inter',sans-serif;
-      transition:border-color .2s;
+      width:100%;background:var(--surface);border:1px solid rgba(248,250,252,0.12);
+      border-radius:12px;padding:14px 18px 14px 46px;
+      font-size:14px;color:var(--text);outline:none;font-family:var(--font-sans);
+      transition:border-color .2s,box-shadow .2s;
+      box-shadow:0 1px 2px rgba(0,0,0,.28);
     }
-    .search-wrap input:focus{border-color:var(--gold)}
+    .search-wrap input:focus{
+      border-color:rgba(234,88,12,.45);
+      box-shadow:0 0 0 3px rgba(194,65,12,.2),0 2px 12px rgba(0,0,0,.35);
+    }
     .search-wrap input::placeholder{color:var(--muted)}
     .search-icon{
       position:absolute;left:14px;top:50%;transform:translateY(-50%);
@@ -96,13 +91,13 @@
     }
     .filter-row{display:flex;gap:8px;flex-wrap:wrap}
     .filter-chip{
-      padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;
-      border:1px solid var(--border);background:var(--surface);color:var(--muted);
-      cursor:pointer;transition:all .2s;white-space:nowrap;
+      padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;
+      border:1px solid var(--border-strong);background:var(--surface);color:var(--text-secondary);
+      cursor:pointer;transition:background .15s,border-color .15s,color .15s;white-space:nowrap;
     }
-    .filter-chip:hover{border-color:var(--purple);color:var(--purple-light)}
+    .filter-chip:hover{border-color:var(--border-strong);color:var(--text);background:var(--bg2)}
     .filter-chip.active{
-      background:var(--purple-dim);border-color:var(--purple);color:var(--purple-light);
+      background:rgba(248,250,252,.08);border-color:rgba(248,250,252,.16);color:var(--text);
     }
 
     /* CATEGORY SCROLL BAR */
@@ -116,13 +111,13 @@
     }
     .cat-pill{
       display:flex;align-items:center;gap:6px;
-      padding:7px 16px;border-radius:100px;font-size:13px;font-weight:600;
-      border:1px solid var(--border);background:var(--surface);color:var(--muted);
-      cursor:pointer;transition:all .2s;white-space:nowrap;user-select:none;
+      padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;
+      border:1px solid var(--border-strong);background:var(--surface);color:var(--text-secondary);
+      cursor:pointer;transition:background .15s,border-color .15s,color .15s;white-space:nowrap;user-select:none;
     }
-    .cat-pill:hover{border-color:var(--gold-light);color:var(--gold)}
+    .cat-pill:hover{border-color:rgba(154,52,18,.25);color:var(--text)}
     .cat-pill.active{
-      background:var(--gold-dim);border-color:var(--gold);color:var(--gold);
+      background:rgba(154,52,18,.07);border-color:rgba(154,52,18,.28);color:var(--gold);
     }
 
     /* SORT ROW */
@@ -133,45 +128,61 @@
     .sort-row .results{font-size:14px;color:var(--muted)}
     .sort-row .results strong{color:var(--text)}
     .sort-select{
-      background:var(--surface);border:1px solid var(--border);
-      color:var(--text);padding:8px 14px;border-radius:10px;
-      font-size:13px;font-family:'Inter',sans-serif;outline:none;cursor:pointer;
+      background:var(--surface);border:1px solid var(--border-strong);
+      color:var(--text);padding:8px 12px;border-radius:8px;
+      font-size:13px;font-family:var(--font-sans);outline:none;cursor:pointer;
     }
 
     /* TOOL GRID */
     .tool-grid{
-      display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-      gap:18px;
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(288px,1fr));
+      gap:20px;
     }
     .tool-card{
-      background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
-      padding:24px;transition:all .25s;cursor:pointer;display:flex;flex-direction:column;
+      background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);
+      padding:20px 20px 16px;transition:border-color .18s,box-shadow .18s;cursor:pointer;display:flex;flex-direction:column;
+      box-shadow:var(--shadow-card);
     }
+    .tc-listing-badge{
+      display:inline-block;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+      padding:3px 8px;border-radius:6px;margin-bottom:8px;width:fit-content;
+      border:1px solid rgba(154,52,18,.2);background:rgba(154,52,18,.06);color:var(--gold);
+    }
+    .tc-subtitle{font-size:12px;color:var(--muted);line-height:1.45;margin:-4px 0 8px;font-weight:500}
+    .hosted-run-note{
+      font-size:13px;color:var(--text-secondary);line-height:1.6;margin:0 0 26px;max-width:56rem;
+      background:var(--bg2);
+      border:1px solid var(--border-strong);border-left:3px solid var(--gold);
+      border-radius:var(--radius);
+      padding:14px 18px;
+    }
+    .hosted-run-note strong{color:var(--text);font-weight:600}
     .tool-card:hover{
-      border-color:rgba(201,168,76,.35);transform:translateY(-3px);
-      box-shadow:0 12px 40px rgba(0,0,0,.5);
+      border-color:rgba(154,52,18,.22);
+      box-shadow:var(--shadow-card-hover);
     }
     .tc-header{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
     .tc-icon{
-      width:46px;height:46px;border-radius:12px;
+      width:44px;height:44px;border-radius:10px;
       display:flex;align-items:center;justify-content:center;
-      font-size:22px;flex-shrink:0;
+      font-size:20px;flex-shrink:0;
     }
     .tc-meta{flex:1;min-width:0}
     .tc-meta h3{
-      font-size:15px;font-weight:700;white-space:nowrap;
-      overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;
+      font-size:15px;font-weight:700;letter-spacing:-.01em;line-height:1.25;margin-bottom:4px;
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
     }
+    .tc-kind{font-size:11px;color:var(--muted2);text-transform:capitalize;margin-bottom:6px;letter-spacing:.02em}
     .tc-type{
       display:inline-block;font-size:11px;font-weight:600;
-      padding:3px 10px;border-radius:100px;
+      padding:3px 8px;border-radius:6px;
     }
-    .type-prompt{background:var(--gold-dim);color:var(--gold)}
-    .type-agent{background:var(--purple-dim);color:var(--purple-light)}
-    .type-model{background:rgba(251,113,133,.12);color:#f87171}
-    .type-chat{background:rgba(74,222,128,.12);color:#4ade80}
-    .type-tool{background:rgba(99,179,237,.12);color:#63b3ed}
-    .type-other{background:rgba(87,83,78,.10);color:#57534e}
+    .type-prompt{background:rgba(248,250,252,.07);color:var(--text-secondary);border:1px solid var(--border)}
+    .type-agent{background:rgba(248,250,252,.07);color:var(--text-secondary);border:1px solid var(--border)}
+    .type-model{background:rgba(248,250,252,.07);color:var(--text-secondary);border:1px solid var(--border)}
+    .type-chat{background:rgba(248,250,252,.07);color:var(--text-secondary);border:1px solid var(--border)}
+    .type-tool{background:rgba(248,250,252,.07);color:var(--text-secondary);border:1px solid var(--border)}
+    .type-other{background:rgba(248,250,252,.07);color:var(--text-secondary);border:1px solid var(--border)}
     .tc-desc{
       font-size:13px;color:var(--muted);line-height:1.6;
       flex:1;margin-bottom:16px;
@@ -187,9 +198,10 @@
     .tc-stats{display:flex;gap:12px}
     .tc-stats span{display:flex;align-items:center;gap:3px}
     .tc-price{font-weight:700}
-    .price-free{color:#4ade80}
+    .price-free{color:#047857}
     .price-paid{color:var(--gold)}
-    .tc-author{color:var(--gold);font-weight:600;font-size:11px;margin-top:6px}
+    .tc-author{font-size:12px;color:var(--muted);font-weight:500;margin-top:4px}
+    .tc-author strong{color:var(--text-secondary);font-weight:600}
 
     /* RUN MODAL */
     .modal-overlay{
@@ -198,7 +210,7 @@
       backdrop-filter:blur(8px);padding:20px;
     }
     #keyOverlay{z-index:2000}
-    .model-chip{padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);transition:all .2s;user-select:none}
+    .model-chip{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border-strong);color:var(--text-secondary);transition:background .15s,border-color .15s,color .15s;user-select:none}
     .model-chip:hover{border-color:var(--gold);color:var(--gold)}
     .model-chip.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
     .api-help-details{
@@ -212,9 +224,10 @@
     .api-help-details code{font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px}
     .modal-overlay.open{display:flex}
     .modal{
-      background:var(--bg2);border:1px solid var(--border);
-      border-radius:20px;width:100%;max-width:660px;
-      max-height:90vh;overflow-y:auto;padding:36px;position:relative;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius-lg);width:100%;max-width:720px;
+      max-height:90vh;overflow-y:auto;padding:32px clamp(24px,4vw,40px);position:relative;
+      box-shadow:var(--shadow-card-hover);
     }
     .modal-close{
       position:absolute;top:20px;right:20px;background:var(--surface);
@@ -223,11 +236,19 @@
       transition:all .2s;
     }
     .modal-close:hover{color:var(--text);background:var(--bg3)}
-    .modal-header{display:flex;gap:16px;align-items:center;margin-bottom:28px}
+    .modal-header{display:flex;gap:16px;align-items:flex-start;margin-bottom:12px}
     .modal-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden}
     .modal-icon img{width:100%;height:100%;object-fit:cover;display:block}
-    .modal-title{font-size:20px;font-weight:800}
-    .modal-subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+    .modal-title{font-family:var(--font-sans);font-size:clamp(1.125rem,2.2vw,1.35rem);font-weight:700;letter-spacing:-.03em}
+    .modal-subtitle{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5}
+    .modal-meta{
+      display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px;padding-bottom:16px;border-bottom:1px solid var(--border);
+    }
+    .modal-pill{
+      font-size:11px;font-weight:600;color:var(--text-secondary);
+      background:var(--bg2);border:1px solid var(--border-strong);padding:4px 10px;border-radius:8px;text-transform:capitalize;
+    }
+    .modal-header .tc-listing-badge{margin-bottom:6px}
 
     .modal label{
       display:block;font-size:13px;font-weight:600;
@@ -243,11 +264,11 @@
     .modal textarea{min-height:100px}
     .modal-actions{display:flex;gap:12px;margin-top:24px}
     .btn-run{
-      flex:1;padding:14px;border-radius:12px;font-size:15px;font-weight:700;
-      background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;
-      border:none;cursor:pointer;transition:all .2s;
+      flex:1;padding:14px;border-radius:10px;font-size:15px;font-weight:600;
+      background:var(--gold);color:#fff;
+      border:1px solid rgba(0,0,0,.06);cursor:pointer;transition:background .15s,box-shadow .15s;
     }
-    .btn-run:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.35)}
+    .btn-run:hover{background:var(--gold-light);box-shadow:0 4px 16px rgba(154,52,18,.25)}
     .btn-run:disabled{opacity:.6;cursor:not-allowed;transform:none}
     .btn-download{
       flex:0 1 auto;padding:14px 18px;border-radius:12px;font-size:14px;font-weight:700;
@@ -323,11 +344,19 @@
 <body>
 
 <!-- NAV -->
-<nav>
+<nav class="site-nav">
   <a href="index.html" class="nav-logo">
     <img src="images/socrates-mark.png" alt="" class="nav-logo-img" width="42" height="42" decoding="async"/>
     Socrates
   </a>
+  <div class="nav-links">
+    <a href="marketplace.html" class="nav-link-current">Explore</a>
+    <a href="publish.html">Builders</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="download.html">Download</a>
+    <a href="spec.html">Docs</a>
+    <a href="dashboard.html">Dashboard</a>
+  </div>
   <div class="nav-right">
     <button id="keyBtn" onclick="openKeyModal()" class="btn btn-ghost" style="font-size:12px">🔑 Add API Key</button>
     <a href="dashboard.html" class="btn btn-ghost">My Dashboard</a>
@@ -341,37 +370,44 @@
   <aside class="sidebar">
     <div class="sidebar-section">
       <h4>Browse</h4>
-      <div class="sidebar-link active" onclick="filterCat('all')"><span class="icon">🌐</span>All Tools</div>
-      <div class="sidebar-link" onclick="filterCat('trending')"><span class="icon">🔥</span>Trending</div>
-      <div class="sidebar-link" onclick="filterCat('new')"><span class="icon">✨</span>New Releases</div>
-      <div class="sidebar-link" onclick="filterCat('free')"><span class="icon">🎁</span>Free Only</div>
+      <div class="sidebar-link active" data-filter="all" onclick="filterCat('all')"><span class="sidebar-link-text"><span class="icon">🌐</span>All Tools</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="trending" onclick="filterCat('trending')"><span class="sidebar-link-text"><span class="icon">🔥</span>Trending</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="new" onclick="filterCat('new')"><span class="sidebar-link-text"><span class="icon">✨</span>New Releases</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="free" onclick="filterCat('free')"><span class="sidebar-link-text"><span class="icon">🎁</span>Free Only</span><span class="cnt">0</span></div>
     </div>
     <div class="sidebar-section">
       <h4>Categories</h4>
-      <div class="sidebar-link" onclick="filterCat('writing')"><span class="icon">✍️</span>Writing</div>
-      <div class="sidebar-link" onclick="filterCat('coding')"><span class="icon">💻</span>Coding</div>
-      <div class="sidebar-link" onclick="filterCat('study')"><span class="icon">📚</span>Study</div>
-      <div class="sidebar-link" onclick="filterCat('business')"><span class="icon">💼</span>Business</div>
-      <div class="sidebar-link" onclick="filterCat('creative')"><span class="icon">🎨</span>Creative</div>
-      <div class="sidebar-link" onclick="filterCat('research')"><span class="icon">🔬</span>Research</div>
-      <div class="sidebar-link" onclick="filterCat('health')"><span class="icon">⚕️</span>Health</div>
-      <div class="sidebar-link" onclick="filterCat('finance')"><span class="icon">💰</span>Finance</div>
-      <div class="sidebar-link" onclick="filterCat('fun')"><span class="icon">🎮</span>Fun & Games</div>
-      <div class="sidebar-link" onclick="filterCat('automation')"><span class="icon">🤖</span>Automation</div>
+      <div class="sidebar-link" data-filter="writing" onclick="filterCat('writing')"><span class="sidebar-link-text"><span class="icon">✍️</span>Writing</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="coding" onclick="filterCat('coding')"><span class="sidebar-link-text"><span class="icon">💻</span>Coding</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="study" onclick="filterCat('study')"><span class="sidebar-link-text"><span class="icon">📚</span>Study</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="business" onclick="filterCat('business')"><span class="sidebar-link-text"><span class="icon">💼</span>Business</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="creative" onclick="filterCat('creative')"><span class="sidebar-link-text"><span class="icon">🎨</span>Creative</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="research" onclick="filterCat('research')"><span class="sidebar-link-text"><span class="icon">🔬</span>Research</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="health" onclick="filterCat('health')"><span class="sidebar-link-text"><span class="icon">⚕️</span>Health</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="finance" onclick="filterCat('finance')"><span class="sidebar-link-text"><span class="icon">💰</span>Finance</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="fun" onclick="filterCat('fun')"><span class="sidebar-link-text"><span class="icon">🎮</span>Fun & Games</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-filter="automation" onclick="filterCat('automation')"><span class="sidebar-link-text"><span class="icon">🤖</span>Automation</span><span class="cnt">0</span></div>
     </div>
     <div class="sidebar-section">
       <h4>AI Type</h4>
-      <div class="sidebar-link" onclick="filterType('prompt')"><span class="icon">⚡</span>Prompt Apps</div>
-      <div class="sidebar-link" onclick="filterType('agent')"><span class="icon">🤖</span>Agents</div>
-      <div class="sidebar-link" onclick="filterType('chat')"><span class="icon">💬</span>Chat Bots</div>
-      <div class="sidebar-link" onclick="filterType('model')"><span class="icon">🧠</span>Models</div>
-      <div class="sidebar-link" onclick="filterType('tool')"><span class="icon">🔧</span>Connectors</div>
-      <div class="sidebar-link" onclick="filterType('other')"><span class="icon">✨</span>Other</div>
+      <div class="sidebar-link" data-type="prompt" onclick="filterType('prompt')"><span class="sidebar-link-text"><span class="icon">⚡</span>Prompt Apps</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-type="agent" onclick="filterType('agent')"><span class="sidebar-link-text"><span class="icon">🤖</span>Agents</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-type="chat" onclick="filterType('chat')"><span class="sidebar-link-text"><span class="icon">💬</span>Chat Bots</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-type="model" onclick="filterType('model')"><span class="sidebar-link-text"><span class="icon">🧠</span>Models</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-type="tool" onclick="filterType('tool')"><span class="sidebar-link-text"><span class="icon">🔧</span>Connectors</span><span class="cnt">0</span></div>
+      <div class="sidebar-link" data-type="other" onclick="filterType('other')"><span class="sidebar-link-text"><span class="icon">✨</span>Other</span><span class="cnt">0</span></div>
     </div>
   </aside>
 
   <!-- MAIN CONTENT -->
   <main class="main">
+    <header class="mp-page-head">
+      <p class="mp-kicker">Catalog</p>
+      <h1 class="mp-title">Explore AI tools</h1>
+      <p class="mp-lead">Public listings from teams and individual builders — not only coding. Run prompt apps, agents, chat experiences, connectors, and model wrappers in one place. Hosted runs work without a visitor API key when the platform API is deployed.</p>
+    </header>
+
+    <p class="hosted-run-note"><strong>No visitor API key needed</strong> when this deployment uses Socrates-hosted AI (<code style="font-size:11px">OPENAI_API_KEY</code> on the server). Add your own OpenAI or Claude key only on static copies or when you want usage billed to your account.</p>
 
     <!-- SEARCH + FILTERS -->
     <div class="top-bar">
@@ -394,35 +430,35 @@
     <!-- CATEGORY SCROLL BAR -->
     <div class="cat-scroll-wrap">
       <div class="cat-scroll">
-        <div class="cat-pill active" onclick="catPillFilter(this,'all')">🌐 All</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'writing')">✍️ Writing</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'coding')">💻 Coding</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'study')">📚 Study</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'business')">💼 Business</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'creative')">🎨 Creative</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'research')">🔬 Research</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'health')">⚕️ Health</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'finance')">💰 Finance</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'fun')">🎮 Fun &amp; Games</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'automation')">🤖 Automation</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'translation')">🌐 Translation</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'science')">🔭 Science</div>
-        <div class="cat-pill" onclick="catPillFilter(this,'tutoring')">🎓 Tutoring</div>
-        <div class="cat-pill" onclick="filterType('model')">🧠 Models</div>
-        <div class="cat-pill" onclick="filterType('agent')">⚡ Agents</div>
-        <div class="cat-pill" onclick="filterType('tool')">🔗 Connectors</div>
-        <div class="cat-pill" onclick="filterType('other')">✨ Other</div>
+        <div class="cat-pill active" data-filter="all" onclick="catPillFilter(this,'all')">🌐 All</div>
+        <div class="cat-pill" data-filter="writing" onclick="catPillFilter(this,'writing')">✍️ Writing</div>
+        <div class="cat-pill" data-filter="coding" onclick="catPillFilter(this,'coding')">💻 Coding</div>
+        <div class="cat-pill" data-filter="study" onclick="catPillFilter(this,'study')">📚 Study</div>
+        <div class="cat-pill" data-filter="business" onclick="catPillFilter(this,'business')">💼 Business</div>
+        <div class="cat-pill" data-filter="creative" onclick="catPillFilter(this,'creative')">🎨 Creative</div>
+        <div class="cat-pill" data-filter="research" onclick="catPillFilter(this,'research')">🔬 Research</div>
+        <div class="cat-pill" data-filter="health" onclick="catPillFilter(this,'health')">⚕️ Health</div>
+        <div class="cat-pill" data-filter="finance" onclick="catPillFilter(this,'finance')">💰 Finance</div>
+        <div class="cat-pill" data-filter="fun" onclick="catPillFilter(this,'fun')">🎮 Fun &amp; Games</div>
+        <div class="cat-pill" data-filter="automation" onclick="catPillFilter(this,'automation')">🤖 Automation</div>
+        <div class="cat-pill" data-filter="translation" onclick="catPillFilter(this,'translation')">🌐 Translation</div>
+        <div class="cat-pill" data-filter="science" onclick="catPillFilter(this,'science')">🔭 Science</div>
+        <div class="cat-pill" data-filter="tutoring" onclick="catPillFilter(this,'tutoring')">🎓 Tutoring</div>
+        <div class="cat-pill" data-type="model" onclick="filterType('model')">🧠 Models</div>
+        <div class="cat-pill" data-type="agent" onclick="filterType('agent')">⚡ Agents</div>
+        <div class="cat-pill" data-type="tool" onclick="filterType('tool')">🔗 Connectors</div>
+        <div class="cat-pill" data-type="other" onclick="filterType('other')">✨ Other</div>
       </div>
     </div>
 
     <div class="filter-row" style="margin-bottom:20px">
-      <div class="filter-chip active" onclick="setFilter(this,'all')">All Types</div>
-      <div class="filter-chip" onclick="setFilter(this,'prompt')">⚡ Prompt App</div>
-      <div class="filter-chip" onclick="setFilter(this,'agent')">🤖 Agent</div>
-      <div class="filter-chip" onclick="setFilter(this,'chat')">💬 Chat Bot</div>
-      <div class="filter-chip" onclick="setFilter(this,'model')">🧠 Model</div>
-      <div class="filter-chip" onclick="setFilter(this,'tool')">🔧 Connector</div>
-      <div class="filter-chip" onclick="setFilter(this,'other')">✨ Other</div>
+      <div class="filter-chip active" data-type="all" onclick="setFilter(this,'all')">All Types</div>
+      <div class="filter-chip" data-type="prompt" onclick="setFilter(this,'prompt')">⚡ Prompt App</div>
+      <div class="filter-chip" data-type="agent" onclick="setFilter(this,'agent')">🤖 Agent</div>
+      <div class="filter-chip" data-type="chat" onclick="setFilter(this,'chat')">💬 Chat Bot</div>
+      <div class="filter-chip" data-type="model" onclick="setFilter(this,'model')">🧠 Model</div>
+      <div class="filter-chip" data-type="tool" onclick="setFilter(this,'tool')">🔧 Connector</div>
+      <div class="filter-chip" data-type="other" onclick="setFilter(this,'other')">✨ Other</div>
     </div>
 
     <div class="sort-row">
@@ -478,7 +514,7 @@
       <input type="password" id="claudeKeyInput" placeholder="sk-ant-..." autocomplete="off" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
     </div>
 
-    <button onclick="saveKey()" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;cursor:pointer;">Save Keys</button>
+    <button onclick="saveKey()" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;border:none;cursor:pointer;">Save Keys</button>
     <button onclick="closeKeyModal()" style="width:100%;padding:10px;border-radius:12px;font-size:13px;font-weight:600;background:transparent;color:var(--muted);border:none;cursor:pointer;margin-top:8px;">Cancel</button>
   </div>
 </div>
@@ -491,9 +527,12 @@
       <div class="modal-icon" id="modalIcon"></div>
       <div>
         <div class="modal-title" id="modalTitle"></div>
+        <div id="modalListingExtras" style="margin-top:4px"></div>
         <div class="modal-subtitle" id="modalSubtitle"></div>
       </div>
     </div>
+
+    <div class="modal-meta" id="modalMeta" hidden></div>
 
     <div id="modalFields"></div>
 
@@ -526,7 +565,7 @@
       </details>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <input type="password" id="inlineKeyInput" placeholder="sk-..." style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Inter',sans-serif"/>
-        <button onclick="saveInlineKey()" style="padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;border:none;cursor:pointer;white-space:nowrap">Save & Run</button>
+        <button onclick="saveInlineKey()" style="padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;border:none;cursor:pointer;white-space:nowrap">Save & Run</button>
       </div>
     </div>
 
@@ -551,6 +590,7 @@
 <script>
 const TOOLS = [
   {id:1,icon:'✍️',bg:'rgba(201,168,76,.15)',name:'Essay Master Pro',type:'prompt',typeName:'Prompt App',typeClass:'type-prompt',cat:'writing',desc:'Write college-level essays on any topic instantly. Includes thesis, body, citations, and revision mode.',rating:4.9,runs:'',price:'free',author:'Socrates',trending:true,
+   listing_extras:{badge:'Demo listing style',subtitle:'Set badge, subtitle & accent in Publish → Customize',accent:'#9a6e0c'},
    sys:'You are an expert academic essay writer. Write well-structured, college-level essays with a clear thesis, developed body paragraphs with evidence, and a conclusion. Match the requested tone and length. End with 2-3 suggested citations in MLA format.',
    fields:[
      {label:'Essay Topic',id:'topic',type:'text',placeholder:'e.g. The impact of social media on democracy'},
@@ -682,6 +722,7 @@ const TOOLS = [
 })();
 
 window.__socratesAllTools = TOOLS;
+refreshSidebarCounts();
 
 let currentTools = [...TOOLS];
 let activeFilter = 'all';
@@ -827,12 +868,12 @@ window.startToolCheckout = async function startToolCheckout() {
 
 function toolTypeDisplay(type) {
   const map = {
-    prompt: { typeName: 'Prompt App', typeClass: 'type-prompt', bg: 'rgba(201,168,76,.15)' },
-    agent: { typeName: 'Agent', typeClass: 'type-agent', bg: 'rgba(124,58,237,.15)' },
-    chat: { typeName: 'Chat Agent', typeClass: 'type-chat', bg: 'rgba(74,222,128,.15)' },
-    model: { typeName: 'Fine-Tuned Model', typeClass: 'type-model', bg: 'rgba(251,113,133,.15)' },
-    tool: { typeName: 'Connector', typeClass: 'type-tool', bg: 'rgba(99,179,237,.15)' },
-    other: { typeName: 'Other', typeClass: 'type-other', bg: 'rgba(87,83,78,.12)' },
+    prompt: { typeName: 'Prompt App', typeClass: 'type-prompt', bg: 'rgba(248,250,252,.09)' },
+    agent: { typeName: 'Agent', typeClass: 'type-agent', bg: 'rgba(248,250,252,.09)' },
+    chat: { typeName: 'Chat Agent', typeClass: 'type-chat', bg: 'rgba(248,250,252,.09)' },
+    model: { typeName: 'Fine-Tuned Model', typeClass: 'type-model', bg: 'rgba(248,250,252,.09)' },
+    tool: { typeName: 'Connector', typeClass: 'type-tool', bg: 'rgba(248,250,252,.09)' },
+    other: { typeName: 'Other', typeClass: 'type-other', bg: 'rgba(248,250,252,.09)' },
   };
   return map[type] || map.other;
 }
@@ -842,12 +883,51 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function normalizeListingExtras(raw) {
+  if (raw == null) return {};
+  let o = raw;
+  if (typeof raw === 'string') {
+    try { o = JSON.parse(raw); } catch (_) { return {}; }
+  }
+  if (typeof o !== 'object' || o === null || Array.isArray(o)) return {};
+  const out = {};
+  if (typeof o.subtitle === 'string') out.subtitle = o.subtitle.trim().slice(0, 80);
+  if (typeof o.badge === 'string') out.badge = o.badge.trim().slice(0, 48);
+  if (typeof o.accent === 'string') {
+    const a = o.accent.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(a)) out.accent = a.toLowerCase();
+  }
+  return out;
+}
+
+function hexToRgbaFill(hex, alpha) {
+  const m = /^#([0-9a-f]{6})$/i.exec((hex || '').trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function toolCardEdgeStyle(lx) {
+  if (!lx.accent) return '';
+  const fill = hexToRgbaFill(lx.accent, 0.28);
+  return `border-color:${lx.accent};box-shadow:inset 0 0 0 1px ${fill || 'transparent'}`;
+}
+
+function listingBadgeHtml(lx) {
+  if (!lx.badge) return '';
+  const st = lx.accent
+    ? `border-color:${lx.accent};color:${lx.accent};background:${hexToRgbaFill(lx.accent, 0.14) || 'rgba(154,52,18,.08)'}`
+    : '';
+  return `<span class="tc-listing-badge" ${st ? `style="${escapeHtml(st)}"` : ''}>${escapeHtml(lx.badge)}</span>`;
+}
+
 function isImageIconString(s) {
   return s && typeof s === 'string' && (s.startsWith('data:image') || /^https?:\/\//i.test(s));
 }
 
 function toolIconCellHtml(icon, bg) {
-  const b = bg || 'rgba(201,168,76,.15)';
+  const b = bg || 'rgba(248,250,252,.07)';
   if (!icon) {
     return `<div class="tc-icon" style="background:${escapeHtml(b)}">✨</div>`;
   }
@@ -865,34 +945,47 @@ function renderTools(tools) {
     grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No tools match your search. Try a different keyword or category.</p></div>';
     return;
   }
-  grid.innerHTML = tools.map(t => `
-    <div class="tool-card" onclick='openTool(${JSON.stringify(String(t.id))})'>
+  grid.innerHTML = tools.map(t => {
+    const lx = normalizeListingExtras(t.listing_extras);
+    const edge = toolCardEdgeStyle(lx);
+    return `
+    <div class="tool-card" style="${edge ? escapeHtml(edge) : ''}" onclick='openTool(${JSON.stringify(String(t.id))})'>
       <div class="tc-header">
         ${toolIconCellHtml(t.icon, t.bg)}
         <div class="tc-meta">
-          <h3>${t.name}</h3>
-          <span class="tc-type ${t.typeClass}">${t.typeName}</span>
+          ${listingBadgeHtml(lx)}
+          <h3>${escapeHtml(t.name)}</h3>
+          ${lx.subtitle ? `<div class="tc-subtitle">${escapeHtml(lx.subtitle)}</div>` : ''}
+          <div class="tc-kind">${escapeHtml(t.cat)}</div>
+          <span class="tc-type ${t.typeClass}">${escapeHtml(t.typeName)}</span>
         </div>
       </div>
-      <div class="tc-desc">${t.desc}</div>
+      <div class="tc-desc">${escapeHtml(t.desc)}</div>
       <div class="tc-footer">
         <div>
           <div class="tc-stats">
-            ${t.runs ? `<span>🔁 ${t.runs} runs</span>` : '<span style="color:var(--muted);font-size:11px">New</span>'}
+            ${t.runs ? `<span>🔁 ${escapeHtml(String(t.runs))} runs</span>` : '<span style="color:var(--muted2);font-size:11px;font-weight:600">New listing</span>'}
           </div>
-          <div class="tc-author">${t.author}</div>
+          <div class="tc-author">Publisher · <strong>${escapeHtml(t.author)}</strong></div>
         </div>
-        <div class="tc-price ${t.price === 'free' ? 'price-free' : 'price-paid'}">${t.price === 'free' ? 'Free' : t.price}</div>
+        <div class="tc-price ${t.price === 'free' ? 'price-free' : 'price-paid'}">${t.price === 'free' ? 'Free' : escapeHtml(t.price)}</div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function applyFilters() {
   let tools = [...(window.__socratesAllTools || TOOLS)];
   if (activeFilter === 'trending') tools = tools.filter(t => t.trending);
   else if (activeFilter === 'free') tools = tools.filter(t => t.price === 'free');
-  else if (activeFilter !== 'all' && activeFilter !== 'new') tools = tools.filter(t => t.cat === activeFilter);
+  else if (activeFilter === 'new') {
+    tools = tools.filter(t => {
+      const r = t.runs;
+      const n = typeof r === 'number' ? r : parseFloat(String(r || '').replace(/,/g, '')) || 0;
+      return !r || r === '' || n === 0;
+    });
+  } else if (activeFilter !== 'all') tools = tools.filter(t => String(t.cat || '').toLowerCase() === activeFilter);
   if (activeType !== 'all') tools = tools.filter(t => t.type === activeType);
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
@@ -907,29 +1000,69 @@ function applyFilters() {
   renderTools(tools);
 }
 
+function countMatchesBrowseFilter(pool, filter) {
+  if (filter === 'all') return pool.length;
+  if (filter === 'trending') return pool.filter(t => t.trending).length;
+  if (filter === 'free') return pool.filter(t => t.price === 'free').length;
+  if (filter === 'new') {
+    return pool.filter(t => {
+      const r = t.runs;
+      const n = typeof r === 'number' ? r : parseFloat(String(r || '').replace(/,/g, '')) || 0;
+      return !r || r === '' || n === 0;
+    }).length;
+  }
+  return pool.filter(t => String(t.cat || '').toLowerCase() === filter).length;
+}
+
+function refreshSidebarCounts() {
+  const pool = window.__socratesAllTools || TOOLS;
+  document.querySelectorAll('.sidebar-link[data-filter]').forEach(el => {
+    const f = el.getAttribute('data-filter');
+    const cntEl = el.querySelector('.cnt');
+    if (!cntEl || !f) return;
+    cntEl.textContent = String(countMatchesBrowseFilter(pool, f));
+  });
+  document.querySelectorAll('.sidebar-link[data-type]').forEach(el => {
+    const ty = el.getAttribute('data-type');
+    const cntEl = el.querySelector('.cnt');
+    if (!cntEl || !ty) return;
+    cntEl.textContent = String(pool.filter(t => t.type === ty).length);
+  });
+}
+
+function syncMarketplaceUIFromState() {
+  document.querySelectorAll('.sidebar-link').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.cat-pill').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.filter-chip').forEach(x => x.classList.remove('active'));
+  if (activeType !== 'all') {
+    document.querySelector(`.sidebar-link[data-type="${activeType}"]`)?.classList.add('active');
+    document.querySelector(`.cat-pill[data-type="${activeType}"]`)?.classList.add('active');
+    document.querySelector(`.filter-chip[data-type="${activeType}"]`)?.classList.add('active');
+  } else {
+    document.querySelector(`.sidebar-link[data-filter="${activeFilter}"]`)?.classList.add('active');
+    document.querySelector(`.cat-pill[data-filter="${activeFilter}"]`)?.classList.add('active');
+    document.querySelector('.filter-chip[data-type="all"]')?.classList.add('active');
+  }
+}
+
 function filterCat(cat) {
   activeFilter = cat;
-  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  activeType = 'all';
+  syncMarketplaceUIFromState();
   applyFilters();
 }
 
 function catPillFilter(el, cat) {
   activeFilter = cat;
-  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  // Also sync sidebar
-  document.querySelectorAll('.sidebar-link').forEach(s => {
-    s.classList.remove('active');
-    if (s.textContent.toLowerCase().includes(cat)) s.classList.add('active');
-  });
+  activeType = 'all';
+  syncMarketplaceUIFromState();
   applyFilters();
 }
 
 function filterType(type) {
   activeType = type;
-  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  activeFilter = 'all';
+  syncMarketplaceUIFromState();
   applyFilters();
 }
 
@@ -937,6 +1070,8 @@ function setFilter(el, type) {
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   activeType = type;
+  activeFilter = 'all';
+  syncMarketplaceUIFromState();
   applyFilters();
 }
 
@@ -948,9 +1083,45 @@ function doSearch(q) {
 function doSort(val) {
   let tools = [...currentTools];
   if (val === 'rating') tools.sort((a,b) => b.rating - a.rating);
-  else if (val === 'runs') tools.sort((a,b) => parseFloat(b.runs) - parseFloat(a.runs));
+  else if (val === 'runs') tools.sort((a,b) => parseFloat(b.runs || 0) - parseFloat(a.runs || 0));
   else if (val === 'free') tools.sort((a,b) => (a.price === 'free' ? -1 : 1));
+  else if (val === 'trending') tools.sort((a,b) => ((b.trending === true) - (a.trending === true)) || b.rating - a.rating);
+  else if (val === 'newest') {
+    tools.sort((a,b) => {
+      const ta = Date.parse(a.createdAt || '') || Number(a.id) || 0;
+      const tb = Date.parse(b.createdAt || '') || Number(b.id) || 0;
+      return tb - ta;
+    });
+  }
   renderTools(tools);
+}
+
+function applyMarketplaceUrlState() {
+  const p = new URLSearchParams(location.search);
+  const f = p.get('filter');
+  const ty = p.get('type');
+  const sort = p.get('sort');
+  const q = p.get('q');
+  const browse = new Set(['all','trending','new','free','writing','coding','study','business','creative','research','health','finance','fun','automation','translation','science','tutoring']);
+  if (q !== null && q !== '') {
+    searchQuery = q;
+    const si = document.getElementById('searchInput');
+    if (si) si.value = q;
+  }
+  if (ty && ['prompt','agent','chat','model','tool','other'].includes(ty)) {
+    activeType = ty;
+    activeFilter = 'all';
+  } else if (f && browse.has(f)) {
+    activeFilter = f;
+    activeType = 'all';
+  }
+  syncMarketplaceUIFromState();
+  applyFilters();
+  const sortSel = document.querySelector('.sort-select');
+  const allowedSort = ['trending','rating','runs','free','newest'];
+  if (sort && allowedSort.includes(sort) && sortSel) sortSel.value = sort;
+  doSort(sortSel ? sortSel.value : 'trending');
+  updateKeyBtn();
 }
 
 function openTool(id) {
@@ -958,8 +1129,10 @@ function openTool(id) {
   const pool = window.__socratesAllTools || TOOLS;
   currentTool = currentTools.find(t => String(t.id) === idStr) || pool.find(t => String(t.id) === idStr);
   if (!currentTool) return;
+  const lx = normalizeListingExtras(currentTool.listing_extras);
   const mic = document.getElementById('modalIcon');
-  mic.style.background = currentTool.bg;
+  const iconBg = lx.accent ? (hexToRgbaFill(lx.accent, 0.22) || currentTool.bg) : currentTool.bg;
+  mic.style.background = iconBg;
   const ic = currentTool.icon;
   mic.innerHTML = '';
   if (ic && isImageIconString(ic)) {
@@ -971,7 +1144,22 @@ function openTool(id) {
     mic.textContent = ic || '✨';
   }
   document.getElementById('modalTitle').textContent = currentTool.name;
-  document.getElementById('modalSubtitle').textContent = `${currentTool.typeName} by ${currentTool.author} · ${currentTool.price === 'free' ? '🟢 Free' : '🟡 ' + currentTool.price}`;
+  const mex = document.getElementById('modalListingExtras');
+  if (mex) {
+    const parts = [];
+    if (lx.badge) parts.push(listingBadgeHtml(lx));
+    if (lx.subtitle) parts.push(`<div class="tc-subtitle" style="margin:0 0 4px">${escapeHtml(lx.subtitle)}</div>`);
+    mex.innerHTML = parts.join('');
+  }
+  document.getElementById('modalSubtitle').textContent = `Published by ${currentTool.author}`;
+  const metaEl = document.getElementById('modalMeta');
+  if (metaEl) {
+    const cat = escapeHtml((currentTool.cat || 'general').replace(/-/g, ' '));
+    const typeN = escapeHtml(currentTool.typeName || 'Tool');
+    const priceLab = currentTool.price === 'free' ? 'Free' : escapeHtml(String(currentTool.price));
+    metaEl.innerHTML = `<span class="modal-pill">${cat}</span><span class="modal-pill">${typeN}</span><span class="modal-pill">${priceLab}</span>`;
+    metaEl.removeAttribute('hidden');
+  }
 
   const fieldsEl = document.getElementById('modalFields');
   fieldsEl.innerHTML = currentTool.fields.map(f => {
@@ -999,6 +1187,8 @@ function openTool(id) {
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
+  const m = document.getElementById('modalMeta');
+  if (m) { m.innerHTML = ''; m.setAttribute('hidden', ''); }
 }
 
 // Modal only closes via the ✕ button — clicking the backdrop does nothing
@@ -1327,8 +1517,15 @@ function _isLikelyAutofillEmail(v) {
   return false;
 }
 if (_si) {
-  _si.value = '';
-  searchQuery = '';
+  const qp = new URLSearchParams(location.search);
+  const initialQ = qp.get('q');
+  if (initialQ != null && initialQ !== '') {
+    _si.value = initialQ;
+    searchQuery = initialQ;
+  } else {
+    _si.value = '';
+    searchQuery = '';
+  }
   const markSearchUse = () => { _searchUserInteracted = true; };
   _si.addEventListener('keydown', markSearchUse, { once: true });
   _si.addEventListener('paste', markSearchUse, { once: true });
@@ -1359,8 +1556,7 @@ if (_si) {
   [50, 150, 400, 1000, 2500, 4000, 8000].forEach(ms => setTimeout(zapBadSearchValue, ms));
 }
 
-applyFilters();
-updateKeyBtn();
+applyMarketplaceUrlState();
 
 function toolFieldsFromSupabaseRow(t) {
   const ph = t.input_placeholder || 'Describe what you want...';
@@ -1393,21 +1589,28 @@ function toolFieldsFromSupabaseRow(t) {
         const mapped = realTools.map(t => {
         const d = toolTypeDisplay(t.type);
         const priceNum = Number(t.price) || 0;
+        const lx = normalizeListingExtras(t.listing_extras);
+        const accentFill = lx.accent ? hexToRgbaFill(lx.accent, 0.18) : null;
         return {
           id: t.id, name: t.name,
           creator: t.profiles?.display_name || t.profiles?.username || 'Builder',
           cat: t.category, type: t.type, desc: t.description,
           icon: t.icon, tags: t.tags || [],
-          typeName: d.typeName, typeClass: d.typeClass, bg: d.bg,
+          listing_extras: lx,
+          typeName: d.typeName, typeClass: d.typeClass, bg: accentFill || d.bg,
           paid: priceNum > 0,
           price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
           sys: t.system_prompt, real: true,
+          rating: Number(t.rating) || 4.8,
+          trending: t.trending === true || Number(t.runs) > 10,
+          createdAt: t.created_at || '',
           fields: toolFieldsFromSupabaseRow(t)
         };
       });
       window.__socratesAllTools = [...mapped, ...TOOLS];
-      applyFilters();
+      refreshSidebarCounts();
+      applyMarketplaceUrlState();
     }
   } catch(e) { /* silently fall back to demo tools only */ }
 })();

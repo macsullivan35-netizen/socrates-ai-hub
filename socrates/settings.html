@@ -10,11 +10,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.12);--purple:#6d28d9;--purple-dim:rgba(109,40,217,.09);--green:#16a34a;--bg:#f9f8f5;--bg2:#f2f0ea;--surface:#fff;--border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76}
+    :root{--gold:#c2410c;--gold-light:#ea580c;--gold-dim:rgba(194,65,12,.14);--purple:#818cf8;--purple-dim:rgba(129,140,248,.14);--green:#34d399;--bg:#080b12;--bg2:#0c111a;--surface:#151d2e;--border:rgba(248,250,252,.1);--text:#f1f5f9;--muted:#94a3b8}
+    html{color-scheme:dark}
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
-    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 60px;background:rgba(249,248,245,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 60px;background:rgba(8,11,18,.93);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
     .nav-logo{display:flex;align-items:center;gap:12px;font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);text-decoration:none}
-    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:9px;display:block;flex-shrink:0;object-fit:contain}
+    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:0;display:block;flex-shrink:0;object-fit:contain}
     .nav-links{display:flex;align-items:center;gap:32px}
     .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
     .nav-links a:hover{color:var(--text)}
@@ -52,9 +53,13 @@
     <a href="publish.html">Builders</a>
     <a href="pricing.html">Pricing</a>
     <a href="download.html">Download</a>
+    <a href="spec.html">Docs</a>
     <a href="dashboard.html">Dashboard</a>
   </div>
-  <div class="nav-cta"></div>
+  <div class="nav-cta">
+    <a href="marketplace.html" class="btn btn-ghost" style="text-decoration:none;font-size:13px;padding:9px 18px">Browse AI</a>
+    <a href="publish.html" class="btn btn-gold" style="text-decoration:none;font-size:13px;padding:9px 18px;display:inline-block">Start Building</a>
+  </div>
 </nav>
 
 <main>
@@ -85,7 +90,7 @@
     <!-- OPENAI KEY -->
     <div class="card">
       <h3>🤖 OpenAI API Key</h3>
-      <p>If the marketplace uses <strong style="color:var(--text)">Socrates-hosted AI</strong> (Vercel <code style="font-size:11px">/api/run-tool</code> + server keys), visitors don’t need their own key. This field is still useful for power users, local testing, or future features. Keys may also be stored in your <em>browser</em> on the Marketplace.</p>
+      <p><strong style="color:var(--text)">Usually optional.</strong> If the marketplace talks to Socrates-hosted AI (<code style="font-size:11px">/api/run-tool</code> on your deploy + server keys), visitors can run tools without any key. Use this field when you want runs on <em>your</em> OpenAI bill, you’re on a static-only copy of the site with no API, or you’re developing locally. Keys can also live only in the browser on the Marketplace.</p>
       <details style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--bg)">
         <summary style="cursor:pointer;font-weight:700;color:var(--gold);list-style-position:outside">I don’t know what an API key is</summary>
         <p style="margin-top:12px;margin-bottom:10px">It’s <strong style="color:var(--text)">not</strong> your Socrates login. It’s a code you create at OpenAI (and/or Anthropic for Claude) so software can call their AI. You’ll sign up on their site, maybe add a few dollars of credit, then create a key that starts with <code style="font-size:12px;background:var(--surface);padding:2px 6px;border-radius:4px">sk-</code>.</p>

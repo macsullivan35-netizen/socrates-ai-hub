@@ -1,0 +1,20 @@
+WHAT THIS IS
+------------
+1) ZIP: `original-light-theme-GIT-HEAD.zip`  
+   Exact `socrates/` tree from **Git commit HEAD** saved when we froze the backup: parchment-style light theme, inline CSS on the homepage, **no** shared `css/platform.css`.
+
+2) This text file: restore steps.
+
+CURRENT SITE (after May 2026)
+-----------------------------
+The live `socrates/` folder is intentionally **all dark** (shared tokens in `css/platform.css` + matching `:root` on standalone pages). Use the ZIP above to return to the earlier light look.
+
+HOW TO REVERT TO THE LIGHT THEME (from the ZIP)
+-----------------------------------------------
+1. Move or copy your current `socrates` folder elsewhere if you want to keep the dark version.
+2. Create an empty `socrates` folder again (or delete everything inside it **except** `socrates/_archive/` if you want to keep this backup folder).
+3. Unzip `original-light-theme-GIT-HEAD.zip` at the repo root so paths match: `socrates/index.html`, `socrates/js/…`, etc.
+
+WHAT THE ZIP DOES *NOT* CONTAIN
+--------------------------------
+Files that only existed in your working tree after that commit — for example **`socrates/css/platform.css`** and **`socrates/legal.html`**. Restore those manually from git history / an old backup if you need them on the light site.

@@ -4,7 +4,9 @@
 alter table public.tools add column if not exists tags text[] default '{}'::text[];
 alter table public.tools add column if not exists input_schema jsonb;
 alter table public.tools add column if not exists sample_output text;
+alter table public.tools add column if not exists listing_extras jsonb default '{}'::jsonb;
 
 comment on column public.tools.tags is 'Short discoverability tags from the publish form.';
 comment on column public.tools.input_schema is 'JSON array of {id,label,type,placeholder} for Run modal fields.';
 comment on column public.tools.sample_output is 'Optional example output for the listing.';
+comment on column public.tools.listing_extras is 'Optional JSON {subtitle, badge, accent (#hex)} for marketplace card look.';

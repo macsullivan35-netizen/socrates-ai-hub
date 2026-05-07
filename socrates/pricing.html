@@ -8,24 +8,25 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --gold:#9a6e0c;--gold-light:#c49a3c;--gold-dim:rgba(154,110,12,.12);
-      --purple:#6d28d9;--purple-light:#7c3aed;--purple-dim:rgba(109,40,217,.09);
-      --green:#16a34a;
-      --bg:#f9f8f5;--bg2:#f2f0ea;--bg3:#e8e5db;--surface:#ffffff;
-      --border:rgba(20,20,40,.09);--text:#1a1a2e;--muted:#5e5e76;--radius:16px;
+      --gold:#c2410c;--gold-light:#ea580c;--gold-dim:rgba(194,65,12,.14);
+      --purple:#818cf8;--purple-light:#a5b4fc;--purple-dim:rgba(129,140,248,.14);
+      --green:#34d399;
+      --bg:#080b12;--bg2:#0c111a;--bg3:#121a26;--surface:#151d2e;
+      --border:rgba(248,250,252,.1);--text:#f1f5f9;--muted:#94a3b8;--radius:16px;
     }
-    html{scroll-behavior:smooth}
+    html{color-scheme:dark}
+    html{scroll-behavior:smooth;color-scheme:dark}
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
 
     /* NAV */
     nav{
       position:fixed;top:0;left:0;right:0;z-index:100;
       display:flex;align-items:center;justify-content:space-between;
-      padding:18px 60px;background:rgba(249,248,245,0.95);
+      padding:18px 60px;background:rgba(8,11,18,.93);
       backdrop-filter:blur(20px);border-bottom:1px solid var(--border);
     }
     .nav-logo{display:flex;align-items:center;gap:12px;font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);text-decoration:none}
-    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:9px;display:block;flex-shrink:0;object-fit:contain}
+    .nav-logo .nav-logo-img{width:42px;height:42px;border-radius:0;display:block;flex-shrink:0;object-fit:contain}
     .nav-links{display:flex;align-items:center;gap:32px}
     .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
     .nav-links a:hover,.nav-links a.active{color:var(--text)}
@@ -34,7 +35,7 @@
     .btn{padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
     .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
     .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
-    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff}
     .btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(201,168,76,.4)}
     .btn-purple{background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff}
     .btn-purple:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(124,58,237,.4)}
@@ -63,7 +64,7 @@
     .plan-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:36px;position:relative;transition:transform .25s}
     .plan-card:hover{transform:translateY(-4px)}
     .plan-card.featured{border-color:var(--gold);background:linear-gradient(160deg,rgba(201,168,76,.06),var(--bg2))}
-    .featured-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),#a8722a);color:#0a0a0a;font-size:12px;font-weight:800;padding:5px 18px;border-radius:100px;white-space:nowrap;letter-spacing:.5px}
+    .featured-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),#a8722a);color:#fff;font-size:12px;font-weight:800;padding:5px 18px;border-radius:100px;white-space:nowrap;letter-spacing:.5px}
     .plan-icon{font-size:36px;margin-bottom:16px}
     .plan-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;margin-bottom:6px}
     .plan-tagline{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.5}
@@ -141,7 +142,6 @@
     }
     @media(max-width:600px){
       nav{padding:16px 20px}
-      .nav-links{display:none}
       .credit-bundles{grid-template-columns:1fr 1fr}
       .footer-top{grid-template-columns:1fr}
     }
@@ -405,30 +405,30 @@
       <div class="footer-col">
         <h4>Explore</h4>
         <a href="marketplace.html">Marketplace</a>
-        <a href="marketplace.html">Trending</a>
-        <a href="marketplace.html">New Releases</a>
-        <a href="marketplace.html">Collections</a>
+        <a href="marketplace.html?filter=trending">Trending</a>
+        <a href="marketplace.html?filter=new">New Releases</a>
+        <a href="index.html#browse-categories">Collections</a>
       </div>
       <div class="footer-col">
         <h4>Build</h4>
         <a href="publish.html">Publish a Tool</a>
         <a href="dashboard.html">Builder Dashboard</a>
-        <a href="spec.html">API Docs</a>
-        <a href="spec.html">SDK</a>
+        <a href="spec.html#api">API Docs</a>
+        <a href="spec.html#sdk">SDK</a>
       </div>
       <div class="footer-col">
         <h4>Company</h4>
-        <a href="about.html">About</a>
-        <a href="about.html">Blog</a>
-        <a href="about.html">Careers</a>
-        <a href="about.html">Press</a>
+        <a href="about.html#mission">About</a>
+        <a href="about.html#blog">Blog</a>
+        <a href="about.html#careers">Careers</a>
+        <a href="about.html#press">Press</a>
       </div>
       <div class="footer-col">
         <h4>Legal</h4>
-        <a href="about.html">Terms</a>
-        <a href="about.html">Privacy</a>
-        <a href="about.html">Content Policy</a>
-        <a href="about.html">Safety</a>
+        <a href="legal.html#terms">Terms</a>
+        <a href="legal.html#privacy">Privacy</a>
+        <a href="legal.html#content-policy">Content Policy</a>
+        <a href="legal.html#safety">Safety</a>
       </div>
     </div>
     <div class="footer-bottom">
