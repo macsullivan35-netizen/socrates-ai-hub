@@ -757,6 +757,10 @@ function unlockedToolsMap() {
 function hasPaidToolAccess(toolId) {
   return !!unlockedToolsMap()[String(toolId)];
 }
+function paidToolSessionId(toolId) {
+  const id = unlockedToolsMap()[String(toolId)];
+  return id ? String(id) : '';
+}
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
   const runBtn = document.getElementById('runBtn');
@@ -1163,17 +1167,21 @@ function openTool(id) {
 
   const fieldsEl = document.getElementById('modalFields');
   fieldsEl.innerHTML = currentTool.fields.map(f => {
+    const id = escapeHtml(f.id);
+    const label = escapeHtml(f.label);
+    const placeholder = escapeHtml(f.placeholder || '');
     if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
+      const options = Array.isArray(f.options) ? f.options : [];
+      return `<label>${label}</label>
+        <select id="${id}">
+          ${options.map(o => `<option>${escapeHtml(o)}</option>`).join('')}
         </select>`;
     } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
+      return `<label>${label}</label>
+        <textarea id="${id}" placeholder="${placeholder}"></textarea>`;
     } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
+      return `<label>${label}</label>
+        <input type="text" id="${id}" placeholder="${placeholder}"/>`;
     }
   }).join('');
 
@@ -1425,6 +1433,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? paidToolSessionId(currentTool.id) : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
