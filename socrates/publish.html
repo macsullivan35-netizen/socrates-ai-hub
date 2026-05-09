@@ -1149,11 +1149,19 @@ function botSay(text, chips = []) {
   }, 900);
 }
 
+function escapeChatHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
 function addMsg(role, text) {
   const win = document.getElementById('chatWindow');
   const div = document.createElement('div');
   div.className = `msg ${role}`;
-  div.innerHTML = `<div class="msg-avatar">${role==='bot'?'🏛️':'👤'}</div><div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div>`;
+  div.innerHTML = `<div class="msg-avatar">${role==='bot'?'🏛️':'👤'}</div><div class="msg-bubble">${escapeChatHtml(text).replace(/\n/g,'<br>')}</div>`;
   win.appendChild(div);
   win.scrollTop = win.scrollHeight;
 }
@@ -1339,7 +1347,7 @@ async function aiPublishTool() {
     const input_schema = buildInputSchemaForPublish(primaryLabel, primaryPh);
     const samp = getSampleOutputForPublish();
     const listing_extras = getListingExtrasForPublish();
-    await sb.from('tools').insert([{
+    const { error } = await sb.from('tools').insert([{
       name: generatedTool.name,
       description: descPub,
       category: generatedTool.category,
@@ -1356,7 +1364,13 @@ async function aiPublishTool() {
       ...(samp ? { sample_output: samp } : {}),
       ...(listing_extras ? { listing_extras } : {})
     }]);
-  } catch(e) { /* silent */ }
+    if (error) throw error;
+  } catch(e) {
+    console.error(e);
+    btn.textContent='Publish to Marketplace'; btn.disabled=false;
+    addMsg('bot',`Publishing failed:\n\n${e.message || 'Please try again.'}`);
+    return;
+  }
   document.getElementById('publishArea').classList.remove('visible');
   document.getElementById('successBanner').classList.add('visible');
   const paidNote = document.getElementById('aiPayoutNote');
@@ -1459,7 +1473,7 @@ async function advPublish(){
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
     const sb=createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
     const { data:{user} } = await sb.auth.getUser();
-    await sb.from('tools').insert([{
+    const { error } = await sb.from('tools').insert([{
       name, description: fullDesc, category: cat,
       icon: advIconImage || document.getElementById('advIcon').value.trim()||'🔗',
       type:'other',
@@ -1471,7 +1485,13 @@ async function advPublish(){
       ...(samp ? { sample_output: samp } : {}),
       ...(listing_extras ? { listing_extras } : {})
     }]);
-  }catch(e){/* silent */}
+    if (error) throw error;
+  }catch(e){
+    console.error(e);
+    btn.textContent='🚀 Publish listing'; btn.disabled=false;
+    alert(`Could not publish listing: ${e.message || 'Please try again.'}`);
+    return;
+  }
   document.getElementById('advancedForm').style.display='none';
   document.getElementById('advSuccessScreen').classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1492,7 +1512,7 @@ async function manPublish(){
     const input_schema = buildInputSchemaForPublish(primaryLabel, primaryPh);
     const samp = getSampleOutputForPublish();
     const listing_extras = getListingExtrasForPublish();
-    await sb.from('tools').insert([{
+    const { error } = await sb.from('tools').insert([{
       name: document.getElementById('mName').value,
       description: descPub,
       category: document.getElementById('mCat').value,
@@ -1509,7 +1529,13 @@ async function manPublish(){
       ...(samp ? { sample_output: samp } : {}),
       ...(listing_extras ? { listing_extras } : {})
     }]);
-  }catch(e){/*silent*/}
+    if (error) throw error;
+  }catch(e){
+    console.error(e);
+    btn.textContent='🚀 Publish'; btn.disabled=false;
+    alert(`Could not publish tool: ${e.message || 'Please try again.'}`);
+    return;
+  }
   document.getElementById('mp5').classList.remove('active');
   document.getElementById('manSuccessScreen').classList.add('active');
   const manPaid = manPrice !== 'free' && (parseFloat(document.getElementById('mPriceAmt').value) || 0) > 0;
