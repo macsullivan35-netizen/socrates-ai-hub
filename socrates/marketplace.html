@@ -754,8 +754,12 @@ function apiUrl(path) {
 function unlockedToolsMap() {
   try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
 }
+function paidToolCheckoutSession(toolId) {
+  const sessionId = unlockedToolsMap()[String(toolId)];
+  return typeof sessionId === 'string' && sessionId.startsWith('cs_') ? sessionId : '';
+}
 function hasPaidToolAccess(toolId) {
-  return !!unlockedToolsMap()[String(toolId)];
+  return !!paidToolCheckoutSession(toolId);
 }
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
@@ -1425,6 +1429,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? paidToolCheckoutSession(currentTool.id) : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1442,6 +1447,12 @@ async function runTool() {
           (selectedModel === 'claude' && j.error === 'claude_unavailable'));
 
       if (hostedMissing || r.status === 404 || r.status === 405) {
+        if (currentTool.paid) {
+          content.textContent = 'Paid tools require Socrates-hosted AI so checkout can be verified before each run.';
+          btn.disabled = false;
+          btn.textContent = '▶ Try Again';
+          return;
+        }
         content.innerHTML = '<span style="color:var(--muted);font-size:13px">Hosted AI isn’t available here (configure /api/run-tool and OPENAI_API_KEY on the server, or use your own key below).</span>';
         const hasKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
         if (hasKey) {

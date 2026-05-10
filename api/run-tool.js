@@ -1,6 +1,7 @@
-// POST { toolId, userMessage, model?: "gpt" | "claude" } — run a published tool via platform API keys (no visitor key).
+// POST { toolId, userMessage, model?: "gpt" | "claude", checkoutSessionId?: "cs_..." } — run a published tool via platform API keys (no visitor key).
 // Env: OPENAI_API_KEY (required for model gpt), ANTHROPIC_API_KEY (required for model claude),
-//      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-3-5-haiku-latest)
+//      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), STRIPE_SECRET_KEY (for paid UUID tools),
+//      optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-3-5-haiku-latest)
 
 const { createClient } = require('@supabase/supabase-js');
 const { cors, parseJsonBody } = require('../server-lib/payments-util.js');
@@ -9,6 +10,36 @@ const DEMO_TOOL_PROMPTS = require('../server-lib/demo-tool-prompts.js');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_USER_CHARS = 16000;
 const MAX_OUT_TOKENS = 1200;
+
+function priceCents(price) {
+  const n = Number(price);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.round(n * 100);
+}
+
+async function verifyPaidToolAccess(toolId, checkoutSessionId) {
+  const sessionId = checkoutSessionId != null ? String(checkoutSessionId).trim() : '';
+  if (!sessionId) {
+    return { ok: false, status: 402, error: 'payment_required', message: 'Complete checkout before running this paid tool.' };
+  }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { ok: false, status: 503, error: 'paid_access_unavailable', message: 'Paid access verification is not configured.' };
+  }
+
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== 'paid') {
+      return { ok: false, status: 402, error: 'payment_required', message: 'Checkout has not been paid.' };
+    }
+    if (String(session.metadata?.tool_id || '') !== String(toolId)) {
+      return { ok: false, status: 403, error: 'wrong_tool', message: 'Checkout session does not unlock this tool.' };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, status: 402, error: 'payment_required', message: 'Checkout session could not be verified.' };
+  }
+}
 
 module.exports = async (req, res) => {
   cors(res);
@@ -52,11 +83,20 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    if (priceCents(tool.price) > 0) {
+      const access = await verifyPaidToolAccess(toolIdRaw, body.checkoutSessionId || body.sessionId);
+      if (!access.ok) {
+        return res.status(access.status).json({
+          error: access.error,
+          message: access.message,
+        });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }
