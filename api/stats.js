@@ -2,11 +2,29 @@
 // Stripe secret key is stored as an environment variable (STRIPE_SECRET_KEY)
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { cors } = require('../server-lib/payments-util.js');
+
+function readHeader(req, name) {
+  const value = req.headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function isAuthorized(req) {
+  const token = process.env.STATS_API_TOKEN;
+  if (!token) return false;
+  const auth = readHeader(req, 'authorization') || '';
+  const explicit = readHeader(req, 'x-socrates-stats-token') || '';
+  return auth === `Bearer ${token}` || explicit === token;
+}
 
 module.exports = async (req, res) => {
-  // Allow the dashboard page to call this
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  cors(res, 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
+
+  if (!isAuthorized(req)) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
 
   try {
     // Fetch last 100 charges
