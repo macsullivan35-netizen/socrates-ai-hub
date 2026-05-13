@@ -754,8 +754,12 @@ function apiUrl(path) {
 function unlockedToolsMap() {
   try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
 }
+function paidCheckoutSessionId(toolId) {
+  const v = unlockedToolsMap()[String(toolId)];
+  return typeof v === 'string' && /^cs_(test|live)_[A-Za-z0-9_]+$/.test(v) ? v : '';
+}
 function hasPaidToolAccess(toolId) {
-  return !!unlockedToolsMap()[String(toolId)];
+  return !!paidCheckoutSessionId(toolId);
 }
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
@@ -1163,17 +1167,21 @@ function openTool(id) {
 
   const fieldsEl = document.getElementById('modalFields');
   fieldsEl.innerHTML = currentTool.fields.map(f => {
+    const fieldId = escapeHtml(f.id || '');
+    const label = escapeHtml(f.label || '');
+    const placeholder = escapeHtml(f.placeholder || '');
     if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
+      const options = (Array.isArray(f.options) ? f.options : []).map(o => `<option>${escapeHtml(o)}</option>`).join('');
+      return `<label>${label}</label>
+        <select id="${fieldId}">
+          ${options}
         </select>`;
     } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
+      return `<label>${label}</label>
+        <textarea id="${fieldId}" placeholder="${placeholder}"></textarea>`;
     } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
+      return `<label>${label}</label>
+        <input type="text" id="${fieldId}" placeholder="${placeholder}"/>`;
     }
   }).join('');
 
@@ -1418,14 +1426,18 @@ async function runTool() {
     content.textContent = '';
     content.innerHTML = '<span style="color:var(--muted);font-size:13px">Running with Socrates AI…</span>';
     try {
+      const runPayload = {
+        toolId: String(currentTool.id),
+        userMessage,
+        model: selectedModel,
+      };
+      if (currentTool.paid) {
+        runPayload.checkoutSessionId = paidCheckoutSessionId(currentTool.id);
+      }
       const r = await fetch(apiUrl('/api/run-tool'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          toolId: String(currentTool.id),
-          userMessage,
-          model: selectedModel,
-        }),
+        body: JSON.stringify(runPayload),
       });
       let j = await r.json().catch(() => ({}));
       if (r.ok && typeof j.text === 'string') {

@@ -1,14 +1,47 @@
-// Serverless function — runs on Vercel's servers, never exposed to the browser
-// Stripe secret key is stored as an environment variable (STRIPE_SECRET_KEY)
+// Serverless function — runs on Vercel's servers.
+// Env: STRIPE_SECRET_KEY, SOCRATES_STATS_TOKEN (or DASHBOARD_STATS_TOKEN)
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const crypto = require('crypto');
+
+function statsToken() {
+  return process.env.SOCRATES_STATS_TOKEN || process.env.DASHBOARD_STATS_TOKEN || '';
+}
+
+function tokenMatches(actual, expected) {
+  if (!actual || !expected) return false;
+  const actualBuf = Buffer.from(actual);
+  const expectedBuf = Buffer.from(expected);
+  return actualBuf.length === expectedBuf.length && crypto.timingSafeEqual(actualBuf, expectedBuf);
+}
+
+function hasStatsAccess(req) {
+  const expected = statsToken();
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
+  return tokenMatches(token, expected);
+}
 
 module.exports = async (req, res) => {
-  // Allow the dashboard page to call this
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
+
+  if (!statsToken()) {
+    return res.status(404).json({ error: 'not_found' });
+  }
+
+  if (!hasStatsAccess(req)) {
+    return res.status(401).json({ error: 'auth' });
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).json({ error: 'config' });
+  }
 
   try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
     // Fetch last 100 charges
     const charges = await stripe.charges.list({ limit: 100 });
 
@@ -54,6 +87,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'stripe_error' });
   }
 };
