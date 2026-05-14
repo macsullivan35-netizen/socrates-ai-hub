@@ -754,8 +754,11 @@ function apiUrl(path) {
 function unlockedToolsMap() {
   try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
 }
+function paidToolCheckoutSessionId(toolId) {
+  return unlockedToolsMap()[String(toolId)] || '';
+}
 function hasPaidToolAccess(toolId) {
-  return !!unlockedToolsMap()[String(toolId)];
+  return !!paidToolCheckoutSessionId(toolId);
 }
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
@@ -1425,6 +1428,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? paidToolCheckoutSessionId(currentTool.id) : '',
         }),
       });
       let j = await r.json().catch(() => ({}));
