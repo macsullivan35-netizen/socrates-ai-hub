@@ -10,6 +10,29 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 const MAX_USER_CHARS = 16000;
 const MAX_OUT_TOKENS = 1200;
 
+async function verifyPaidCheckoutSession(toolId, checkoutSessionId) {
+  const sessionId = checkoutSessionId != null ? String(checkoutSessionId).trim() : '';
+  if (!sessionId) {
+    return { ok: false, status: 402, error: 'payment_required', message: 'Complete checkout to run this paid tool.' };
+  }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { ok: false, status: 503, error: 'payment_config', message: 'Stripe verification is not configured for paid tools.' };
+  }
+
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const paidForTool = String(session.metadata?.tool_id || '') === String(toolId);
+    if (session.payment_status === 'paid' && paidForTool) {
+      return { ok: true };
+    }
+  } catch {
+    // Treat unreadable sessions as locked; never run paid tools on unverifiable payment state.
+  }
+
+  return { ok: false, status: 402, error: 'payment_required', message: 'Complete checkout to run this paid tool.' };
+}
+
 module.exports = async (req, res) => {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -52,11 +75,18 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    const priceNum = Number(tool.price) || 0;
+    if (priceNum > 0) {
+      const access = await verifyPaidCheckoutSession(toolIdRaw, body.checkoutSessionId || body.sessionId);
+      if (!access.ok) {
+        return res.status(access.status).json({ error: access.error, message: access.message });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }
