@@ -757,6 +757,10 @@ function unlockedToolsMap() {
 function hasPaidToolAccess(toolId) {
   return !!unlockedToolsMap()[String(toolId)];
 }
+function paidToolCheckoutSession(toolId) {
+  const v = unlockedToolsMap()[String(toolId)];
+  return typeof v === 'string' && v.trim() ? v.trim() : '';
+}
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
   const runBtn = document.getElementById('runBtn');
@@ -1410,6 +1414,7 @@ async function runTool() {
   const userMessage = userParts.join('\n');
 
   if (useHostedRun()) {
+    const checkoutSessionId = currentTool && currentTool.paid ? paidToolCheckoutSession(currentTool.id) : '';
     document.getElementById('inlineKeyPrompt').style.display = 'none';
     btn.style.display = '';
     btn.disabled = true;
@@ -1425,6 +1430,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId,
         }),
       });
       let j = await r.json().catch(() => ({}));
