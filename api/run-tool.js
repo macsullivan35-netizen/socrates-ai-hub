@@ -3,7 +3,13 @@
 //      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-3-5-haiku-latest)
 
 const { createClient } = require('@supabase/supabase-js');
-const { cors, parseJsonBody } = require('../server-lib/payments-util.js');
+const {
+  checkoutSessionIdFrom,
+  cors,
+  isPaidPrice,
+  parseJsonBody,
+  verifyPaidToolAccess,
+} = require('../server-lib/payments-util.js');
 const DEMO_TOOL_PROMPTS = require('../server-lib/demo-tool-prompts.js');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -52,11 +58,28 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    if (isPaidPrice(tool.price)) {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(503).json({ error: 'config', message: 'Stripe is not configured for paid tool verification.' });
+      }
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const access = await verifyPaidToolAccess({
+        stripe,
+        sessionId: checkoutSessionIdFrom(body),
+        toolId: toolIdRaw,
+      });
+      if (!access.ok) {
+        return res.status(access.status).json({
+          error: access.error,
+          message: access.message,
+        });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }
