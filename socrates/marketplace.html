@@ -754,8 +754,11 @@ function apiUrl(path) {
 function unlockedToolsMap() {
   try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
 }
+function getPaidToolAccessSession(toolId) {
+  return unlockedToolsMap()[String(toolId)] || '';
+}
 function hasPaidToolAccess(toolId) {
-  return !!unlockedToolsMap()[String(toolId)];
+  return !!getPaidToolAccessSession(toolId);
 }
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
@@ -794,13 +797,50 @@ function slugifyExportName(name) {
   return s || 'tool';
 }
 
-/** Export tool definition as JSON. Free: immediate. Paid: same unlock as Run (per-browser after checkout). */
-function downloadCurrentToolPack() {
+function saveToolPackDownload(pack, fallbackName, fallbackId) {
+  const blob = new Blob([JSON.stringify(pack, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `socrates-tool-${slugifyExportName(pack?.tool?.name || fallbackName)}-${String(pack?.tool?.id || fallbackId)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Export tool definition as JSON. Free: immediate. Paid: same verified unlock as Run. */
+async function downloadCurrentToolPack() {
   if (!currentTool) return;
-  if (currentTool.paid && !hasPaidToolAccess(currentTool.id)) {
+  const accessSession = getPaidToolAccessSession(currentTool.id);
+  if (currentTool.paid && !accessSession) {
     const row = document.getElementById('paidUnlockRow');
     if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     alert('This tool is paid. Complete checkout below to unlock downloads and runs for this browser.');
+    return;
+  }
+  if (currentTool.real) {
+    const btn = document.getElementById('downloadToolBtn');
+    const previousText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+    try {
+      const r = await fetch(apiUrl('/api/tool-pack'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toolId: String(currentTool.id),
+          checkoutSessionId: accessSession,
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.message || j.error || 'Could not export tool pack');
+      currentTool.sys = j.tool?.system_prompt || currentTool.sys || '';
+      saveToolPackDownload(j, currentTool.name, currentTool.id);
+    } catch (e) {
+      alert(e.message || 'Could not export tool pack.');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = previousText || '⬇ Download'; }
+    }
     return;
   }
   let iconExport = currentTool.icon;
@@ -831,15 +871,7 @@ function downloadCurrentToolPack() {
       desktop: 'For optional desktop bundles and installs, see the Download page on the same site.',
     },
   };
-  const blob = new Blob([JSON.stringify(pack, null, 2)], { type: 'application/json;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `socrates-tool-${slugifyExportName(currentTool.name)}-${String(currentTool.id)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  saveToolPackDownload(pack, currentTool.name, currentTool.id);
 }
 
 window.startToolCheckout = async function startToolCheckout() {
@@ -1163,17 +1195,20 @@ function openTool(id) {
 
   const fieldsEl = document.getElementById('modalFields');
   fieldsEl.innerHTML = currentTool.fields.map(f => {
+    const safeId = escapeHtml(f.id);
+    const safeLabel = escapeHtml(f.label);
+    const safePlaceholder = escapeHtml(f.placeholder || '');
     if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
+      return `<label>${safeLabel}</label>
+        <select id="${safeId}">
+          ${(f.options || []).map(o => `<option>${escapeHtml(o)}</option>`).join('')}
         </select>`;
     } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
+      return `<label>${safeLabel}</label>
+        <textarea id="${safeId}" placeholder="${safePlaceholder}"></textarea>`;
     } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
+      return `<label>${safeLabel}</label>
+        <input type="text" id="${safeId}" placeholder="${safePlaceholder}"/>`;
     }
   }).join('');
 
@@ -1310,6 +1345,24 @@ function saveInlineKey() {
   runTool();
 }
 
+async function ensureRealToolPromptForOwnKey() {
+  if (!currentTool || !currentTool.real || currentTool.sys) return true;
+  const accessSession = getPaidToolAccessSession(currentTool.id);
+  if (currentTool.paid && !accessSession) return false;
+  const r = await fetch(apiUrl('/api/tool-pack'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      toolId: String(currentTool.id),
+      checkoutSessionId: accessSession,
+    }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.message || j.error || 'Could not load the protected tool prompt.');
+  currentTool.sys = j.tool?.system_prompt || '';
+  return !!currentTool.sys;
+}
+
 async function runToolWithOwnKey(userMessage) {
   const apiKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
   if (!apiKey) return;
@@ -1325,6 +1378,13 @@ async function runToolWithOwnKey(userMessage) {
   content.innerHTML = '<span style="color:var(--muted);font-size:13px">Connecting to AI with your key…</span>';
 
   try {
+    if (!(await ensureRealToolPromptForOwnKey())) {
+      content.textContent = 'Complete checkout to unlock this paid tool.';
+      btn.disabled = false;
+      btn.textContent = '▶ Run Tool';
+      return;
+    }
+
     const isClaude = selectedModel === 'claude';
     const endpoint = isClaude
       ? 'https://api.anthropic.com/v1/messages'
@@ -1425,6 +1485,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: getPaidToolAccessSession(currentTool.id),
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1584,7 +1645,8 @@ function toolFieldsFromSupabaseRow(t) {
     const SUPA_URL = 'https://bbhgmblfgiwdyubdqxxp.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGdtYmxmZ2l3ZHl1YmRxeHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NTI5NzUsImV4cCI6MjA2MTUyODk3NX0.s2YG5sIuZoKaYJfQzMdlhQ9rWdL-yiSh7G3vLR_bFLg';
     const sb = createClient(SUPA_URL, SUPA_KEY);
-    const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
+    const publicToolColumns = 'id,name,description,category,type,icon,tags,listing_extras,input_schema,input_placeholder,price,runs,rating,trending,created_at,profiles(username,display_name)';
+    const { data: realTools, error } = await sb.from('tools').select(publicToolColumns).eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
         const mapped = realTools.map(t => {
         const d = toolTypeDisplay(t.type);
@@ -1601,7 +1663,7 @@ function toolFieldsFromSupabaseRow(t) {
           paid: priceNum > 0,
           price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
-          sys: t.system_prompt, real: true,
+          sys: '', real: true,
           rating: Number(t.rating) || 4.8,
           trending: t.trending === true || Number(t.runs) > 10,
           createdAt: t.created_at || '',

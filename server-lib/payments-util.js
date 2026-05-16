@@ -28,4 +28,48 @@ function platformFeeAmount(totalCents, feePercent) {
   return Math.round((totalCents * p) / 100);
 }
 
-module.exports = { cors, parseJsonBody, platformFeeAmount };
+function isPaidPrice(price) {
+  const n = Number(price);
+  return Number.isFinite(n) && n > 0;
+}
+
+function checkoutSessionIdFrom(body) {
+  const raw = body?.checkoutSessionId ?? body?.checkout_session_id ?? body?.sessionId ?? '';
+  return raw != null ? String(raw).trim() : '';
+}
+
+async function verifyPaidToolAccess({ stripe, sessionId, toolId }) {
+  const id = String(toolId || '').trim();
+  const sid = String(sessionId || '').trim();
+  if (!sid) {
+    return { ok: false, status: 402, error: 'payment_required', message: 'Complete checkout to unlock this paid tool.' };
+  }
+  if (!stripe || typeof stripe.checkout?.sessions?.retrieve !== 'function') {
+    return { ok: false, status: 500, error: 'config', message: 'Stripe is not configured for paid tool verification.' };
+  }
+
+  let session;
+  try {
+    session = await stripe.checkout.sessions.retrieve(sid);
+  } catch (err) {
+    return { ok: false, status: 403, error: 'invalid_checkout_session', message: err.message || 'Checkout session could not be verified.' };
+  }
+
+  if (session?.payment_status !== 'paid') {
+    return { ok: false, status: 402, error: 'payment_required', message: 'Checkout has not been paid yet.' };
+  }
+  if (String(session?.metadata?.tool_id || '') !== id) {
+    return { ok: false, status: 403, error: 'tool_mismatch', message: 'Checkout session does not unlock this tool.' };
+  }
+
+  return { ok: true, session };
+}
+
+module.exports = {
+  checkoutSessionIdFrom,
+  cors,
+  isPaidPrice,
+  parseJsonBody,
+  platformFeeAmount,
+  verifyPaidToolAccess,
+};
