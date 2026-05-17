@@ -754,8 +754,17 @@ function apiUrl(path) {
 function unlockedToolsMap() {
   try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
 }
+function paidToolCheckoutSession(toolId) {
+  const sessionId = unlockedToolsMap()[String(toolId)];
+  return typeof sessionId === 'string' ? sessionId : '';
+}
 function hasPaidToolAccess(toolId) {
-  return !!unlockedToolsMap()[String(toolId)];
+  return !!paidToolCheckoutSession(toolId);
+}
+function clearPaidToolAccess(toolId) {
+  const unlocked = unlockedToolsMap();
+  delete unlocked[String(toolId)];
+  localStorage.setItem('socrates_unlocked_tools', JSON.stringify(unlocked));
 }
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
@@ -1418,14 +1427,18 @@ async function runTool() {
     content.textContent = '';
     content.innerHTML = '<span style="color:var(--muted);font-size:13px">Running with Socrates AI…</span>';
     try {
+      const hostedRunPayload = {
+        toolId: String(currentTool.id),
+        userMessage,
+        model: selectedModel,
+      };
+      const checkoutSessionId = currentTool.paid ? paidToolCheckoutSession(currentTool.id) : '';
+      if (checkoutSessionId) hostedRunPayload.checkoutSessionId = checkoutSessionId;
+
       const r = await fetch(apiUrl('/api/run-tool'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          toolId: String(currentTool.id),
-          userMessage,
-          model: selectedModel,
-        }),
+        body: JSON.stringify(hostedRunPayload),
       });
       let j = await r.json().catch(() => ({}));
       if (r.ok && typeof j.text === 'string') {
@@ -1454,6 +1467,15 @@ async function runTool() {
           btn.style.display = 'none';
           syncInlineKeyCopy();
         }
+        return;
+      }
+
+      if (r.status === 402 && j.error === 'payment_required') {
+        clearPaidToolAccess(currentTool.id);
+        updateModalPaidGate();
+        content.textContent = j.message || 'Payment is required to run this tool.';
+        btn.disabled = false;
+        btn.textContent = '▶ Run Tool';
         return;
       }
 

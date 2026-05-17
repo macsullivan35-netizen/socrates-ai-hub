@@ -10,6 +10,27 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 const MAX_USER_CHARS = 16000;
 const MAX_OUT_TOKENS = 1200;
 
+async function verifyPaidToolAccess(toolId, checkoutSessionId) {
+  if (!checkoutSessionId) {
+    return { ok: false, status: 402, message: 'Payment is required to run this tool.' };
+  }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { ok: false, status: 503, message: 'Paid tool verification is not configured on the API server.' };
+  }
+
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+    const sessionToolId = session.metadata?.tool_id;
+    if (session.payment_status !== 'paid' || String(sessionToolId || '') !== String(toolId)) {
+      return { ok: false, status: 402, message: 'Payment is required to run this tool.' };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, status: 402, message: 'Payment is required to run this tool.' };
+  }
+}
+
 module.exports = async (req, res) => {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -32,6 +53,9 @@ module.exports = async (req, res) => {
   const toolIdRaw = body.toolId != null ? String(body.toolId).trim() : '';
   let userMessage = body.userMessage != null ? String(body.userMessage) : '';
   const modelPref = body.model === 'claude' ? 'claude' : 'gpt';
+  const checkoutSessionId = body.checkoutSessionId != null
+    ? String(body.checkoutSessionId).trim()
+    : (body.sessionId != null ? String(body.sessionId).trim() : '');
 
   if (!toolIdRaw) {
     return res.status(400).json({ error: 'bad_request', message: 'toolId required' });
@@ -52,11 +76,21 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    const priceNum = Number(tool.price) || 0;
+    if (priceNum > 0) {
+      const entitlement = await verifyPaidToolAccess(toolIdRaw, checkoutSessionId);
+      if (!entitlement.ok) {
+        return res.status(entitlement.status).json({
+          error: entitlement.status === 503 ? 'paid_verification_unavailable' : 'payment_required',
+          message: entitlement.message,
+        });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }
