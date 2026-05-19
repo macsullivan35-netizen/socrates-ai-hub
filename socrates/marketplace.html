@@ -757,6 +757,9 @@ function unlockedToolsMap() {
 function hasPaidToolAccess(toolId) {
   return !!unlockedToolsMap()[String(toolId)];
 }
+function checkoutSessionForTool(toolId) {
+  return unlockedToolsMap()[String(toolId)] || '';
+}
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
   const runBtn = document.getElementById('runBtn');
@@ -1425,6 +1428,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: checkoutSessionForTool(currentTool.id),
         }),
       });
       let j = await r.json().catch(() => ({}));
