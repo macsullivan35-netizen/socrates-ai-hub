@@ -4,6 +4,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const { cors, parseJsonBody, platformFeeAmount } = require('../server-lib/payments-util.js');
+const { validateUnlockNonce } = require('../server-lib/stripe-entitlements.js');
 
 module.exports = async (req, res) => {
   cors(res);
@@ -28,6 +29,13 @@ module.exports = async (req, res) => {
   }
   const toolId = body.toolId != null ? String(body.toolId).trim() : '';
   if (!toolId) return res.status(400).json({ error: 'bad_request', message: 'toolId required' });
+  const unlockNonce = validateUnlockNonce(body.unlockNonce || body.unlock_nonce);
+  if (!unlockNonce) {
+    return res.status(400).json({
+      error: 'bad_request',
+      message: 'Checkout requires a fresh unlock token. Reload the marketplace and try again.',
+    });
+  }
 
   try {
     const { data: tool, error: tErr } = await sb
@@ -99,11 +107,11 @@ module.exports = async (req, res) => {
       payment_intent_data: {
         application_fee_amount: feeCents,
         transfer_data: { destination: profile.stripe_account_id },
-        metadata: { tool_id: String(tool.id), creator_id: String(tool.creator_id) },
+        metadata: { tool_id: String(tool.id), creator_id: String(tool.creator_id), unlock_nonce: unlockNonce },
       },
       success_url: `${siteBase}/marketplace.html?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteBase}/marketplace.html`,
-      metadata: { tool_id: String(tool.id), creator_id: String(tool.creator_id) },
+      metadata: { tool_id: String(tool.id), creator_id: String(tool.creator_id), unlock_nonce: unlockNonce },
     });
 
     return res.status(200).json({ url: session.url });
