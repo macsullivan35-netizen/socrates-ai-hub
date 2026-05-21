@@ -10,7 +10,50 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 const MAX_USER_CHARS = 16000;
 const MAX_OUT_TOKENS = 1200;
 
-module.exports = async (req, res) => {
+async function verifyPaidToolAccess(body, toolId) {
+  const checkoutSessionId = body.checkoutSessionId != null ? String(body.checkoutSessionId).trim() : '';
+  if (!checkoutSessionId) {
+    return {
+      ok: false,
+      status: 402,
+      error: 'payment_required',
+      message: 'Complete checkout before running this paid tool.',
+    };
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return {
+      ok: false,
+      status: 503,
+      error: 'config',
+      message: 'Stripe is not configured for paid tool access checks.',
+    };
+  }
+
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+    const paidToolId = session.metadata?.tool_id;
+    if (session.payment_status !== 'paid' || String(paidToolId || '') !== String(toolId)) {
+      return {
+        ok: false,
+        status: 403,
+        error: 'payment_invalid',
+        message: 'Checkout session does not unlock this tool.',
+      };
+    }
+    return { ok: true };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'payment_invalid',
+      message: 'Could not verify paid tool access.',
+    };
+  }
+}
+
+async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
@@ -41,6 +84,7 @@ module.exports = async (req, res) => {
   const fallbackUser = 'Please demonstrate what this tool can do with a short, realistic sample output.';
 
   let systemPrompt = '';
+  let requiresPayment = false;
 
   const asNum = Number(toolIdRaw);
   if (Number.isInteger(asNum) && asNum >= 1 && asNum <= 12) {
@@ -52,17 +96,26 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
     }
     systemPrompt = (tool.system_prompt || '').trim();
+    const priceNum = Number(tool.price);
+    requiresPayment = Number.isFinite(priceNum) && priceNum > 0;
   }
 
   if (!systemPrompt) {
     return res.status(404).json({ error: 'not_found', message: 'Unknown tool or missing system prompt.' });
+  }
+
+  if (requiresPayment) {
+    const access = await verifyPaidToolAccess(body, toolIdRaw);
+    if (!access.ok) {
+      return res.status(access.status).json({ error: access.error, message: access.message });
+    }
   }
 
   if (modelPref === 'claude') {
@@ -144,4 +197,7 @@ module.exports = async (req, res) => {
   } catch (e) {
     return res.status(502).json({ error: 'upstream', message: e.message || 'OpenAI request failed.' });
   }
-};
+}
+
+module.exports = handler;
+module.exports._test = { verifyPaidToolAccess };
