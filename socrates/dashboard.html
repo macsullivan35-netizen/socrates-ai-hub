@@ -661,9 +661,12 @@ function setRange(btn, range) {
 
 // ── REAL STRIPE DATA ──
 // Calls /api/stats (serverless function on Vercel) which talks to Stripe server-side
-async function loadStripeData() {
+async function loadStripeData(accessToken) {
   try {
-    const res = await fetch('/api/stats');
+    if (!accessToken) throw new Error('Sign in to view Stripe stats');
+    const res = await fetch('/api/stats', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
     if (!res.ok) throw new Error('API not available');
     const data = await res.json();
 
@@ -730,7 +733,7 @@ async function loadStripeData() {
   }
 }
 
-loadStripeData();
+window.loadStripeData = loadStripeData;
 </script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -747,6 +750,9 @@ async function loadRealDashboard() {
     document.getElementById('toolsLoadingRow').innerHTML = '<td colspan="8" style="text-align:center;padding:32px;color:var(--muted);font-size:14px">Please <a href="#" onclick="openAuthModal(\'login\')" style="color:var(--gold);font-weight:700">sign in</a> to see your tools.</td>';
     return;
   }
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (window.loadStripeData) window.loadStripeData(session?.access_token || '');
 
   // Load profile
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();

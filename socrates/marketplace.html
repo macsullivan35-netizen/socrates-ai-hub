@@ -757,6 +757,10 @@ function unlockedToolsMap() {
 function hasPaidToolAccess(toolId) {
   return !!unlockedToolsMap()[String(toolId)];
 }
+function paidToolCheckoutSession(toolId) {
+  const sessionId = unlockedToolsMap()[String(toolId)];
+  return typeof sessionId === 'string' ? sessionId : '';
+}
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
   const runBtn = document.getElementById('runBtn');
@@ -1425,6 +1429,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? paidToolCheckoutSession(currentTool.id) : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1582,7 +1587,7 @@ function toolFieldsFromSupabaseRow(t) {
   try {
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
     const SUPA_URL = 'https://bbhgmblfgiwdyubdqxxp.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGdtYmxmZ2l3ZHl1YmRxeHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NTI5NzUsImV4cCI6MjA2MTUyODk3NX0.s2YG5sIuZoKaYJfQzMdlhQ9rWdL-yiSh7G3vLR_bFLg';
+    const SUPA_KEY = 'sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM';
     const sb = createClient(SUPA_URL, SUPA_KEY);
     const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
