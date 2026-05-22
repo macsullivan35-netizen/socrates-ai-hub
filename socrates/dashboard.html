@@ -385,7 +385,7 @@
       <div class="chart-card">
         <h3>Revenue by Tool</h3>
         <div class="ch-sub">Earnings breakdown from Stripe</div>
-        <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted)">
+        <div class="chart-wrap" id="revenueByToolBreakdown" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted)">
           <div style="font-size:40px">💰</div>
           <div style="font-size:14px;font-weight:600">No revenue yet</div>
           <div style="font-size:12px;text-align:center;max-width:220px">Set a price on your tools and revenue will show here after your first sale.</div>
@@ -661,9 +661,12 @@ function setRange(btn, range) {
 
 // ── REAL STRIPE DATA ──
 // Calls /api/stats (serverless function on Vercel) which talks to Stripe server-side
-async function loadStripeData() {
+async function loadStripeData(accessToken) {
   try {
-    const res = await fetch('/api/stats');
+    if (!accessToken) throw new Error('Sign in required');
+    const res = await fetch('/api/stats', {
+      headers: { Authorization: 'Bearer ' + accessToken },
+    });
     if (!res.ok) throw new Error('API not available');
     const data = await res.json();
 
@@ -686,19 +689,18 @@ async function loadStripeData() {
     document.getElementById('statMode').textContent = 'Test';
     document.getElementById('statModeSub').textContent = 'Switch to Live in Stripe to accept real payments';
 
-    // Revenue pie chart — real breakdown by product
+    // Revenue breakdown by product
     const products = Object.keys(data.byProduct);
-    const amounts = products.map(p => data.byProduct[p]);
+    const breakdown = document.getElementById('revenueByToolBreakdown');
     if (products.length > 0) {
-      revenueChart.data.labels = products;
-      revenueChart.data.datasets[0].data = amounts;
-      revenueChart.data.datasets[0].backgroundColor = ['#c9a84c','#7c3aed','#4ade80','#f472b6','#60a5fa'].slice(0, products.length);
-      revenueChart.update();
+      breakdown.innerHTML = products.slice(0, 5).map(p => `
+        <div style="width:100%;display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p}</span>
+          <strong style="color:var(--gold)">${fmt(data.byProduct[p])}</strong>
+        </div>
+      `).join('');
     } else {
-      revenueChart.data.labels = ['No sales yet'];
-      revenueChart.data.datasets[0].data = [1];
-      revenueChart.data.datasets[0].backgroundColor = ['#e8e5db'];
-      revenueChart.update();
+      breakdown.innerHTML = '<div style="font-size:40px">💰</div><div style="font-size:14px;font-weight:600">No revenue yet</div><div style="font-size:12px;text-align:center;max-width:220px">Set a price on your tools and revenue will show here after your first sale.</div>';
     }
 
     // Activity feed — real recent transactions
@@ -726,11 +728,9 @@ async function loadStripeData() {
     ['statSales','statCustomers','statRevenue'].forEach(id => {
       document.getElementById(id).innerHTML = '<a href="https://dashboard.stripe.com" target="_blank" style="color:var(--gold);font-size:13px;text-decoration:none">See Stripe ↗</a>';
     });
-    document.getElementById('activityFeed').innerHTML = '<div class="activity-item"><div class="activity-dot" style="background:var(--gold)"></div><div><div class="activity-text">Connect Stripe API to see real transactions here. <a href="https://dashboard.stripe.com" target="_blank" style="color:var(--gold)">Open Stripe dashboard ↗</a></div></div></div>';
+    document.getElementById('activityFeed').innerHTML = '<div class="activity-item"><div class="activity-dot" style="background:var(--gold)"></div><div><div class="activity-text">Sign in and connect Stripe API to see real transactions here. <a href="https://dashboard.stripe.com" target="_blank" style="color:var(--gold)">Open Stripe dashboard ↗</a></div></div></div>';
   }
 }
-
-loadStripeData();
 </script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -747,6 +747,8 @@ async function loadRealDashboard() {
     document.getElementById('toolsLoadingRow').innerHTML = '<td colspan="8" style="text-align:center;padding:32px;color:var(--muted);font-size:14px">Please <a href="#" onclick="openAuthModal(\'login\')" style="color:var(--gold);font-weight:700">sign in</a> to see your tools.</td>';
     return;
   }
+  const { data: { session } } = await sb.auth.getSession();
+  loadStripeData(session?.access_token);
 
   // Load profile
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
