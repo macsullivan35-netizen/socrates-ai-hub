@@ -754,8 +754,12 @@ function apiUrl(path) {
 function unlockedToolsMap() {
   try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
 }
+function paidToolSessionId(toolId) {
+  const v = unlockedToolsMap()[String(toolId)];
+  return typeof v === 'string' && v.trim() ? v.trim() : '';
+}
 function hasPaidToolAccess(toolId) {
-  return !!unlockedToolsMap()[String(toolId)];
+  return !!paidToolSessionId(toolId);
 }
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
@@ -1425,6 +1429,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? paidToolSessionId(currentTool.id) : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1432,6 +1437,17 @@ async function runTool() {
         content.textContent = j.text;
         btn.disabled = false;
         btn.textContent = '▶ Run Again';
+        return;
+      }
+
+      if (r.status === 402 && j.error === 'payment_required') {
+        const u = unlockedToolsMap();
+        delete u[String(currentTool.id)];
+        localStorage.setItem('socrates_unlocked_tools', JSON.stringify(u));
+        content.textContent = j.message || 'Complete checkout before running this paid tool.';
+        btn.disabled = false;
+        btn.textContent = '▶ Run Tool';
+        updateModalPaidGate();
         return;
       }
 
