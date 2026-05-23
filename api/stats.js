@@ -1,14 +1,37 @@
 // Serverless function — runs on Vercel's servers, never exposed to the browser
 // Stripe secret key is stored as an environment variable (STRIPE_SECRET_KEY)
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripeFactory = require('stripe');
+
+function bearerToken(req) {
+  const h = req.headers?.authorization || req.headers?.Authorization || '';
+  const m = String(h).match(/^Bearer\s+(.+)$/i);
+  return m ? m[1].trim() : '';
+}
 
 module.exports = async (req, res) => {
-  // Allow the dashboard page to call this
+  // Allow the dashboard page to call this when it supplies a server-configured token.
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
+
+  const statsToken = process.env.STRIPE_STATS_TOKEN || process.env.SOCRATES_STATS_TOKEN || '';
+  if (!statsToken) {
+    return res.status(503).json({ error: 'stats_auth_not_configured' });
+  }
+  if (bearerToken(req) !== statsToken) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(503).json({ error: 'stripe_not_configured' });
+  }
 
   try {
+    const stripe = stripeFactory(process.env.STRIPE_SECRET_KEY);
     // Fetch last 100 charges
     const charges = await stripe.charges.list({ limit: 100 });
 
@@ -54,6 +77,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'stripe_error' });
   }
 };
