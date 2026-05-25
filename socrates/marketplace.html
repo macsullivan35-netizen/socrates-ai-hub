@@ -754,8 +754,16 @@ function apiUrl(path) {
 function unlockedToolsMap() {
   try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
 }
+function paidToolCheckoutSessionId(toolId) {
+  return unlockedToolsMap()[String(toolId)] || '';
+}
 function hasPaidToolAccess(toolId) {
-  return !!unlockedToolsMap()[String(toolId)];
+  return !!paidToolCheckoutSessionId(toolId);
+}
+function forgetPaidToolAccess(toolId) {
+  const unlocked = unlockedToolsMap();
+  delete unlocked[String(toolId)];
+  localStorage.setItem('socrates_unlocked_tools', JSON.stringify(unlocked));
 }
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
@@ -1124,6 +1132,43 @@ function applyMarketplaceUrlState() {
   updateKeyBtn();
 }
 
+function renderModalFields(fields) {
+  const fieldsEl = document.getElementById('modalFields');
+  fieldsEl.replaceChildren();
+
+  (Array.isArray(fields) ? fields : []).forEach((f, i) => {
+    const field = f && typeof f === 'object' ? f : {};
+    const id = field.id ? String(field.id) : `field_${i}`;
+    const type = field.type === 'select' ? 'select' : (field.type === 'textarea' ? 'textarea' : 'text');
+
+    const label = document.createElement('label');
+    label.textContent = field.label ? String(field.label) : `Input ${i + 1}`;
+    fieldsEl.appendChild(label);
+
+    if (type === 'select') {
+      const select = document.createElement('select');
+      select.id = id;
+      (Array.isArray(field.options) ? field.options : []).forEach((optionText) => {
+        const option = document.createElement('option');
+        option.textContent = String(optionText);
+        select.appendChild(option);
+      });
+      fieldsEl.appendChild(select);
+    } else if (type === 'textarea') {
+      const textarea = document.createElement('textarea');
+      textarea.id = id;
+      textarea.placeholder = field.placeholder ? String(field.placeholder) : '';
+      fieldsEl.appendChild(textarea);
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = id;
+      input.placeholder = field.placeholder ? String(field.placeholder) : '';
+      fieldsEl.appendChild(input);
+    }
+  });
+}
+
 function openTool(id) {
   const idStr = String(id);
   const pool = window.__socratesAllTools || TOOLS;
@@ -1161,21 +1206,7 @@ function openTool(id) {
     metaEl.removeAttribute('hidden');
   }
 
-  const fieldsEl = document.getElementById('modalFields');
-  fieldsEl.innerHTML = currentTool.fields.map(f => {
-    if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
-        </select>`;
-    } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
-    } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
-    }
-  }).join('');
+  renderModalFields(currentTool.fields);
 
   document.getElementById('outputBox').classList.remove('visible');
   document.getElementById('outputContent').textContent = '';
@@ -1425,6 +1456,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? paidToolCheckoutSessionId(currentTool.id) : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1454,6 +1486,15 @@ async function runTool() {
           btn.style.display = 'none';
           syncInlineKeyCopy();
         }
+        return;
+      }
+
+      if (r.status === 402 && currentTool.paid) {
+        forgetPaidToolAccess(currentTool.id);
+        updateModalPaidGate();
+        content.textContent = j.message || 'Complete checkout before running this paid tool.';
+        btn.disabled = false;
+        btn.textContent = '▶ Run Tool';
         return;
       }
 
