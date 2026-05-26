@@ -1,4 +1,4 @@
-// POST { toolId, userMessage, model?: "gpt" | "claude" } — run a published tool via platform API keys (no visitor key).
+// POST { toolId, userMessage, model?: "gpt" | "claude", checkoutSessionId?: string } — run a published tool via platform API keys (no visitor key).
 // Env: OPENAI_API_KEY (required for model gpt), ANTHROPIC_API_KEY (required for model claude),
 //      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-3-5-haiku-latest)
 
@@ -9,6 +9,37 @@ const DEMO_TOOL_PROMPTS = require('../server-lib/demo-tool-prompts.js');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_USER_CHARS = 16000;
 const MAX_OUT_TOKENS = 1200;
+const PAYMENT_REQUIRED = 402;
+
+let stripeClient;
+
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  if (!stripeClient) stripeClient = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  return stripeClient;
+}
+
+async function verifyPaidToolCheckout(toolId, checkoutSessionId) {
+  const sessionId = checkoutSessionId != null ? String(checkoutSessionId).trim() : '';
+  if (!sessionId) {
+    return { ok: false, status: PAYMENT_REQUIRED, message: 'Complete checkout to run this paid tool.' };
+  }
+
+  const stripe = getStripeClient();
+  if (!stripe) {
+    return { ok: false, status: 503, message: 'Paid tool checkout verification is not configured on this server.' };
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== 'paid' || String(session.metadata?.tool_id || '') !== String(toolId)) {
+      return { ok: false, status: PAYMENT_REQUIRED, message: 'Checkout session does not unlock this tool.' };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, status: PAYMENT_REQUIRED, message: 'Checkout session could not be verified.' };
+  }
+}
 
 module.exports = async (req, res) => {
   cors(res);
@@ -32,6 +63,7 @@ module.exports = async (req, res) => {
   const toolIdRaw = body.toolId != null ? String(body.toolId).trim() : '';
   let userMessage = body.userMessage != null ? String(body.userMessage) : '';
   const modelPref = body.model === 'claude' ? 'claude' : 'gpt';
+  const checkoutSessionId = body.checkoutSessionId != null ? String(body.checkoutSessionId).trim() : '';
 
   if (!toolIdRaw) {
     return res.status(400).json({ error: 'bad_request', message: 'toolId required' });
@@ -52,11 +84,18 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    const priceNum = Number(tool.price);
+    if (Number.isFinite(priceNum) && priceNum > 0) {
+      const paidAccess = await verifyPaidToolCheckout(toolIdRaw, checkoutSessionId);
+      if (!paidAccess.ok) {
+        return res.status(paidAccess.status).json({ error: 'payment_required', message: paidAccess.message });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }
