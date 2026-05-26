@@ -754,8 +754,12 @@ function apiUrl(path) {
 function unlockedToolsMap() {
   try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
 }
+function paidAccessSessionId(toolId) {
+  const v = unlockedToolsMap()[String(toolId)];
+  return typeof v === 'string' ? v : '';
+}
 function hasPaidToolAccess(toolId) {
-  return !!unlockedToolsMap()[String(toolId)];
+  return !!paidAccessSessionId(toolId);
 }
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
@@ -1418,14 +1422,16 @@ async function runTool() {
     content.textContent = '';
     content.innerHTML = '<span style="color:var(--muted);font-size:13px">Running with Socrates AI…</span>';
     try {
+      const runPayload = {
+        toolId: String(currentTool.id),
+        userMessage,
+        model: selectedModel,
+      };
+      if (currentTool.paid) runPayload.checkoutSessionId = paidAccessSessionId(currentTool.id);
       const r = await fetch(apiUrl('/api/run-tool'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          toolId: String(currentTool.id),
-          userMessage,
-          model: selectedModel,
-        }),
+        body: JSON.stringify(runPayload),
       });
       let j = await r.json().catch(() => ({}));
       if (r.ok && typeof j.text === 'string') {
