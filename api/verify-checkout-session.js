@@ -1,20 +1,26 @@
 // GET ?session_id=cs_... — confirms payment; use after redirect (do not expose secret).
 
 const url = require('url');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { cors } = require('../server-lib/payments-util.js');
+
+let stripeClient;
+function stripe() {
+  if (!stripeClient) stripeClient = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  return stripeClient;
+}
 
 module.exports = async (req, res) => {
   cors(res, 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
+  if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ ok: false, error: 'config' });
 
   const parsed = url.parse(req.url || '', true);
   const sessionId = req.query?.session_id || parsed.query?.session_id;
   if (!sessionId) return res.status(400).json({ ok: false, error: 'session_id required' });
 
   try {
-    const session = await stripe.checkout.sessions.retrieve(String(sessionId));
+    const session = await stripe().checkout.sessions.retrieve(String(sessionId));
     if (session.payment_status !== 'paid') {
       return res.status(400).json({ ok: false, error: 'not_paid' });
     }
