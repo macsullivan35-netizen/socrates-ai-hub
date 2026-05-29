@@ -757,6 +757,29 @@ function unlockedToolsMap() {
 function hasPaidToolAccess(toolId) {
   return !!unlockedToolsMap()[String(toolId)];
 }
+function paidToolSessionId(toolId) {
+  const stored = unlockedToolsMap()[String(toolId)];
+  return typeof stored === 'string' ? stored : '';
+}
+function forgetPaidToolAccess(toolId) {
+  const u = unlockedToolsMap();
+  delete u[String(toolId)];
+  localStorage.setItem('socrates_unlocked_tools', JSON.stringify(u));
+}
+async function verifyStoredPaidToolAccess(toolId) {
+  const sessionId = paidToolSessionId(toolId);
+  if (!sessionId) return false;
+  if (isGithubPages() && !socratesApiOrigin()) return false;
+  try {
+    const r = await fetch(apiUrl('/api/verify-checkout-session?session_id=' + encodeURIComponent(sessionId)));
+    const j = await r.json().catch(() => ({}));
+    const ok = r.ok && j.ok && String(j.toolId) === String(toolId);
+    if (!ok) forgetPaidToolAccess(toolId);
+    return ok;
+  } catch {
+    return false;
+  }
+}
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
   const runBtn = document.getElementById('runBtn');
@@ -794,13 +817,57 @@ function slugifyExportName(name) {
   return s || 'tool';
 }
 
-/** Export tool definition as JSON. Free: immediate. Paid: same unlock as Run (per-browser after checkout). */
-function downloadCurrentToolPack() {
+function saveToolPack(pack, tool) {
+  const blob = new Blob([JSON.stringify(pack, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `socrates-tool-${slugifyExportName(tool?.name)}-${String(tool?.id || 'tool')}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function fetchVerifiedToolPack(tool) {
+  if (isGithubPages() && !socratesApiOrigin()) {
+    alert('Downloads for published marketplace tools require the Vercel API. Set SOCRATES_API_ORIGIN for this static host.');
+    return null;
+  }
+  const r = await fetch(apiUrl('/api/download-tool'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      toolId: String(tool.id),
+      sessionId: tool.paid ? paidToolSessionId(tool.id) : undefined,
+    }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (r.ok && j.format === 'socrates-tool-pack') return j;
+  if (tool.paid && (r.status === 402 || r.status === 403)) {
+    forgetPaidToolAccess(tool.id);
+    updateModalPaidGate();
+  }
+  alert(j.message || j.error || 'Could not download this tool pack.');
+  return null;
+}
+
+/** Export tool definition as JSON. Free static tools are immediate; database/paid tools are served by the API. */
+async function downloadCurrentToolPack() {
   if (!currentTool) return;
-  if (currentTool.paid && !hasPaidToolAccess(currentTool.id)) {
-    const row = document.getElementById('paidUnlockRow');
-    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    alert('This tool is paid. Complete checkout below to unlock downloads and runs for this browser.');
+  if (currentTool.real) {
+    if (currentTool.paid) {
+      const verified = await verifyStoredPaidToolAccess(currentTool.id);
+      if (!verified) {
+        const row = document.getElementById('paidUnlockRow');
+        if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        alert('This tool is paid. Complete checkout below to unlock downloads and runs for this browser.');
+        updateModalPaidGate();
+        return;
+      }
+    }
+    const verifiedPack = await fetchVerifiedToolPack(currentTool);
+    if (verifiedPack) saveToolPack(verifiedPack, currentTool);
     return;
   }
   let iconExport = currentTool.icon;
@@ -831,15 +898,7 @@ function downloadCurrentToolPack() {
       desktop: 'For optional desktop bundles and installs, see the Download page on the same site.',
     },
   };
-  const blob = new Blob([JSON.stringify(pack, null, 2)], { type: 'application/json;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `socrates-tool-${slugifyExportName(currentTool.name)}-${String(currentTool.id)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  saveToolPack(pack, currentTool);
 }
 
 window.startToolCheckout = async function startToolCheckout() {
@@ -1425,6 +1484,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          sessionId: currentTool.paid ? paidToolSessionId(currentTool.id) : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1584,7 +1644,8 @@ function toolFieldsFromSupabaseRow(t) {
     const SUPA_URL = 'https://bbhgmblfgiwdyubdqxxp.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGdtYmxmZ2l3ZHl1YmRxeHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NTI5NzUsImV4cCI6MjA2MTUyODk3NX0.s2YG5sIuZoKaYJfQzMdlhQ9rWdL-yiSh7G3vLR_bFLg';
     const sb = createClient(SUPA_URL, SUPA_KEY);
-    const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
+    const listingCols = 'id,name,price,category,type,description,icon,tags,listing_extras,input_schema,input_placeholder,runs,rating,trending,created_at,profiles(username,display_name)';
+    const { data: realTools, error } = await sb.from('tools').select(listingCols).eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
         const mapped = realTools.map(t => {
         const d = toolTypeDisplay(t.type);
@@ -1601,7 +1662,7 @@ function toolFieldsFromSupabaseRow(t) {
           paid: priceNum > 0,
           price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
-          sys: t.system_prompt, real: true,
+          sys: '', real: true,
           rating: Number(t.rating) || 4.8,
           trending: t.trending === true || Number(t.runs) > 10,
           createdAt: t.created_at || '',
