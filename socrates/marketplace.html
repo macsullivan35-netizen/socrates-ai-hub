@@ -1161,21 +1161,7 @@ function openTool(id) {
     metaEl.removeAttribute('hidden');
   }
 
-  const fieldsEl = document.getElementById('modalFields');
-  fieldsEl.innerHTML = currentTool.fields.map(f => {
-    if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
-        </select>`;
-    } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
-    } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
-    }
-  }).join('');
+  renderModalFields(document.getElementById('modalFields'), currentTool.fields);
 
   document.getElementById('outputBox').classList.remove('visible');
   document.getElementById('outputContent').textContent = '';
@@ -1183,6 +1169,37 @@ function openTool(id) {
   document.getElementById('runBtn').textContent = '▶ Run Tool';
   document.getElementById('modalOverlay').classList.add('open');
   updateModalPaidGate();
+}
+
+function renderModalFields(fieldsEl, fields) {
+  fieldsEl.replaceChildren();
+  (fields || []).forEach(f => {
+    const label = document.createElement('label');
+    label.textContent = f.label || '';
+    fieldsEl.appendChild(label);
+
+    if (f.type === 'select') {
+      const select = document.createElement('select');
+      select.id = f.id;
+      (Array.isArray(f.options) ? f.options : []).forEach(o => {
+        const option = document.createElement('option');
+        option.textContent = o;
+        select.appendChild(option);
+      });
+      fieldsEl.appendChild(select);
+    } else if (f.type === 'textarea') {
+      const textarea = document.createElement('textarea');
+      textarea.id = f.id;
+      textarea.placeholder = f.placeholder || '';
+      fieldsEl.appendChild(textarea);
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = f.id;
+      input.placeholder = f.placeholder || '';
+      fieldsEl.appendChild(input);
+    }
+  });
 }
 
 function closeModal() {
