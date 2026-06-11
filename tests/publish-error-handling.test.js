@@ -8,7 +8,8 @@ const publishPage = fs.readFileSync(path.resolve(__dirname, '../socrates/publish
 test('publish paths throw on Supabase insert errors instead of showing false success', () => {
   const insertCalls = publishPage.match(/await insertToolOrThrow\(sb,/g) || [];
   assert.equal(insertCalls.length, 3);
-  assert.doesNotMatch(publishPage, /await sb\.from\('tools'\)\.insert/);
+  assert.match(publishPage, /const \{ error \} = await sb\.from\('tools'\)\.insert\(\[row\]\);/);
+  assert.match(publishPage, /if \(error\) throw error;/);
   assert.doesNotMatch(publishPage, /catch\(e\)\s*\{\s*\/\*\s*silent\s*\*\/\s*\}/i);
   assert.match(publishPage, /Could not publish this tool\. Nothing was saved\./);
 });
