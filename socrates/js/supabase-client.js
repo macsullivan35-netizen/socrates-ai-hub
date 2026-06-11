@@ -37,9 +37,10 @@ export async function signOut() {
 // ── TOOLS HELPERS ──
 
 export async function getPublishedTools(category = null) {
+  const listingColumns = 'id,name,type,category,description,icon,tags,input_schema,input_placeholder,listing_extras,price,runs,rating,trending,created_at,profiles(username, display_name)';
   let query = supabase
     .from('tools')
-    .select('*, profiles(username, display_name)')
+    .select(listingColumns)
     .eq('is_published', true)
     .order('runs', { ascending: false });
 
