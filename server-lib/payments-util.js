@@ -28,4 +28,57 @@ function platformFeeAmount(totalCents, feePercent) {
   return Math.round((totalCents * p) / 100);
 }
 
-module.exports = { cors, parseJsonBody, platformFeeAmount };
+async function verifyPaidToolCheckoutSession(stripeClient, sessionId, toolId) {
+  const sid = sessionId != null ? String(sessionId).trim() : '';
+  if (!sid) {
+    return {
+      ok: false,
+      status: 402,
+      error: 'payment_required',
+      message: 'Complete checkout before running this paid tool.',
+    };
+  }
+  if (!stripeClient?.checkout?.sessions?.retrieve) {
+    return {
+      ok: false,
+      status: 503,
+      error: 'payment_verification_unavailable',
+      message: 'Paid access verification is not configured.',
+    };
+  }
+
+  let session;
+  try {
+    session = await stripeClient.checkout.sessions.retrieve(sid);
+  } catch (err) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'invalid_payment_session',
+      message: err.message || 'Could not verify checkout session.',
+    };
+  }
+
+  if (session.payment_status !== 'paid') {
+    return {
+      ok: false,
+      status: 402,
+      error: 'payment_required',
+      message: 'Checkout is not paid yet.',
+    };
+  }
+
+  const paidToolId = session.metadata?.tool_id != null ? String(session.metadata.tool_id) : '';
+  if (!paidToolId || paidToolId !== String(toolId)) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'payment_mismatch',
+      message: 'Checkout session does not unlock this tool.',
+    };
+  }
+
+  return { ok: true, session };
+}
+
+module.exports = { cors, parseJsonBody, platformFeeAmount, verifyPaidToolCheckoutSession };
