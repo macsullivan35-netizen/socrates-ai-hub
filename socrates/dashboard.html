@@ -385,7 +385,7 @@
       <div class="chart-card">
         <h3>Revenue by Tool</h3>
         <div class="ch-sub">Earnings breakdown from Stripe</div>
-        <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted)">
+        <div class="chart-wrap" id="revenueByToolWrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted)">
           <div style="font-size:40px">💰</div>
           <div style="font-size:14px;font-weight:600">No revenue yet</div>
           <div style="font-size:12px;text-align:center;max-width:220px">Set a price on your tools and revenue will show here after your first sale.</div>
@@ -659,11 +659,37 @@ function setRange(btn, range) {
   }
 })();
 
+function dashEscapeHtml(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
+
+function dashboardApiUrl(path) {
+  const base = window.SOCRATES_API_ORIGIN != null ? String(window.SOCRATES_API_ORIGIN).trim().replace(/\/$/, '') : '';
+  return base ? base + path : path;
+}
+
+async function getStatsAccessToken() {
+  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+  const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.access_token) throw new Error('Sign in to view Stripe stats.');
+  return session.access_token;
+}
+
 // ── REAL STRIPE DATA ──
 // Calls /api/stats (serverless function on Vercel) which talks to Stripe server-side
 async function loadStripeData() {
   try {
-    const res = await fetch('/api/stats');
+    const token = await getStatsAccessToken();
+    const res = await fetch(dashboardApiUrl('/api/stats'), {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     if (!res.ok) throw new Error('API not available');
     const data = await res.json();
 
@@ -686,32 +712,32 @@ async function loadStripeData() {
     document.getElementById('statMode').textContent = 'Test';
     document.getElementById('statModeSub').textContent = 'Switch to Live in Stripe to accept real payments';
 
-    // Revenue pie chart — real breakdown by product
+    // Revenue by tool — real breakdown by product
     const products = Object.keys(data.byProduct);
-    const amounts = products.map(p => data.byProduct[p]);
-    if (products.length > 0) {
-      revenueChart.data.labels = products;
-      revenueChart.data.datasets[0].data = amounts;
-      revenueChart.data.datasets[0].backgroundColor = ['#c9a84c','#7c3aed','#4ade80','#f472b6','#60a5fa'].slice(0, products.length);
-      revenueChart.update();
-    } else {
-      revenueChart.data.labels = ['No sales yet'];
-      revenueChart.data.datasets[0].data = [1];
-      revenueChart.data.datasets[0].backgroundColor = ['#e8e5db'];
-      revenueChart.update();
+    const revenueWrap = document.getElementById('revenueByToolWrap');
+    if (revenueWrap && products.length > 0) {
+      revenueWrap.style.alignItems = 'stretch';
+      revenueWrap.innerHTML = products.map(p => {
+        const amount = Number(data.byProduct[p]) || 0;
+        return `<div style="display:flex;justify-content:space-between;gap:16px;width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px">
+          <span style="font-weight:600;color:var(--text)">${dashEscapeHtml(p)}</span>
+          <span style="color:var(--gold);font-weight:800">${fmt(amount)}</span>
+        </div>`;
+      }).join('');
     }
 
     // Activity feed — real recent transactions
     const feed = document.getElementById('activityFeed');
-    if (data.recent.length === 0) {
+    const recent = Array.isArray(data.recent) ? data.recent : [];
+    if (recent.length === 0) {
       feed.innerHTML = '<div class="activity-item"><div class="activity-dot" style="background:var(--muted)"></div><div><div class="activity-text">No transactions yet — share your download page to get your first sale!</div></div></div>';
     } else {
-      feed.innerHTML = data.recent.map(t => `
+      feed.innerHTML = recent.map(t => `
         <div class="activity-item">
           <div class="activity-dot" style="background:var(--green)"></div>
           <div>
-            <div class="activity-text"><strong>${t.customer}</strong> purchased ${t.description}</div>
-            <div class="activity-time">${t.date} · +${('$' + t.amount.toFixed(2))}</div>
+            <div class="activity-text"><strong>${dashEscapeHtml(t.customer)}</strong> purchased ${dashEscapeHtml(t.description)}</div>
+            <div class="activity-time">${dashEscapeHtml(t.date)} · +${fmt(Number(t.amount) || 0)}</div>
           </div>
         </div>
       `).join('');
