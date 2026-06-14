@@ -18,3 +18,16 @@ test('marketplace run modal escapes published custom field metadata', () => {
   assert.doesNotMatch(renderer, /placeholder="\$\{f\.placeholder \|\| ''\}"/);
   assert.doesNotMatch(renderer, /<option>\$\{o\}<\/option>/);
 });
+
+test('marketplace public listing loader does not expose stored system prompts', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'socrates', 'marketplace.html'), 'utf8');
+  const loaderStart = html.indexOf('// Supabase real tool loading');
+  const loaderEnd = html.indexOf('</script>', loaderStart);
+  assert.notEqual(loaderStart, -1);
+  assert.notEqual(loaderEnd, -1);
+
+  const loader = html.slice(loaderStart, loaderEnd);
+  assert.doesNotMatch(loader, /\.select\('\*, profiles/);
+  assert.doesNotMatch(loader, /system_prompt/);
+  assert.doesNotMatch(loader, /sys:\s*t\.system_prompt/);
+});
