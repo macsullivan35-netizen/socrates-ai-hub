@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripeFactory = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 const { cors } = require('../server-lib/payments-util.js');
 
@@ -9,6 +9,10 @@ function bearerToken(req) {
 
 function formatDate(created) {
   return new Date(created * 1000).toLocaleDateString();
+}
+
+function getStripe() {
+  return stripeFactory(process.env.STRIPE_SECRET_KEY);
 }
 
 module.exports = async (req, res) => {
@@ -35,7 +39,7 @@ module.exports = async (req, res) => {
     if (toolsErr) throw toolsErr;
 
     const toolNames = new Map((tools || []).map(t => [String(t.id), t.name || 'Unknown tool']));
-    const sessions = await stripe.checkout.sessions.list({ limit: 100 });
+    const sessions = await getStripe().checkout.sessions.list({ limit: 100 });
     const paidSessions = (sessions.data || []).filter(s =>
       s.payment_status === 'paid' &&
       String(s.metadata?.creator_id || '') === String(user.id)
