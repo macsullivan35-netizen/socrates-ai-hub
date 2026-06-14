@@ -1167,17 +1167,20 @@ function openTool(id) {
 
   const fieldsEl = document.getElementById('modalFields');
   fieldsEl.innerHTML = currentTool.fields.map(f => {
+    const fieldId = escapeHtml(f.id);
+    const label = escapeHtml(f.label);
+    const placeholder = escapeHtml(f.placeholder || '');
     if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
+      return `<label>${label}</label>
+        <select id="${fieldId}">
+          ${(f.options || []).map(o => `<option>${escapeHtml(o)}</option>`).join('')}
         </select>`;
     } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
+      return `<label>${label}</label>
+        <textarea id="${fieldId}" placeholder="${placeholder}"></textarea>`;
     } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
+      return `<label>${label}</label>
+        <input type="text" id="${fieldId}" placeholder="${placeholder}"/>`;
     }
   }).join('');
 
