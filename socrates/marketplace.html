@@ -883,6 +883,44 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function runFieldDomId(f, i) {
+  const raw = f && f.id != null ? String(f.id) : `field_${i}`;
+  return raw.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '') || `field_${i}`;
+}
+
+function normalizedRunField(f, i) {
+  const typ = f && f.type === 'select' ? 'select' : (f && f.type === 'textarea' ? 'textarea' : 'text');
+  const out = {
+    id: runFieldDomId(f, i),
+    label: f && f.label != null ? String(f.label) : `Input ${i + 1}`,
+    type: typ,
+    placeholder: f && f.placeholder != null ? String(f.placeholder) : '',
+  };
+  if (typ === 'select') {
+    out.options = Array.isArray(f.options) ? f.options.map(String) : [];
+  }
+  return out;
+}
+
+function runFieldHtml(f, i) {
+  const field = normalizedRunField(f, i);
+  const id = escapeHtml(field.id);
+  const label = escapeHtml(field.label);
+  const placeholder = escapeHtml(field.placeholder);
+  if (field.type === 'select') {
+    return `<label for="${id}">${label}</label>
+      <select id="${id}">
+        ${field.options.map(o => `<option>${escapeHtml(o)}</option>`).join('')}
+      </select>`;
+  }
+  if (field.type === 'textarea') {
+    return `<label for="${id}">${label}</label>
+      <textarea id="${id}" placeholder="${placeholder}"></textarea>`;
+  }
+  return `<label for="${id}">${label}</label>
+    <input type="text" id="${id}" placeholder="${placeholder}"/>`;
+}
+
 function normalizeListingExtras(raw) {
   if (raw == null) return {};
   let o = raw;
@@ -1162,20 +1200,7 @@ function openTool(id) {
   }
 
   const fieldsEl = document.getElementById('modalFields');
-  fieldsEl.innerHTML = currentTool.fields.map(f => {
-    if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
-        </select>`;
-    } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
-    } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
-    }
-  }).join('');
+  fieldsEl.innerHTML = currentTool.fields.map(runFieldHtml).join('');
 
   document.getElementById('outputBox').classList.remove('visible');
   document.getElementById('outputContent').textContent = '';
@@ -1401,10 +1426,11 @@ async function runTool() {
   const output = document.getElementById('outputBox');
   const content = document.getElementById('outputContent');
 
-  const userParts = currentTool.fields.map(f => {
-    const el = document.getElementById(f.id);
+  const userParts = currentTool.fields.map((f, i) => {
+    const field = normalizedRunField(f, i);
+    const el = document.getElementById(field.id);
     const val = el ? el.value.trim() : '';
-    return val ? `${f.label}: ${val}` : '';
+    return val ? `${field.label}: ${val}` : '';
   }).filter(Boolean);
 
   const userMessage = userParts.join('\n');
