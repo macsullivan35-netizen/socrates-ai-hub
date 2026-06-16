@@ -5,6 +5,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { cors, parseJsonBody } = require('../server-lib/payments-util.js');
 const DEMO_TOOL_PROMPTS = require('../server-lib/demo-tool-prompts.js');
+const createStripe = require('stripe');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_USER_CHARS = 16000;
@@ -32,6 +33,7 @@ module.exports = async (req, res) => {
   const toolIdRaw = body.toolId != null ? String(body.toolId).trim() : '';
   let userMessage = body.userMessage != null ? String(body.userMessage) : '';
   const modelPref = body.model === 'claude' ? 'claude' : 'gpt';
+  const checkoutSessionId = body.checkoutSessionId != null ? String(body.checkoutSessionId).trim() : '';
 
   if (!toolIdRaw) {
     return res.status(400).json({ error: 'bad_request', message: 'toolId required' });
@@ -52,11 +54,33 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    const priceNum = Number(tool.price) || 0;
+    if (priceNum > 0) {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(503).json({ error: 'config', message: 'Stripe is required to verify paid tool access.' });
+      }
+      if (!checkoutSessionId) {
+        return res.status(402).json({ error: 'payment_required', message: 'Complete checkout before running this paid tool.' });
+      }
+      let session;
+      try {
+        const stripe = createStripe(process.env.STRIPE_SECRET_KEY);
+        session = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+      } catch {
+        return res.status(402).json({ error: 'payment_required', message: 'Could not verify paid tool access.' });
+      }
+      const paidForThisTool =
+        session.payment_status === 'paid' &&
+        String(session.metadata?.tool_id || '') === toolIdRaw;
+      if (!paidForThisTool) {
+        return res.status(402).json({ error: 'payment_required', message: 'Checkout session does not unlock this tool.' });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }
