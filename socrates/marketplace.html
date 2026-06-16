@@ -1163,17 +1163,21 @@ function openTool(id) {
 
   const fieldsEl = document.getElementById('modalFields');
   fieldsEl.innerHTML = currentTool.fields.map(f => {
+    const id = escapeHtml(f.id || '');
+    const label = escapeHtml(f.label || '');
+    const placeholder = escapeHtml(f.placeholder || '');
     if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
+      const options = Array.isArray(f.options) ? f.options : [];
+      return `<label>${label}</label>
+        <select id="${id}">
+          ${options.map(o => `<option>${escapeHtml(o)}</option>`).join('')}
         </select>`;
     } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
+      return `<label>${label}</label>
+        <textarea id="${id}" placeholder="${placeholder}"></textarea>`;
     } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
+      return `<label>${label}</label>
+        <input type="text" id="${id}" placeholder="${placeholder}"/>`;
     }
   }).join('');
 
@@ -1425,6 +1429,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? unlockedToolsMap()[String(currentTool.id)] : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1584,8 +1589,36 @@ function toolFieldsFromSupabaseRow(t) {
     const SUPA_URL = 'https://bbhgmblfgiwdyubdqxxp.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGdtYmxmZ2l3ZHl1YmRxeHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NTI5NzUsImV4cCI6MjA2MTUyODk3NX0.s2YG5sIuZoKaYJfQzMdlhQ9rWdL-yiSh7G3vLR_bFLg';
     const sb = createClient(SUPA_URL, SUPA_KEY);
-    const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
+    const PUBLIC_TOOL_COLUMNS = [
+      'id',
+      'name',
+      'description',
+      'category',
+      'icon',
+      'tags',
+      'listing_extras',
+      'type',
+      'price',
+      'runs',
+      'rating',
+      'trending',
+      'created_at',
+      'input_placeholder',
+      'input_schema',
+      'profiles(username,display_name)'
+    ].join(',');
+    const { data: realTools, error } = await sb.from('tools').select(PUBLIC_TOOL_COLUMNS).eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
+        let freePromptRows = [];
+        try {
+          const { data: fp, error: fpErr } = await sb
+            .from('tools')
+            .select('id,system_prompt')
+            .eq('is_published', true)
+            .lte('price', 0);
+          if (!fpErr && Array.isArray(fp)) freePromptRows = fp;
+        } catch (_) {}
+        const freePromptsById = new Map(freePromptRows.map(r => [String(r.id), r.system_prompt || '']));
         const mapped = realTools.map(t => {
         const d = toolTypeDisplay(t.type);
         const priceNum = Number(t.price) || 0;
@@ -1601,7 +1634,8 @@ function toolFieldsFromSupabaseRow(t) {
           paid: priceNum > 0,
           price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
-          sys: t.system_prompt, real: true,
+          sys: priceNum > 0 ? '' : (freePromptsById.get(String(t.id)) || ''),
+          real: true,
           rating: Number(t.rating) || 4.8,
           trending: t.trending === true || Number(t.runs) > 10,
           createdAt: t.created_at || '',
