@@ -663,11 +663,21 @@ function setRange(btn, range) {
 // Calls /api/stats (serverless function on Vercel) which talks to Stripe server-side
 async function loadStripeData() {
   try {
-    const res = await fetch('/api/stats');
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const statsSb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+    const { data: { session } } = await statsSb.auth.getSession();
+    if (!session?.access_token) throw new Error('Sign in required');
+
+    const res = await fetch('/api/stats', { headers: { Authorization: 'Bearer ' + session.access_token } });
     if (!res.ok) throw new Error('API not available');
     const data = await res.json();
 
     const fmt = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const escapeHtml = s => String(s == null ? '' : s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
 
     // Earnings highlight
     document.getElementById('totalRevenue').textContent = fmt(data.totalRevenue);
@@ -686,21 +696,6 @@ async function loadStripeData() {
     document.getElementById('statMode').textContent = 'Test';
     document.getElementById('statModeSub').textContent = 'Switch to Live in Stripe to accept real payments';
 
-    // Revenue pie chart — real breakdown by product
-    const products = Object.keys(data.byProduct);
-    const amounts = products.map(p => data.byProduct[p]);
-    if (products.length > 0) {
-      revenueChart.data.labels = products;
-      revenueChart.data.datasets[0].data = amounts;
-      revenueChart.data.datasets[0].backgroundColor = ['#c9a84c','#7c3aed','#4ade80','#f472b6','#60a5fa'].slice(0, products.length);
-      revenueChart.update();
-    } else {
-      revenueChart.data.labels = ['No sales yet'];
-      revenueChart.data.datasets[0].data = [1];
-      revenueChart.data.datasets[0].backgroundColor = ['#e8e5db'];
-      revenueChart.update();
-    }
-
     // Activity feed — real recent transactions
     const feed = document.getElementById('activityFeed');
     if (data.recent.length === 0) {
@@ -710,8 +705,8 @@ async function loadStripeData() {
         <div class="activity-item">
           <div class="activity-dot" style="background:var(--green)"></div>
           <div>
-            <div class="activity-text"><strong>${t.customer}</strong> purchased ${t.description}</div>
-            <div class="activity-time">${t.date} · +${('$' + t.amount.toFixed(2))}</div>
+            <div class="activity-text"><strong>${escapeHtml(t.customer)}</strong> purchased ${escapeHtml(t.description)}</div>
+            <div class="activity-time">${escapeHtml(t.date)} · +${escapeHtml('$' + Number(t.amount).toFixed(2))}</div>
           </div>
         </div>
       `).join('');
