@@ -2,6 +2,7 @@
 // Env: OPENAI_API_KEY (required for model gpt), ANTHROPIC_API_KEY (required for model claude),
 //      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-3-5-haiku-latest)
 
+const stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 const { cors, parseJsonBody } = require('../server-lib/payments-util.js');
 const DEMO_TOOL_PROMPTS = require('../server-lib/demo-tool-prompts.js');
@@ -32,6 +33,7 @@ module.exports = async (req, res) => {
   const toolIdRaw = body.toolId != null ? String(body.toolId).trim() : '';
   let userMessage = body.userMessage != null ? String(body.userMessage) : '';
   const modelPref = body.model === 'claude' ? 'claude' : 'gpt';
+  const checkoutSessionId = body.checkoutSessionId != null ? String(body.checkoutSessionId).trim() : '';
 
   if (!toolIdRaw) {
     return res.status(400).json({ error: 'bad_request', message: 'toolId required' });
@@ -52,11 +54,29 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    const priceNum = Number(tool.price) || 0;
+    if (priceNum > 0) {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(503).json({ error: 'config', message: 'Stripe is not configured for paid hosted runs.' });
+      }
+      if (!checkoutSessionId) {
+        return res.status(402).json({ error: 'checkout_required', message: 'Complete checkout before running this paid tool.' });
+      }
+      try {
+        const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
+        const session = await stripeClient.checkout.sessions.retrieve(checkoutSessionId);
+        if (session.payment_status !== 'paid' || String(session.metadata?.tool_id || '') !== toolIdRaw) {
+          return res.status(403).json({ error: 'checkout_invalid', message: 'Checkout session does not unlock this tool.' });
+        }
+      } catch (e) {
+        return res.status(403).json({ error: 'checkout_invalid', message: 'Checkout session could not be verified.' });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }
