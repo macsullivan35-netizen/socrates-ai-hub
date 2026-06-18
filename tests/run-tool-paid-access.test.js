@@ -69,8 +69,12 @@ function loadRunTool({ tool, stripeSession }) {
   };
 
   const handler = require(RUN_TOOL_PATH);
-  Module._load = originalLoad;
-  return handler;
+  return {
+    handler,
+    restore() {
+      Module._load = originalLoad;
+    },
+  };
 }
 
 async function call(handler, body) {
@@ -92,17 +96,19 @@ test('paid database tools require a checkout session before hosted run', async (
     throw new Error('should not call upstream');
   };
 
+  let loaded;
   try {
-    const handler = loadRunTool({
+    loaded = loadRunTool({
       tool: { system_prompt: 'paid prompt', is_published: true, price: 5 },
       stripeSession: null,
     });
-    const res = await call(handler, { toolId: PAID_TOOL_ID, userMessage: 'hello', model: 'gpt' });
+    const res = await call(loaded.handler, { toolId: PAID_TOOL_ID, userMessage: 'hello', model: 'gpt' });
 
     assert.equal(res.statusCode, 402);
     assert.equal(res.body.error, 'payment_required');
     assert.equal(upstreamCalled, false);
   } finally {
+    if (loaded) loaded.restore();
     global.fetch = originalFetch;
   }
 });
@@ -119,12 +125,13 @@ test('paid database tools reject checkout sessions for a different tool', async 
     throw new Error('should not call upstream');
   };
 
+  let loaded;
   try {
-    const handler = loadRunTool({
+    loaded = loadRunTool({
       tool: { system_prompt: 'paid prompt', is_published: true, price: 5 },
       stripeSession: { payment_status: 'paid', metadata: { tool_id: '00000000-0000-1000-8000-000000000000' } },
     });
-    const res = await call(handler, {
+    const res = await call(loaded.handler, {
       toolId: PAID_TOOL_ID,
       checkoutSessionId: 'cs_test_paid',
       userMessage: 'hello',
@@ -135,6 +142,7 @@ test('paid database tools reject checkout sessions for a different tool', async 
     assert.equal(res.body.error, 'invalid_purchase');
     assert.equal(upstreamCalled, false);
   } finally {
+    if (loaded) loaded.restore();
     global.fetch = originalFetch;
   }
 });
@@ -154,12 +162,13 @@ test('paid database tools run after a paid matching checkout session', async () 
     };
   };
 
+  let loaded;
   try {
-    const handler = loadRunTool({
+    loaded = loadRunTool({
       tool: { system_prompt: 'paid prompt', is_published: true, price: 5 },
       stripeSession: { payment_status: 'paid', metadata: { tool_id: PAID_TOOL_ID } },
     });
-    const res = await call(handler, {
+    const res = await call(loaded.handler, {
       toolId: PAID_TOOL_ID,
       checkoutSessionId: 'cs_test_paid',
       userMessage: 'hello',
@@ -169,6 +178,7 @@ test('paid database tools run after a paid matching checkout session', async () 
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.text, 'ok');
   } finally {
+    if (loaded) loaded.restore();
     global.fetch = originalFetch;
   }
 });
