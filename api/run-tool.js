@@ -1,4 +1,4 @@
-// POST { toolId, userMessage, model?: "gpt" | "claude" } — run a published tool via platform API keys (no visitor key).
+// POST { toolId, userMessage, model?: "gpt" | "claude", checkoutSessionId?: string } — run a published tool via platform API keys (no visitor key).
 // Env: OPENAI_API_KEY (required for model gpt), ANTHROPIC_API_KEY (required for model claude),
 //      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-3-5-haiku-latest)
 
@@ -9,6 +9,39 @@ const DEMO_TOOL_PROMPTS = require('../server-lib/demo-tool-prompts.js');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_USER_CHARS = 16000;
 const MAX_OUT_TOKENS = 1200;
+
+let stripeClient;
+function stripe() {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  if (!stripeClient) stripeClient = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  return stripeClient;
+}
+
+async function verifyPaidToolSession(toolId, expectedAmountCents, body) {
+  const sessionIdRaw = body.checkoutSessionId || body.sessionId || body.stripeSessionId;
+  const sessionId = sessionIdRaw != null ? String(sessionIdRaw).trim() : '';
+  if (!sessionId) {
+    return { ok: false, status: 402, message: 'Complete checkout before running this paid tool.' };
+  }
+
+  const stripeApi = stripe();
+  if (!stripeApi) {
+    return { ok: false, status: 503, message: 'Paid tool verification is not configured.' };
+  }
+
+  try {
+    const session = await stripeApi.checkout.sessions.retrieve(sessionId);
+    const sessionToolId = session.metadata?.tool_id != null ? String(session.metadata.tool_id) : '';
+    const paid = session.payment_status === 'paid';
+    const amountOk = !expectedAmountCents || Number(session.amount_total) >= expectedAmountCents;
+    if (!paid || sessionToolId !== String(toolId) || !amountOk) {
+      return { ok: false, status: 402, message: 'Checkout session does not unlock this tool.' };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, status: 402, message: 'Checkout session could not be verified.' };
+  }
+}
 
 module.exports = async (req, res) => {
   cors(res);
@@ -52,11 +85,19 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    const priceNum = Number(tool.price) || 0;
+    if (priceNum > 0) {
+      const expectedAmountCents = Math.max(0, Math.round(priceNum * 100));
+      const paid = await verifyPaidToolSession(toolIdRaw, expectedAmountCents, body);
+      if (!paid.ok) {
+        return res.status(paid.status).json({ error: paid.status === 503 ? 'config' : 'payment_required', message: paid.message });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }

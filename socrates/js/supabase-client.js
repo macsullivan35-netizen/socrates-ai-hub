@@ -6,6 +6,12 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const PUBLIC_TOOL_COLUMNS = [
+  'id', 'name', 'description', 'category', 'icon', 'type', 'price', 'runs',
+  'rating', 'trending', 'created_at', 'tags', 'input_placeholder',
+  'input_schema', 'sample_output', 'listing_extras', 'creator_id', 'is_published'
+].join(',');
+
 // ── AUTH HELPERS ──
 
 export async function getUser() {
@@ -39,7 +45,7 @@ export async function signOut() {
 export async function getPublishedTools(category = null) {
   let query = supabase
     .from('tools')
-    .select('*, profiles(username, display_name)')
+    .select(`${PUBLIC_TOOL_COLUMNS}, profiles(username, display_name)`)
     .eq('is_published', true)
     .order('runs', { ascending: false });
 
@@ -54,7 +60,7 @@ export async function getPublishedTools(category = null) {
 export async function getMyTools(userId) {
   const { data, error } = await supabase
     .from('tools')
-    .select('*')
+    .select(PUBLIC_TOOL_COLUMNS)
     .eq('creator_id', userId)
     .order('created_at', { ascending: false });
   return { data, error };
@@ -64,7 +70,7 @@ export async function createTool(toolData) {
   const { data, error } = await supabase
     .from('tools')
     .insert([toolData])
-    .select()
+    .select(PUBLIC_TOOL_COLUMNS)
     .single();
   return { data, error };
 }
@@ -74,7 +80,7 @@ export async function updateTool(id, updates) {
     .from('tools')
     .update(updates)
     .eq('id', id)
-    .select()
+    .select(PUBLIC_TOOL_COLUMNS)
     .single();
   return { data, error };
 }
