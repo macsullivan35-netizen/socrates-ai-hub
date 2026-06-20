@@ -3,6 +3,7 @@
 // Env: OPENAI_API_KEY, optional OPENAI_MODEL (default gpt-4o-mini)
 
 const { cors, parseJsonBody } = require('../server-lib/payments-util.js');
+const { createClient } = require('@supabase/supabase-js');
 
 const SYSTEM_PROMPT = `You are an AI tool builder for a marketplace called Socrates. Based on a user's answers, generate a complete tool spec. Return ONLY valid JSON with these keys: {"name":"Short catchy name (max 4 words)","description":"One sentence for marketplace card (max 120 chars)","category":"One of: Writing, Coding, Study, Business, Creative, Research, Health, Finance, Fun & Games, Automation, Translation, Other","icon":"Single emoji","type":"One of: Prompt App, Agent, Chat Bot, Model Wrapper, Other","system_prompt":"Full AI system prompt (3-6 sentences, specific and practical)","input_label":"Label for the main input field","input_placeholder":"Example placeholder text"}`;
 
@@ -17,6 +18,24 @@ module.exports = async (req, res) => {
       message: 'Server OpenAI not configured. Set OPENAI_API_KEY on the API, or paste your own key in Publish (browser mode).',
     });
   }
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(503).json({
+      error: 'config',
+      message: 'Supabase service credentials missing for hosted generation.',
+    });
+  }
+
+  const auth = req.headers?.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token) {
+    return res.status(401).json({ error: 'auth', message: 'Sign in to use hosted tool generation.' });
+  }
+
+  const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const { data: { user }, error: userError } = await sb.auth.getUser(token);
+  if (userError || !user) {
+    return res.status(401).json({ error: 'auth', message: 'Invalid session. Sign in again.' });
+  }
 
   let body;
   try {
@@ -25,11 +44,11 @@ module.exports = async (req, res) => {
     body = {};
   }
 
-  const idea = body.idea != null ? String(body.idea).trim() : '';
-  const audience = body.audience != null ? String(body.audience).trim() : '';
-  const always = body.always != null ? String(body.always).trim() : '';
-  const never = body.never != null ? String(body.never).trim() : '';
-  const price = body.price != null ? String(body.price).trim() : '';
+  const idea = body.idea != null ? String(body.idea).trim().slice(0, 1000) : '';
+  const audience = body.audience != null ? String(body.audience).trim().slice(0, 600) : '';
+  const always = body.always != null ? String(body.always).trim().slice(0, 600) : '';
+  const never = body.never != null ? String(body.never).trim().slice(0, 600) : '';
+  const price = body.price != null ? String(body.price).trim().slice(0, 100) : '';
 
   if (!idea) {
     return res.status(400).json({ error: 'bad_request', message: 'idea is required' });
