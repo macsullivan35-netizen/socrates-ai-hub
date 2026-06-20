@@ -1234,10 +1234,17 @@ async function buildTool() {
     tryUrls.push('/api/publish-generate');
   if (origin) tryUrls.push(origin + '/api/publish-generate');
 
+  const hostedHeaders = { 'Content-Type': 'application/json' };
+  try {
+    const { supabase } = await import('./js/supabase-client.js');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) hostedHeaders.Authorization = 'Bearer ' + session.access_token;
+  } catch (_) { /* fall back to own-key generation below */ }
+
   try {
     for (const url of tryUrls) {
       try {
-        const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: pgPayload });
+        const resp = await fetch(url, { method: 'POST', headers: hostedHeaders, body: pgPayload });
         const data = await resp.json().catch(() => ({}));
         if (resp.ok && data.spec) {
           applyGeneratedSpecFromInterview(data.spec);
