@@ -35,7 +35,7 @@ function requestWithBody(body) {
   return req;
 }
 
-function loadRunToolRoute({ tool, stripeSession }) {
+function loadRunToolRoute(t, { tool, stripeSession }) {
   const routePath = require.resolve('../api/run-tool.js');
   delete require.cache[routePath];
 
@@ -84,11 +84,12 @@ function loadRunToolRoute({ tool, stripeSession }) {
     return originalLoad.apply(this, arguments);
   };
 
-  try {
-    return require('../api/run-tool.js');
-  } finally {
+  t.after(() => {
     Module._load = originalLoad;
-  }
+    delete require.cache[routePath];
+  });
+
+  return require('../api/run-tool.js');
 }
 
 test('paid UUID tools require a paid checkout session before hosted runs', async (t) => {
@@ -109,7 +110,7 @@ test('paid UUID tools require a paid checkout session before hosted runs', async
     return { ok: true, json: async () => ({ choices: [{ message: { content: 'should not run' } }] }) };
   };
 
-  const route = loadRunToolRoute({
+  const route = loadRunToolRoute(t, {
     tool: { system_prompt: 'paid prompt', is_published: true, price: 19 },
     stripeSession: null,
   });
@@ -140,7 +141,7 @@ test('paid UUID tools reject checkout sessions for a different tool', async (t) 
     return { ok: true, json: async () => ({ choices: [{ message: { content: 'should not run' } }] }) };
   };
 
-  const route = loadRunToolRoute({
+  const route = loadRunToolRoute(t, {
     tool: { system_prompt: 'paid prompt', is_published: true, price: 19 },
     stripeSession: { payment_status: 'paid', metadata: { tool_id: '123e4567-e89b-42d3-a456-426614174999' } },
   });
@@ -171,7 +172,7 @@ test('paid UUID tools run when the checkout session is paid for that exact tool'
     return { ok: true, json: async () => ({ choices: [{ message: { content: 'paid run ok' } }] }) };
   };
 
-  const route = loadRunToolRoute({
+  const route = loadRunToolRoute(t, {
     tool: { system_prompt: 'paid prompt', is_published: true, price: 19 },
     stripeSession: { payment_status: 'paid', metadata: { tool_id: PAID_TOOL_ID } },
   });
