@@ -1,4 +1,4 @@
-// POST { toolId, userMessage, model?: "gpt" | "claude" } — run a published tool via platform API keys (no visitor key).
+// POST { toolId, userMessage, model?: "gpt" | "claude", checkoutSessionId?: string } — run a published tool via platform API keys (no visitor key).
 // Env: OPENAI_API_KEY (required for model gpt), ANTHROPIC_API_KEY (required for model claude),
 //      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-3-5-haiku-latest)
 
@@ -9,6 +9,15 @@ const DEMO_TOOL_PROMPTS = require('../server-lib/demo-tool-prompts.js');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_USER_CHARS = 16000;
 const MAX_OUT_TOKENS = 1200;
+
+async function verifyPaidToolSession(toolId, sessionId) {
+  if (!sessionId) return false;
+  if (!process.env.STRIPE_SECRET_KEY) return false;
+
+  const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  const session = await stripe.checkout.sessions.retrieve(String(sessionId));
+  return session.payment_status === 'paid' && String(session.metadata?.tool_id || '') === String(toolId);
+}
 
 module.exports = async (req, res) => {
   cors(res);
@@ -52,11 +61,29 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    const priceNum = Number(tool.price) || 0;
+    if (priceNum > 0) {
+      try {
+        const checkoutSessionId = body.checkoutSessionId != null ? String(body.checkoutSessionId).trim() : '';
+        const paid = await verifyPaidToolSession(toolIdRaw, checkoutSessionId);
+        if (!paid) {
+          return res.status(402).json({
+            error: 'payment_required',
+            message: 'Complete checkout for this paid tool before running it.',
+          });
+        }
+      } catch {
+        return res.status(402).json({
+          error: 'payment_required',
+          message: 'Complete checkout for this paid tool before running it.',
+        });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }
