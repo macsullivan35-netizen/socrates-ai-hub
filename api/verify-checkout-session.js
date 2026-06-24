@@ -2,7 +2,7 @@
 
 const url = require('url');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { cors } = require('../server-lib/payments-util.js');
+const { cors, verifyPaidCheckoutSession } = require('../server-lib/payments-util.js');
 
 module.exports = async (req, res) => {
   cors(res, 'GET, OPTIONS');
@@ -15,11 +15,10 @@ module.exports = async (req, res) => {
 
   try {
     const session = await stripe.checkout.sessions.retrieve(String(sessionId));
-    if (session.payment_status !== 'paid') {
-      return res.status(400).json({ ok: false, error: 'not_paid' });
-    }
     const toolId = session.metadata?.tool_id;
     if (!toolId) return res.status(400).json({ ok: false, error: 'no_metadata' });
+    const paid = await verifyPaidCheckoutSession({ stripe, sessionId, toolId });
+    if (!paid.ok) return res.status(paid.status).json({ ok: false, error: paid.error });
     return res.status(200).json({ ok: true, toolId: String(toolId) });
   } catch (err) {
     return res.status(400).json({ ok: false, error: err.message });

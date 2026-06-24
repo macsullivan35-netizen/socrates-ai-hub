@@ -1425,6 +1425,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? unlockedToolsMap()[String(currentTool.id)] : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1444,9 +1445,16 @@ async function runTool() {
       if (hostedMissing || r.status === 404 || r.status === 405) {
         content.innerHTML = '<span style="color:var(--muted);font-size:13px">Hosted AI isn’t available here (configure /api/run-tool and OPENAI_API_KEY on the server, or use your own key below).</span>';
         const hasKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
-        if (hasKey) {
+        const canUseOwnKey = !currentTool.real || !!currentTool.sys;
+        if (hasKey && canUseOwnKey) {
           content.innerHTML = '<span style="color:var(--muted);font-size:13px">Running with your key…</span>';
           await runToolWithOwnKey(userMessage);
+        } else if (!canUseOwnKey) {
+          content.innerHTML = '<span style="color:var(--muted);font-size:13px">Hosted AI is required for marketplace-published tools because prompts are kept server-side.</span>';
+          btn.disabled = false;
+          btn.textContent = '▶ Run Tool';
+          document.getElementById('inlineKeyPrompt').style.display = 'none';
+          btn.style.display = '';
         } else {
           btn.disabled = false;
           btn.textContent = '▶ Run Tool';
@@ -1584,7 +1592,8 @@ function toolFieldsFromSupabaseRow(t) {
     const SUPA_URL = 'https://bbhgmblfgiwdyubdqxxp.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGdtYmxmZ2l3ZHl1YmRxeHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NTI5NzUsImV4cCI6MjA2MTUyODk3NX0.s2YG5sIuZoKaYJfQzMdlhQ9rWdL-yiSh7G3vLR_bFLg';
     const sb = createClient(SUPA_URL, SUPA_KEY);
-    const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
+    const publicColumns = 'id,name,price,category,type,description,icon,tags,listing_extras,runs,rating,trending,created_at,input_placeholder,input_schema,profiles(username,display_name)';
+    const { data: realTools, error } = await sb.from('tools').select(publicColumns).eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
         const mapped = realTools.map(t => {
         const d = toolTypeDisplay(t.type);
@@ -1601,7 +1610,7 @@ function toolFieldsFromSupabaseRow(t) {
           paid: priceNum > 0,
           price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
-          sys: t.system_prompt, real: true,
+          sys: '', real: true,
           rating: Number(t.rating) || 4.8,
           trending: t.trending === true || Number(t.runs) > 10,
           createdAt: t.created_at || '',
