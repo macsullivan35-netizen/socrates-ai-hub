@@ -39,7 +39,7 @@ export async function signOut() {
 export async function getPublishedTools(category = null) {
   let query = supabase
     .from('tools')
-    .select('*, profiles(username, display_name)')
+    .select('id,name,description,category,type,icon,tags,price,runs,rating,trending,created_at,input_placeholder,input_schema,listing_extras,profiles(username, display_name)')
     .eq('is_published', true)
     .order('runs', { ascending: false });
 
