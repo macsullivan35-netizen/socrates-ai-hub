@@ -757,6 +757,9 @@ function unlockedToolsMap() {
 function hasPaidToolAccess(toolId) {
   return !!unlockedToolsMap()[String(toolId)];
 }
+function checkoutSessionForTool(toolId) {
+  return unlockedToolsMap()[String(toolId)] || '';
+}
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
   const runBtn = document.getElementById('runBtn');
@@ -880,7 +883,7 @@ function toolTypeDisplay(type) {
 
 function escapeHtml(s) {
   if (s == null) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function normalizeListingExtras(raw) {
@@ -1163,17 +1166,21 @@ function openTool(id) {
 
   const fieldsEl = document.getElementById('modalFields');
   fieldsEl.innerHTML = currentTool.fields.map(f => {
+    const fieldId = escapeHtml(f.id);
+    const label = escapeHtml(f.label);
+    const placeholder = escapeHtml(f.placeholder || '');
     if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
+      const options = Array.isArray(f.options) ? f.options : [];
+      return `<label for="${fieldId}">${label}</label>
+        <select id="${fieldId}">
+          ${options.map(o => `<option>${escapeHtml(o)}</option>`).join('')}
         </select>`;
     } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
+      return `<label for="${fieldId}">${label}</label>
+        <textarea id="${fieldId}" placeholder="${placeholder}"></textarea>`;
     } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
+      return `<label for="${fieldId}">${label}</label>
+        <input type="text" id="${fieldId}" placeholder="${placeholder}"/>`;
     }
   }).join('');
 
@@ -1313,6 +1320,11 @@ function saveInlineKey() {
 async function runToolWithOwnKey(userMessage) {
   const apiKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
   if (!apiKey) return;
+  if (currentTool?.real && !currentTool.sys) {
+    const content = document.getElementById('outputContent');
+    content.textContent = 'This marketplace tool runs only through Socrates-hosted AI so its private prompt stays protected.';
+    return;
+  }
 
   const btn = document.getElementById('runBtn');
   const output = document.getElementById('outputBox');
@@ -1425,6 +1437,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? checkoutSessionForTool(currentTool.id) : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1442,6 +1455,12 @@ async function runTool() {
           (selectedModel === 'claude' && j.error === 'claude_unavailable'));
 
       if (hostedMissing || r.status === 404 || r.status === 405) {
+        if (currentTool.real && !currentTool.sys) {
+          content.textContent = 'Hosted AI is required for this marketplace tool so its private prompt stays protected. Please try again later.';
+          btn.disabled = false;
+          btn.textContent = '▶ Try Again';
+          return;
+        }
         content.innerHTML = '<span style="color:var(--muted);font-size:13px">Hosted AI isn’t available here (configure /api/run-tool and OPENAI_API_KEY on the server, or use your own key below).</span>';
         const hasKey = selectedModel === 'claude' ? getClaudeKey() : getKey();
         if (hasKey) {
@@ -1584,7 +1603,25 @@ function toolFieldsFromSupabaseRow(t) {
     const SUPA_URL = 'https://bbhgmblfgiwdyubdqxxp.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGdtYmxmZ2l3ZHl1YmRxeHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NTI5NzUsImV4cCI6MjA2MTUyODk3NX0.s2YG5sIuZoKaYJfQzMdlhQ9rWdL-yiSh7G3vLR_bFLg';
     const sb = createClient(SUPA_URL, SUPA_KEY);
-    const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
+    const publicToolColumns = [
+      'id',
+      'name',
+      'description',
+      'category',
+      'icon',
+      'type',
+      'price',
+      'runs',
+      'rating',
+      'trending',
+      'created_at',
+      'tags',
+      'input_placeholder',
+      'input_schema',
+      'listing_extras',
+      'profiles(username,display_name)'
+    ].join(',');
+    const { data: realTools, error } = await sb.from('tools').select(publicToolColumns).eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
         const mapped = realTools.map(t => {
         const d = toolTypeDisplay(t.type);
@@ -1601,7 +1638,7 @@ function toolFieldsFromSupabaseRow(t) {
           paid: priceNum > 0,
           price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
-          sys: t.system_prompt, real: true,
+          real: true,
           rating: Number(t.rating) || 4.8,
           trending: t.trending === true || Number(t.runs) > 10,
           createdAt: t.created_at || '',
