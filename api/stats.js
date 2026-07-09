@@ -1,41 +1,49 @@
-// Serverless function — runs on Vercel's servers, never exposed to the browser
-// Stripe secret key is stored as an environment variable (STRIPE_SECRET_KEY)
+// Serverless function — runs on Vercel's servers, never exposes Stripe secrets to the browser.
+// Requires a Supabase bearer token and only returns charges tagged for that builder.
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripeFactory = require('stripe');
+const { cors, requireSupabaseUser } = require('../server-lib/payments-util.js');
 
 module.exports = async (req, res) => {
-  // Allow the dashboard page to call this
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  cors(res, 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
+
+  const auth = await requireSupabaseUser(req, res);
+  if (!auth) return;
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).json({ error: 'config', message: 'Stripe is not configured.' });
+  }
 
   try {
-    // Fetch last 100 charges
-    const charges = await stripe.charges.list({ limit: 100 });
+    const stripe = stripeFactory(process.env.STRIPE_SECRET_KEY);
+    const charges = await stripe.charges.list({ limit: 100, expand: ['data.payment_intent'] });
+    const sellerCharges = charges.data.filter((charge) => {
+      const paymentIntent = charge.payment_intent && typeof charge.payment_intent === 'object'
+        ? charge.payment_intent
+        : null;
+      return charge.status === 'succeeded' &&
+        String(paymentIntent?.metadata?.creator_id || '') === String(auth.user.id);
+    });
 
-    // Fetch all customers
-    const customers = await stripe.customers.list({ limit: 100 });
+    const totalRevenue = sellerCharges
+      .reduce((sum, c) => sum + c.amount, 0) / 100;
 
-    // Calculate real stats from actual Stripe data
-    const totalRevenue = charges.data
-      .filter(c => c.status === 'succeeded')
-      .reduce((sum, c) => sum + c.amount, 0) / 100; // Stripe stores cents
+    const totalSales = sellerCharges.length;
 
-    const totalSales = charges.data.filter(c => c.status === 'succeeded').length;
+    const customerKeys = new Set(
+      sellerCharges.map(c => c.billing_details?.email || c.customer || c.id).filter(Boolean)
+    );
+    const totalCustomers = customerKeys.size;
 
-    const totalCustomers = customers.data.length;
-
-    // Revenue by product (from charge descriptions / metadata)
     const byProduct = {};
-    charges.data
-      .filter(c => c.status === 'succeeded')
-      .forEach(c => {
-        const name = c.description || 'Unknown';
-        byProduct[name] = (byProduct[name] || 0) + c.amount / 100;
-      });
+    sellerCharges.forEach(c => {
+      const name = c.description || 'Unknown';
+      byProduct[name] = (byProduct[name] || 0) + c.amount / 100;
+    });
 
-    // Recent transactions (last 10)
-    const recent = charges.data
-      .filter(c => c.status === 'succeeded')
+    const recent = sellerCharges
       .slice(0, 10)
       .map(c => ({
         id: c.id,
@@ -54,6 +62,6 @@ module.exports = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'stripe_error', message: err.message || 'Could not load Stripe stats.' });
   }
 };

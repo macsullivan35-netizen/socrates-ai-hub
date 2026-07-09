@@ -2,7 +2,7 @@
 // Lets publish flow work when browsers cannot reach api.openai.com directly (file://, CORS, firewall, extensions).
 // Env: OPENAI_API_KEY, optional OPENAI_MODEL (default gpt-4o-mini)
 
-const { cors, parseJsonBody } = require('../server-lib/payments-util.js');
+const { cors, parseJsonBody, requireSupabaseUser } = require('../server-lib/payments-util.js');
 
 const SYSTEM_PROMPT = `You are an AI tool builder for a marketplace called Socrates. Based on a user's answers, generate a complete tool spec. Return ONLY valid JSON with these keys: {"name":"Short catchy name (max 4 words)","description":"One sentence for marketplace card (max 120 chars)","category":"One of: Writing, Coding, Study, Business, Creative, Research, Health, Finance, Fun & Games, Automation, Translation, Other","icon":"Single emoji","type":"One of: Prompt App, Agent, Chat Bot, Model Wrapper, Other","system_prompt":"Full AI system prompt (3-6 sentences, specific and practical)","input_label":"Label for the main input field","input_placeholder":"Example placeholder text"}`;
 
@@ -10,6 +10,9 @@ module.exports = async (req, res) => {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+
+  const auth = await requireSupabaseUser(req, res);
+  if (!auth) return;
 
   if (!process.env.OPENAI_API_KEY) {
     return res.status(503).json({
