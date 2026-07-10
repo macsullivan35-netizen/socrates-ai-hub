@@ -632,6 +632,11 @@ function setRange(btn, range) {
   btn.classList.add('active');
 }
 
+function dashEscapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 (function initDashSidebar() {
   const ids = ['overview','my-tools','earnings','analytics','audience'];
   function syncActive() {
@@ -661,9 +666,10 @@ function setRange(btn, range) {
 
 // ── REAL STRIPE DATA ──
 // Calls /api/stats (serverless function on Vercel) which talks to Stripe server-side
-async function loadStripeData() {
+async function loadStripeData(accessToken) {
   try {
-    const res = await fetch('/api/stats');
+    if (!accessToken) throw new Error('Sign in required');
+    const res = await fetch('/api/stats', { headers: { Authorization: 'Bearer ' + accessToken } });
     if (!res.ok) throw new Error('API not available');
     const data = await res.json();
 
@@ -686,21 +692,6 @@ async function loadStripeData() {
     document.getElementById('statMode').textContent = 'Test';
     document.getElementById('statModeSub').textContent = 'Switch to Live in Stripe to accept real payments';
 
-    // Revenue pie chart — real breakdown by product
-    const products = Object.keys(data.byProduct);
-    const amounts = products.map(p => data.byProduct[p]);
-    if (products.length > 0) {
-      revenueChart.data.labels = products;
-      revenueChart.data.datasets[0].data = amounts;
-      revenueChart.data.datasets[0].backgroundColor = ['#c9a84c','#7c3aed','#4ade80','#f472b6','#60a5fa'].slice(0, products.length);
-      revenueChart.update();
-    } else {
-      revenueChart.data.labels = ['No sales yet'];
-      revenueChart.data.datasets[0].data = [1];
-      revenueChart.data.datasets[0].backgroundColor = ['#e8e5db'];
-      revenueChart.update();
-    }
-
     // Activity feed — real recent transactions
     const feed = document.getElementById('activityFeed');
     if (data.recent.length === 0) {
@@ -710,8 +701,8 @@ async function loadStripeData() {
         <div class="activity-item">
           <div class="activity-dot" style="background:var(--green)"></div>
           <div>
-            <div class="activity-text"><strong>${t.customer}</strong> purchased ${t.description}</div>
-            <div class="activity-time">${t.date} · +${('$' + t.amount.toFixed(2))}</div>
+            <div class="activity-text"><strong>${dashEscapeHtml(t.customer)}</strong> purchased ${dashEscapeHtml(t.description)}</div>
+            <div class="activity-time">${dashEscapeHtml(t.date)} · +${dashEscapeHtml('$' + Number(t.amount).toFixed(2))}</div>
           </div>
         </div>
       `).join('');
@@ -729,15 +720,14 @@ async function loadStripeData() {
     document.getElementById('activityFeed').innerHTML = '<div class="activity-item"><div class="activity-dot" style="background:var(--gold)"></div><div><div class="activity-text">Connect Stripe API to see real transactions here. <a href="https://dashboard.stripe.com" target="_blank" style="color:var(--gold)">Open Stripe dashboard ↗</a></div></div></div>';
   }
 }
-
-loadStripeData();
 </script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
 
 async function loadRealDashboard() {
-  const { data: { user } } = await sb.auth.getUser();
+  const { data: { session } } = await sb.auth.getSession();
+  const user = session?.user || null;
   if (!user) {
     // Not logged in — show sign in prompt
     document.getElementById('sidebarName').textContent = 'Not signed in';
@@ -757,6 +747,7 @@ async function loadRealDashboard() {
   document.getElementById('sidebarHandle').textContent = handle;
   document.getElementById('sidebarAvatar').textContent = name[0].toUpperCase();
   document.getElementById('welcomeName').textContent = name;
+  if (session?.access_token) window.loadStripeData(session.access_token);
 
   // Load real tools
   const { data: tools } = await sb.from('tools').select('*').eq('creator_id', user.id).order('created_at', { ascending: false });
