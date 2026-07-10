@@ -2,6 +2,7 @@
 // Env: OPENAI_API_KEY (required for model gpt), ANTHROPIC_API_KEY (required for model claude),
 //      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-3-5-haiku-latest)
 
+const stripeFactory = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 const { cors, parseJsonBody } = require('../server-lib/payments-util.js');
 const DEMO_TOOL_PROMPTS = require('../server-lib/demo-tool-prompts.js');
@@ -9,6 +10,23 @@ const DEMO_TOOL_PROMPTS = require('../server-lib/demo-tool-prompts.js');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_USER_CHARS = 16000;
 const MAX_OUT_TOKENS = 1200;
+
+async function verifyPaidToolAccess(checkoutSessionId, toolId) {
+  const sessionId = checkoutSessionId != null ? String(checkoutSessionId).trim() : '';
+  if (!sessionId) {
+    return { ok: false, status: 402, error: 'payment_required', message: 'Complete checkout before running this paid tool.' };
+  }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { ok: false, status: 503, error: 'config', message: 'Paid tool verification is not configured.' };
+  }
+
+  const stripe = stripeFactory(process.env.STRIPE_SECRET_KEY);
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  if (session.payment_status !== 'paid' || String(session.metadata?.tool_id || '') !== String(toolId)) {
+    return { ok: false, status: 402, error: 'payment_required', message: 'Checkout session does not unlock this paid tool.' };
+  }
+  return { ok: true };
+}
 
 module.exports = async (req, res) => {
   cors(res);
@@ -52,11 +70,24 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    const priceNum = Number(tool.price) || 0;
+    if (priceNum > 0) {
+      let paid;
+      try {
+        paid = await verifyPaidToolAccess(body.checkoutSessionId, toolIdRaw);
+      } catch (e) {
+        console.error(e);
+        return res.status(402).json({ error: 'payment_required', message: 'Could not verify paid checkout for this tool.' });
+      }
+      if (!paid.ok) {
+        return res.status(paid.status).json({ error: paid.error, message: paid.message });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }

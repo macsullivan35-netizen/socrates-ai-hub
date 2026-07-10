@@ -1,49 +1,66 @@
-// Serverless function — runs on Vercel's servers, never exposed to the browser
-// Stripe secret key is stored as an environment variable (STRIPE_SECRET_KEY)
+// Serverless function — returns Stripe stats scoped to the authenticated builder.
+// Env: STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { cors } = require('../server-lib/payments-util.js');
+const { requireSupabaseUser } = require('../server-lib/auth-util.js');
 
 module.exports = async (req, res) => {
-  // Allow the dashboard page to call this
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  cors(res, 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
+
+  const auth = await requireSupabaseUser(req);
+  if (!auth.ok) {
+    return res.status(auth.status).json({ error: auth.error, message: auth.message });
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).json({ error: 'config', message: 'Stripe is not configured.' });
+  }
 
   try {
-    // Fetch last 100 charges
-    const charges = await stripe.charges.list({ limit: 100 });
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const paymentIntents = await stripe.paymentIntents.list({
+      limit: 100,
+      expand: ['data.latest_charge'],
+    });
 
-    // Fetch all customers
-    const customers = await stripe.customers.list({ limit: 100 });
+    const creatorPayments = paymentIntents.data.filter((pi) =>
+      pi.status === 'succeeded' &&
+      String(pi.metadata?.creator_id || '') === String(auth.user.id)
+    );
 
-    // Calculate real stats from actual Stripe data
-    const totalRevenue = charges.data
-      .filter(c => c.status === 'succeeded')
-      .reduce((sum, c) => sum + c.amount, 0) / 100; // Stripe stores cents
+    const totalRevenue = creatorPayments
+      .reduce((sum, pi) => sum + (Number(pi.amount_received) || Number(pi.amount) || 0), 0) / 100;
 
-    const totalSales = charges.data.filter(c => c.status === 'succeeded').length;
+    const totalSales = creatorPayments.length;
+    const customerIds = new Set();
+    creatorPayments.forEach((pi) => {
+      const charge = pi.latest_charge && typeof pi.latest_charge === 'object' ? pi.latest_charge : null;
+      const buyer = charge?.billing_details?.email || pi.customer || pi.receipt_email || '';
+      if (buyer) customerIds.add(String(buyer));
+    });
+    const totalCustomers = customerIds.size;
 
-    const totalCustomers = customers.data.length;
-
-    // Revenue by product (from charge descriptions / metadata)
     const byProduct = {};
-    charges.data
-      .filter(c => c.status === 'succeeded')
-      .forEach(c => {
-        const name = c.description || 'Unknown';
-        byProduct[name] = (byProduct[name] || 0) + c.amount / 100;
-      });
+    creatorPayments.forEach((pi) => {
+      const charge = pi.latest_charge && typeof pi.latest_charge === 'object' ? pi.latest_charge : null;
+      const name = charge?.description || (pi.metadata?.tool_id ? `Tool ${pi.metadata.tool_id}` : 'Tool purchase');
+      byProduct[name] = (byProduct[name] || 0) + (Number(pi.amount_received) || Number(pi.amount) || 0) / 100;
+    });
 
-    // Recent transactions (last 10)
-    const recent = charges.data
-      .filter(c => c.status === 'succeeded')
+    const recent = creatorPayments
       .slice(0, 10)
-      .map(c => ({
-        id: c.id,
-        amount: c.amount / 100,
-        description: c.description || 'Purchase',
-        customer: c.billing_details?.email || 'Anonymous',
-        date: new Date(c.created * 1000).toLocaleDateString()
-      }));
+      .map((pi) => {
+        const charge = pi.latest_charge && typeof pi.latest_charge === 'object' ? pi.latest_charge : null;
+        return {
+          id: pi.id,
+          amount: (Number(pi.amount_received) || Number(pi.amount) || 0) / 100,
+          description: charge?.description || (pi.metadata?.tool_id ? `Tool ${pi.metadata.tool_id}` : 'Purchase'),
+          customer: charge?.billing_details?.email || pi.receipt_email || 'Anonymous',
+          date: new Date(pi.created * 1000).toLocaleDateString(),
+        };
+      });
 
     res.status(200).json({
       totalRevenue,
@@ -54,6 +71,6 @@ module.exports = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message || 'Stripe stats failed.' });
   }
 };

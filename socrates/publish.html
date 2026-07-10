@@ -1176,6 +1176,16 @@ function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendM
 function autoGrow(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
 function useChip(text){ document.getElementById('chatInput').value=text; sendMessage(); }
 
+async function getSocratesAccessToken() {
+  try {
+    const { supabase } = await import('./js/supabase-client.js');
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || '';
+  } catch (_) {
+    return '';
+  }
+}
+
 document.getElementById('sendBtn').onclick = function() {
   const input = document.getElementById('chatInput');
   if (input.getAttribute('data-awaiting-key')) {
@@ -1235,9 +1245,12 @@ async function buildTool() {
   if (origin) tryUrls.push(origin + '/api/publish-generate');
 
   try {
+    const hostedAccessToken = await getSocratesAccessToken();
     for (const url of tryUrls) {
       try {
-        const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: pgPayload });
+        const headers = { 'Content-Type': 'application/json' };
+        if (hostedAccessToken) headers.Authorization = 'Bearer ' + hostedAccessToken;
+        const resp = await fetch(url, { method: 'POST', headers, body: pgPayload });
         const data = await resp.json().catch(() => ({}));
         if (resp.ok && data.spec) {
           applyGeneratedSpecFromInterview(data.spec);
