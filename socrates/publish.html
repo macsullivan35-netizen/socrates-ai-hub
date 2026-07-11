@@ -838,6 +838,17 @@ function socratesPublishApiOrigin() {
   return '';
 }
 
+async function getSupabaseAccessToken() {
+  try {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const sb = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+    const { data: { session } } = await sb.auth.getSession();
+    return session?.access_token || '';
+  } catch (_) {
+    return '';
+  }
+}
+
 // ── Tool icon: emoji or uploaded image (stored as data URL in `icon` column) ──
 const MAX_ICON_FILE_BYTES = 220 * 1024;
 let manualIconImage = null;
@@ -1233,11 +1244,14 @@ async function buildTool() {
   if (typeof location !== 'undefined' && (location.protocol === 'https:' || location.protocol === 'http:'))
     tryUrls.push('/api/publish-generate');
   if (origin) tryUrls.push(origin + '/api/publish-generate');
+  const accessToken = await getSupabaseAccessToken();
 
   try {
     for (const url of tryUrls) {
       try {
-        const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: pgPayload });
+        const headers = { 'Content-Type': 'application/json' };
+        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+        const resp = await fetch(url, { method: 'POST', headers, body: pgPayload });
         const data = await resp.json().catch(() => ({}));
         if (resp.ok && data.spec) {
           applyGeneratedSpecFromInterview(data.spec);

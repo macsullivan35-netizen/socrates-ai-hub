@@ -1,7 +1,8 @@
 // POST { idea, audience, always, never, price } — AI interview → tool spec JSON via server OPENAI_API_KEY.
 // Lets publish flow work when browsers cannot reach api.openai.com directly (file://, CORS, firewall, extensions).
-// Env: OPENAI_API_KEY, optional OPENAI_MODEL (default gpt-4o-mini)
+// Env: OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, optional OPENAI_MODEL (default gpt-4o-mini)
 
+const { createClient } = require('@supabase/supabase-js');
 const { cors, parseJsonBody } = require('../server-lib/payments-util.js');
 
 const SYSTEM_PROMPT = `You are an AI tool builder for a marketplace called Socrates. Based on a user's answers, generate a complete tool spec. Return ONLY valid JSON with these keys: {"name":"Short catchy name (max 4 words)","description":"One sentence for marketplace card (max 120 chars)","category":"One of: Writing, Coding, Study, Business, Creative, Research, Health, Finance, Fun & Games, Automation, Translation, Other","icon":"Single emoji","type":"One of: Prompt App, Agent, Chat Bot, Model Wrapper, Other","system_prompt":"Full AI system prompt (3-6 sentences, specific and practical)","input_label":"Label for the main input field","input_placeholder":"Example placeholder text"}`;
@@ -16,6 +17,19 @@ module.exports = async (req, res) => {
       error: 'hosted_generate_unavailable',
       message: 'Server OpenAI not configured. Set OPENAI_API_KEY on the API, or paste your own key in Publish (browser mode).',
     });
+  }
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(503).json({ error: 'auth_unavailable', message: 'Supabase auth is not configured on the API server.' });
+  }
+
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token) return res.status(401).json({ error: 'auth', message: 'Sign in before using hosted AI generation.' });
+
+  const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const { data: { user }, error: uErr } = await sb.auth.getUser(token);
+  if (uErr || !user) {
+    return res.status(401).json({ error: 'auth', message: 'Sign in before using hosted AI generation.' });
   }
 
   let body;
