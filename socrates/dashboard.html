@@ -661,9 +661,22 @@ function setRange(btn, range) {
 
 // ── REAL STRIPE DATA ──
 // Calls /api/stats (serverless function on Vercel) which talks to Stripe server-side
+async function getDashboardAccessToken() {
+  try {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const sbStats = createClient('https://bbhgmblfgiwdyubdqxxp.supabase.co','sb_publishable_bFawbUrZj_WMJs_vHrMiEQ_IfVryGkM');
+    const { data: { session } } = await sbStats.auth.getSession();
+    return session?.access_token || '';
+  } catch (_) {
+    return '';
+  }
+}
+
 async function loadStripeData() {
   try {
-    const res = await fetch('/api/stats');
+    const token = await getDashboardAccessToken();
+    if (!token) throw new Error('Sign in required');
+    const res = await fetch('/api/stats', { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error('API not available');
     const data = await res.json();
 

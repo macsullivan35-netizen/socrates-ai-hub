@@ -28,4 +28,10 @@ function platformFeeAmount(totalCents, feePercent) {
   return Math.round((totalCents * p) / 100);
 }
 
-module.exports = { cors, parseJsonBody, platformFeeAmount };
+function getBearerToken(req) {
+  const raw = req.headers?.authorization || req.headers?.Authorization || '';
+  const m = /^Bearer\s+(.+)$/i.exec(String(raw));
+  return m ? m[1].trim() : '';
+}
+
+module.exports = { cors, parseJsonBody, platformFeeAmount, getBearerToken };
