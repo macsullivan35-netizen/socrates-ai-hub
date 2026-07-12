@@ -10,6 +10,29 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 const MAX_USER_CHARS = 16000;
 const MAX_OUT_TOKENS = 1200;
 
+async function verifyPaidCheckoutSession(sessionId, toolId) {
+  if (!sessionId) {
+    return { ok: false, status: 402, error: 'payment_required', message: 'Complete checkout before running this paid tool.' };
+  }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { ok: false, status: 503, error: 'config', message: 'Stripe is not configured for paid tool verification.' };
+  }
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(String(sessionId));
+    if (session.payment_status !== 'paid') {
+      return { ok: false, status: 402, error: 'payment_required', message: 'Checkout session is not paid.' };
+    }
+    const paidToolId = session.metadata?.tool_id;
+    if (!paidToolId || String(paidToolId) !== String(toolId)) {
+      return { ok: false, status: 403, error: 'wrong_tool', message: 'Checkout session does not unlock this tool.' };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, status: 402, error: 'payment_required', message: err.message || 'Could not verify checkout session.' };
+  }
+}
+
 module.exports = async (req, res) => {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -32,6 +55,9 @@ module.exports = async (req, res) => {
   const toolIdRaw = body.toolId != null ? String(body.toolId).trim() : '';
   let userMessage = body.userMessage != null ? String(body.userMessage) : '';
   const modelPref = body.model === 'claude' ? 'claude' : 'gpt';
+  const checkoutSessionId = body.checkoutSessionId != null
+    ? String(body.checkoutSessionId).trim()
+    : (body.checkout_session_id != null ? String(body.checkout_session_id).trim() : '');
 
   if (!toolIdRaw) {
     return res.status(400).json({ error: 'bad_request', message: 'toolId required' });
@@ -52,11 +78,18 @@ module.exports = async (req, res) => {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tool, error } = await sb
       .from('tools')
-      .select('system_prompt, is_published')
+      .select('system_prompt, is_published, price')
       .eq('id', toolIdRaw)
       .maybeSingle();
     if (error || !tool || !tool.is_published) {
       return res.status(404).json({ error: 'not_found', message: 'Tool not found or not published.' });
+    }
+    const priceNum = Number(tool.price) || 0;
+    if (priceNum > 0) {
+      const paid = await verifyPaidCheckoutSession(checkoutSessionId, toolIdRaw);
+      if (!paid.ok) {
+        return res.status(paid.status).json({ error: paid.error, message: paid.message });
+      }
     }
     systemPrompt = (tool.system_prompt || '').trim();
   }
