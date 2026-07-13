@@ -46,6 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let authMode = 'signup'; // 'signup' or 'login'
 
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ── INIT: check if logged in and update nav ──
 async function initAuth() {
   const user = await getUser();
@@ -58,16 +63,19 @@ async function initAuth() {
 }
 
 function updateNav(user) {
-  const ctaArea = document.querySelector('.nav-cta');
+  const ctaArea = document.querySelector('.nav-cta') ||
+    Array.from(document.querySelectorAll('.nav-right')).find(el => !el.querySelector('#keyBtn'));
   if (!ctaArea) return;
 
   if (user) {
     getProfile(user.id).then(profile => {
       const name = profile?.display_name || profile?.username || user.email.split('@')[0];
+      const safeName = escapeHtml(name);
+      const initial = escapeHtml((name[0] || 'U').toUpperCase());
       ctaArea.innerHTML = `
         <button onclick="toggleUserMenu()" style="display:flex;align-items:center;gap:8px;background:#f2f0ea;border:1px solid rgba(20,20,40,.09);border-radius:10px;padding:8px 16px;cursor:pointer;font-size:14px;font-weight:600;color:#1a1a2e;font-family:'Inter',sans-serif">
-          <span style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#9a6e0c,#7c3aed);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${name[0].toUpperCase()}</span>
-          ${name} ▾
+          <span style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#9a6e0c,#7c3aed);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${initial}</span>
+          ${safeName} ▾
         </button>
       `;
       document.getElementById('userMenuName').textContent = name;
