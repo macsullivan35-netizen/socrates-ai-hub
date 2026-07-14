@@ -252,6 +252,14 @@ test('marketplace keeps prompts off public listings and escapes builder fields',
   assert.match(src, /checkoutSessionId:\s*currentTool\.paid \? paidToolCheckoutSessionId\(currentTool\.id\) : undefined/);
 });
 
+test('database privileges keep system prompts out of direct public tool queries', () => {
+  const src = read('supabase/restrict_tool_prompt_reads.sql');
+  assert.match(src, /revoke select on public\.tools from anon, authenticated;/);
+  assert.match(src, /column_name <> 'system_prompt'/);
+  assert.match(src, /grant select \(%s\) on table public\.tools to anon, authenticated/);
+  assert.match(src, /where is_published = true[\s\S]*coalesce\(price, 0\) <= 0/);
+});
+
 test('publish flows check Supabase insert errors before showing success', () => {
   const src = read('socrates/publish.html');
   assert.equal((src.match(/if \(error\) throw error;/g) || []).length, 3);
