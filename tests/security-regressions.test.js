@@ -249,7 +249,17 @@ test('marketplace keeps prompts off public listings and escapes builder fields',
   assert.match(src, /fieldsEl\.innerHTML = currentTool\.fields\.map\(renderToolFieldHtml\)\.join\(''\);/);
   assert.doesNotMatch(src, /from\('tools'\)\.select\('\*[^']*profiles/);
   assert.doesNotMatch(src, /sys:\s*t\.system_prompt/);
+  assert.match(src, /from\('free_tool_prompts'\)/);
+  assert.match(src, /sys:\s*priceNum > 0 \? '' : \(freePromptById\.get/);
   assert.match(src, /checkoutSessionId:\s*currentTool\.paid \? paidToolCheckoutSessionId\(currentTool\.id\) : undefined/);
+});
+
+test('Supabase permissions deny direct public system_prompt reads', () => {
+  const sql = read('supabase/restrict_tool_prompt_reads.sql');
+  assert.match(sql, /revoke select on public\.tools from anon, authenticated;/);
+  assert.match(sql, /column_name <> 'system_prompt'/);
+  assert.match(sql, /where is_published = true[\s\S]*coalesce\(price, 0\) <= 0/);
+  assert.match(sql, /grant select on public\.free_tool_prompts to anon, authenticated;/);
 });
 
 test('publish flows check Supabase insert errors before showing success', () => {
@@ -262,6 +272,7 @@ test('publish flows check Supabase insert errors before showing success', () => 
 test('dashboard stats are authenticated and no longer reference removed revenueChart', () => {
   const src = read('socrates/dashboard.html');
   assert.match(src, /Authorization: `Bearer \$\{accessToken\}`/);
+  assert.doesNotMatch(src, /from\('tools'\)\.select\('\*'\)/);
   assert.doesNotMatch(src, /revenueChart/);
 });
 
