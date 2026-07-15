@@ -1616,6 +1616,21 @@ function toolFieldsFromSupabaseRow(t) {
     ].join(',');
     const { data: realTools, error } = await sb.from('tools').select(publicColumns).eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
+        let freePromptById = new Map();
+        try {
+          let { data: freePromptRows, error: freePromptError } = await sb
+            .from('free_tool_prompts')
+            .select('id,system_prompt');
+          if (freePromptError) {
+            const fallback = await sb
+              .from('tools')
+              .select('id,system_prompt')
+              .eq('is_published', true)
+              .lte('price', 0);
+            freePromptRows = fallback.data;
+          }
+          freePromptById = new Map((freePromptRows || []).map(row => [String(row.id), row.system_prompt || '']));
+        } catch (_) {}
         const mapped = realTools.map(t => {
         const d = toolTypeDisplay(t.type);
         const priceNum = Number(t.price) || 0;
@@ -1631,7 +1646,7 @@ function toolFieldsFromSupabaseRow(t) {
           paid: priceNum > 0,
           price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
-          sys: '', real: true,
+          sys: priceNum > 0 ? '' : (freePromptById.get(String(t.id)) || ''), real: true,
           rating: Number(t.rating) || 4.8,
           trending: t.trending === true || Number(t.runs) > 10,
           createdAt: t.created_at || '',
