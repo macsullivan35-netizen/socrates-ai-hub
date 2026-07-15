@@ -763,7 +763,8 @@ async function loadRealDashboard() {
   document.getElementById('welcomeName').textContent = name;
 
   // Load real tools
-  const { data: tools } = await sb.from('tools').select('*').eq('creator_id', user.id).order('created_at', { ascending: false });
+  const dashboardToolColumns = 'id,name,icon,type,price,runs,rating,is_published,created_at';
+  const { data: tools } = await sb.from('tools').select(dashboardToolColumns).eq('creator_id', user.id).order('created_at', { ascending: false });
   const tbody = document.getElementById('myToolsBody');
 
   if (!tools || tools.length === 0) {
