@@ -282,3 +282,11 @@ test('auth UI supports nav-right without replacing marketplace API-key controls'
   assert.match(src, /find\(el => !el\.querySelector\('#keyBtn'\)\)/);
   assert.match(src, /const safeName = escapeHtml\(name\);/);
 });
+
+test('marketplace uses own-key mode when opened directly from disk', () => {
+  const src = read('socrates/marketplace.html');
+  assert.match(
+    src,
+    /function useHostedRun\(\)[\s\S]*location\.protocol === 'file:'[\s\S]*return false;/
+  );
+});
