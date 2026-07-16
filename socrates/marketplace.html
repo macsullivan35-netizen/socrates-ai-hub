@@ -739,6 +739,7 @@ function socratesApiOrigin() {
 /** When set, runs use /api/run-tool on the Vercel backend (no visitor API key). */
 function useHostedRun() {
   if (socratesApiOrigin()) return true;
+  if (location.protocol === 'file:') return false;
   if (isGithubPages()) return false;
   return true;
 }
