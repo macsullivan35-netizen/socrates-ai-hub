@@ -739,6 +739,7 @@ function socratesApiOrigin() {
 /** When set, runs use /api/run-tool on the Vercel backend (no visitor API key). */
 function useHostedRun() {
   if (socratesApiOrigin()) return true;
+  if (location.protocol === 'file:') return false;
   if (isGithubPages()) return false;
   return true;
 }
@@ -754,8 +755,12 @@ function apiUrl(path) {
 function unlockedToolsMap() {
   try { return JSON.parse(localStorage.getItem('socrates_unlocked_tools') || '{}'); } catch { return {}; }
 }
+function paidToolCheckoutSessionId(toolId) {
+  const value = unlockedToolsMap()[String(toolId)];
+  return value ? String(value) : '';
+}
 function hasPaidToolAccess(toolId) {
-  return !!unlockedToolsMap()[String(toolId)];
+  return !!paidToolCheckoutSessionId(toolId);
 }
 function updateModalPaidGate() {
   const payRow = document.getElementById('paidUnlockRow');
@@ -881,6 +886,25 @@ function toolTypeDisplay(type) {
 function escapeHtml(s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderToolFieldHtml(f) {
+  const id = escapeHtml(f.id || '');
+  const label = escapeHtml(f.label || 'Input');
+  const placeholder = escapeHtml(f.placeholder || '');
+  if (f.type === 'select') {
+    const options = Array.isArray(f.options) ? f.options : [];
+    return `<label>${label}</label>
+      <select id="${id}">
+        ${options.map(o => `<option>${escapeHtml(o)}</option>`).join('')}
+      </select>`;
+  }
+  if (f.type === 'textarea') {
+    return `<label>${label}</label>
+      <textarea id="${id}" placeholder="${placeholder}"></textarea>`;
+  }
+  return `<label>${label}</label>
+    <input type="text" id="${id}" placeholder="${placeholder}"/>`;
 }
 
 function normalizeListingExtras(raw) {
@@ -1162,20 +1186,7 @@ function openTool(id) {
   }
 
   const fieldsEl = document.getElementById('modalFields');
-  fieldsEl.innerHTML = currentTool.fields.map(f => {
-    if (f.type === 'select') {
-      return `<label>${f.label}</label>
-        <select id="${f.id}">
-          ${f.options.map(o => `<option>${o}</option>`).join('')}
-        </select>`;
-    } else if (f.type === 'textarea') {
-      return `<label>${f.label}</label>
-        <textarea id="${f.id}" placeholder="${f.placeholder || ''}"></textarea>`;
-    } else {
-      return `<label>${f.label}</label>
-        <input type="text" id="${f.id}" placeholder="${f.placeholder || ''}"/>`;
-    }
-  }).join('');
+  fieldsEl.innerHTML = currentTool.fields.map(renderToolFieldHtml).join('');
 
   document.getElementById('outputBox').classList.remove('visible');
   document.getElementById('outputContent').textContent = '';
@@ -1425,6 +1436,7 @@ async function runTool() {
           toolId: String(currentTool.id),
           userMessage,
           model: selectedModel,
+          checkoutSessionId: currentTool.paid ? paidToolCheckoutSessionId(currentTool.id) : undefined,
         }),
       });
       let j = await r.json().catch(() => ({}));
@@ -1584,8 +1596,42 @@ function toolFieldsFromSupabaseRow(t) {
     const SUPA_URL = 'https://bbhgmblfgiwdyubdqxxp.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGdtYmxmZ2l3ZHl1YmRxeHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NTI5NzUsImV4cCI6MjA2MTUyODk3NX0.s2YG5sIuZoKaYJfQzMdlhQ9rWdL-yiSh7G3vLR_bFLg';
     const sb = createClient(SUPA_URL, SUPA_KEY);
-    const { data: realTools, error } = await sb.from('tools').select('*, profiles(username,display_name)').eq('is_published', true).order('runs', { ascending: false });
+    const publicColumns = [
+      'id',
+      'name',
+      'description',
+      'category',
+      'icon',
+      'type',
+      'tags',
+      'listing_extras',
+      'price',
+      'runs',
+      'rating',
+      'trending',
+      'created_at',
+      'input_schema',
+      'input_placeholder',
+      'sample_output',
+      'profiles(username,display_name)',
+    ].join(',');
+    const { data: realTools, error } = await sb.from('tools').select(publicColumns).eq('is_published', true).order('runs', { ascending: false });
     if (!error && realTools && realTools.length > 0) {
+        let freePromptById = new Map();
+        try {
+          let { data: freePromptRows, error: freePromptError } = await sb
+            .from('free_tool_prompts')
+            .select('id,system_prompt');
+          if (freePromptError) {
+            const fallback = await sb
+              .from('tools')
+              .select('id,system_prompt')
+              .eq('is_published', true)
+              .lte('price', 0);
+            freePromptRows = fallback.data;
+          }
+          freePromptById = new Map((freePromptRows || []).map(row => [String(row.id), row.system_prompt || '']));
+        } catch (_) {}
         const mapped = realTools.map(t => {
         const d = toolTypeDisplay(t.type);
         const priceNum = Number(t.price) || 0;
@@ -1601,7 +1647,7 @@ function toolFieldsFromSupabaseRow(t) {
           paid: priceNum > 0,
           price: priceNum > 0 ? `$${priceNum}` : 'free',
           runs: t.runs || '', author: t.profiles?.username || 'Builder',
-          sys: t.system_prompt, real: true,
+          sys: priceNum > 0 ? '' : (freePromptById.get(String(t.id)) || ''), real: true,
           rating: Number(t.rating) || 4.8,
           trending: t.trending === true || Number(t.runs) > 10,
           createdAt: t.created_at || '',
