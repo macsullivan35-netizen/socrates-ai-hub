@@ -1,6 +1,6 @@
 // POST { toolId, userMessage, model?: "gpt" | "claude" } — run a published tool via platform API keys (no visitor key).
 // Env: OPENAI_API_KEY (required for model gpt), ANTHROPIC_API_KEY (required for model claude),
-//      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-3-5-haiku-latest)
+//      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (for UUID tools), optional OPENAI_MODEL (default gpt-4o-mini), ANTHROPIC_MODEL (default claude-haiku-4-5-20251001)
 
 const { createClient } = require('@supabase/supabase-js');
 const { cors, parseJsonBody } = require('../server-lib/payments-util.js');
@@ -72,7 +72,8 @@ module.exports = async (req, res) => {
         message: 'Claude is not configured on the server. Use GPT or set ANTHROPIC_API_KEY.',
       });
     }
-    const anthropicModel = process.env.ANTHROPIC_MODEL || 'claude-3-5-haiku-20241022';
+    // claude-3-5-haiku-20241022 was retired 2026-02-19; Anthropic rejects requests to it.
+    const anthropicModel = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
     try {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
